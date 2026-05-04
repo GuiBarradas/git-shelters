@@ -11,10 +11,17 @@
  * Full reference: https://docs.github.com/rest/activity/events
  */
 export type GitHubEvent = {
+  /** Unique event id from the GitHub API. */
+  id?: string;
   type: string;
   /** ISO 8601 timestamp in UTC. */
   created_at: string;
   payload?: {
+    /**
+     * On PushEvent: stable id for the push. Used as the dedup key in
+     * byte_transactions.source_ref so cron retries do not double-credit.
+     */
+    push_id?: number;
     /**
      * On PushEvent: the new commits introduced by the push. The public
      * events API often omits this for size reasons — fall back to `size`.
@@ -91,7 +98,7 @@ export function countCommitsToday(events: GitHubEvent[], now: Date): number {
  * Order of preference: explicit commits array > size field > 1 (lower bound,
  * since we know the push happened).
  */
-function commitCountFromPayload(event: GitHubEvent): number {
+export function commitCountFromPayload(event: GitHubEvent): number {
   const commits = event.payload?.commits;
   if (Array.isArray(commits)) return commits.length;
 

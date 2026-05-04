@@ -1,4 +1,5 @@
 import { signInWithGithub, signOut } from "@/app/auth/actions";
+import { syncBytes } from "@/app/sync/actions";
 
 type AuthBarProps = {
   /** GitHub login of the authenticated user, or null if anonymous. */
@@ -20,6 +21,14 @@ export function AuthBar({ githubLogin }: AuthBarProps) {
     return (
       <div className="pointer-events-auto flex items-center gap-3 font-mono text-sm text-[#7FFF6A]">
         <span>{githubLogin}</span>
+        <form action={syncBytes}>
+          <button
+            type="submit"
+            className="border border-[#7FFF6A] px-3 py-1 hover:bg-[#7FFF6A]/10 transition"
+          >
+            Sync
+          </button>
+        </form>
         <form action={signOut}>
           <button
             type="submit"
