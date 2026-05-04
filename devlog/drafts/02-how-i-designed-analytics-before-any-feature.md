@@ -2,7 +2,7 @@
 status: draft
 target_publish: Friday after post 1
 estimated_writing_time: 3h
-source_material: analytics schema + Public Alpha health gates + v1.0 gates (Wave 1.B)
+source_material: analytics schema + Public Alpha health gates + v1.0 gates
 ---
 
 # Post 2 — "How I designed analytics before any feature"
@@ -15,7 +15,7 @@ Designing the analytics schema and the decision gates before writing the first l
 
 - Shows engineering rigor + product mindset simultaneously. Real differentiator for senior recruiters.
 - Topic rarely covered in game devlogs (most say "I implemented feature X, looks gorgeous"). Editorial differentiation.
-- Material 100% ready — comes from the analytics schema, the Public Alpha health gates, and the v1.0 A→C gates produced in Wave 1.B.
+- Material 100% ready — comes from the analytics schema, the Public Alpha health gates, and the v1.0 A→C gates already designed.
 
 ## Suggested structure (1000–1500 words)
 
@@ -36,7 +36,7 @@ List of what existed on paper BEFORE any code:
 I defined the 6 events of the FTUE funnel:
 - `signup_started` → `signup_completed` → `region_chosen` → `first_build` → `first_event_resolved` → `ftue_completed`
 
-And it was only when writing this that I noticed: **`region_chosen` is trivial in the Public Alpha** (only 1 default region). But I kept the event for symmetry with v0.4+ when a 2nd region appears. A schema decision triggered a product decision.
+And it was only when writing this that I noticed: **`region_chosen` is trivial in the Public Alpha** (only 1 default region). But I kept the event for symmetry with later iterations when a 2nd region appears. A schema decision triggered a product decision.
 
 ### The gates — health signals, not pivot signals
 - **v1.0 gate**: A→C, based on volume + complementary signals (D7 retention, FTUE completion as diagnosis).

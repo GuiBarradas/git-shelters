@@ -1,8 +1,8 @@
 # ADR 0001 — RLS strategy for public profile pages `/u/<login>`
 
-- **Status:** Proposed
-- **Decision:** TBD — to be decided before implementing profile pages in the Public Alpha.
-- **Date:** 2026-05-03
+- **Status:** Accepted
+- **Decision:** **Option B** — isolated API endpoint with service-role key + strict column whitelist + integration test promoted to CI gate.
+- **Date:** 2026-05-03 (proposed) · 2026-05-04 (accepted)
 
 ## Context
 
@@ -55,13 +55,30 @@ Create `VIEW users_public AS SELECT id, github_login, created_at, region_id FROM
 
 ## Decision
 
-**TBD.** Current leaning is **Option B** (isolated API endpoint). To be decided before implementing profile pages in the Public Alpha.
+**Option B accepted.** Isolated API endpoint `GET /api/u/[login]` using the Supabase service-role key (RLS bypass) with a strict, explicit column whitelist. Integration tests asserting that no sensitive field ever appears in the response are promoted to a **CI gate** (test failure blocks merge).
 
-Decision criteria:
-- If the public dataset is **more than plain `users`** (and in the Public Alpha it already is — rooms + kudos count), Option B beats Option C on join simplicity.
-- Option A only wins if maintaining a server-side endpoint per public page becomes prohibitive, which is not the case here.
+Decision criteria that drove the call:
+- The public dataset is more than plain `users` (rooms + aggregated kudos count) — Option C is awkward for joins/aggregates.
+- Option A's RLS-bent helpers fail silently on misconfiguration; Option B's whitelist failures are caught by TypeScript, code review, and tests.
+- Option B is the only path that allows safe **edge caching** of public profiles (`Cache-Control: public, s-maxage=...`), which keeps Vercel free-tier sustainable under viral growth.
+- Option B keeps the model simple as the project evolves toward a possible later anonymous-mode pivot.
+
+## Defense-in-depth model under Option B
+
+The isolated endpoint is one layer of four — bypassing RLS does **not** mean bypassing security:
+
+1. **RLS** stays restricted to `auth.uid() = id` on every table. Anything not flowing through the public endpoint is fully protected.
+2. **Service-role key** is server-only (Vercel env var, never bundled to client).
+3. **Service-role usage** is funneled through a **single typed function** (`lib/api/public-profile.ts`) — auditable with `git grep service_role`.
+4. **The function uses `.select(...)` with an explicit column whitelist**, so adding a sensitive column to a table does not implicitly expose it.
+
+The CI integration test is the failsafe: if a future change accidentally widens the whitelist, the test fails before merge.
 
 ## Consequences
 
-- **Option B (likely):** add `lib/api/public-profile.ts` with a typed function that runs queries via service-role and returns a `PublicProfile` shape. The Next endpoint `GET /api/u/[login]` calls that function. Integration tests verify that sensitive fields never appear in the payload.
-- **Regardless of choice:** a future LGPD-compliance ADR should link here — public profile must respect `users.deleted_at` (404 if deleted).
+- Add `lib/api/public-profile.ts` with a typed `getPublicProfile(login: string): Promise<PublicProfile | null>` function. Returns `null` if the user does not exist or has `deleted_at` set (LGPD).
+- Endpoint route at `app/api/u/[login]/route.ts` calls that function and returns JSON with `Cache-Control: public, s-maxage=300, stale-while-revalidate=3600`.
+- The page route `app/u/[login]/page.tsx` consumes the same function server-side (no double round trip).
+- Integration test `tests/integration/public-profile-leak.test.ts` (or equivalent under Vitest with a Supabase mock or test container): asserts that the response payload, stringified, contains none of `email`, `github_token`, `auth_id`, `ip_hash`, or any column outside the documented whitelist. This test is part of the standard `pnpm test` run, which is required green for CI.
+- A future LGPD-compliance ADR should link here — public profile must 404 when `users.deleted_at` is set.
+- The whitelist of fields exposed by `getPublicProfile` is documented inline in `lib/api/public-profile.ts` and is the source of truth.

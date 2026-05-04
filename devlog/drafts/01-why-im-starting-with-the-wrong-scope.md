@@ -2,7 +2,7 @@
 status: draft
 target_publish: any Friday
 estimated_writing_time: 2h
-source_material: scope cut + roadmap recalibration (Wave 1.A)
+source_material: scope cut + roadmap recalibration
 ---
 
 # Post 1 — "Why I'm starting with the wrong scope"
@@ -13,7 +13,7 @@ Defining what "MVP" actually means was the most important product decision so fa
 
 ## Why this post first
 
-- Material 100% ready — comes from the scope-cut diff produced in Wave 1.A.
+- Material 100% ready — comes from the scope-cut diff already produced.
 - Universally relatable theme for devs: "I started off scoping wrong" is shared experience.
 - Positions the author as someone who thinks in product, not just code (matters for US recruiters).
 
@@ -29,7 +29,7 @@ Defining what "MVP" actually means was the most important product decision so fa
 - Public Alpha = first public release. Not a reduced v1.0 — it's the leanest thing that proves the concept.
 
 ### The cut — bullet by bullet
-Honest list of what was in old v0.1 and got cut:
+Honest list of what was in the older draft and got cut:
 - Workshop, Dorm (2 fewer rooms)
 - 2nd Home Region with differentiated aesthetics
 - Forks with jobs/moods/death
@@ -69,14 +69,14 @@ This isn't just copy. It's a principle: **scope cuts done well become part of th
 
 ## Bluesky thread hooks (3–4 posts)
 
-1. "Two weeks ago my GDD had a 6-month roadmap. Today it has 12–18 months. I'm closer to launching. 🧵"
+1. "Two weeks ago my design notes had a 6-month roadmap. Today they have 12–18 months. I'm closer to launching. 🧵"
 2. "The problem was the word 'MVP'. It carries the expectation of 'has everything that looks essential'. For a solo dev, that's fatal."
 3. "Renamed it 'Public Alpha'. Same thing, different word, drastically smaller scope. [diff screenshot]"
 4. "Lesson: scope cuts done well become part of the narrative, not a hole. [link to full post]"
 
 ## Visual to grab attention
 
-- Diff screenshot: old v0.1 list (struck through) next to the Public Alpha (clean).
+- Diff screenshot: older draft list (struck through) next to the Public Alpha (clean).
 - Pulled quote of the uniform-bunker narrative justification.
 
 ## LinkedIn cross-post

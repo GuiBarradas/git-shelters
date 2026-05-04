@@ -31,7 +31,7 @@ The user resolves **a single** Daily Event per day, picked at random from the po
 
 **Cons:**
 - Lower per-session engagement — a user who opens the app already used today's event, what now?
-- Core loop depends heavily on what else exists (build, sync, kudos in v0.4+) to justify a second session in the same day.
+- Core loop depends heavily on what else exists (build, sync, kudos in later iterations) to justify a second session in the same day.
 
 ### Option B — Multiple different events in the same day (current constraint)
 
@@ -62,7 +62,7 @@ The user resolves 1 "daily" event always available. A second event appears as "o
 
 ## Decision
 
-**TBD.** Current leaning is **Option A for the Public Alpha**, migrating to **Option C post-v0.2**. To be decided before seeding `daily_events_catalog`.
+**TBD.** Current leaning is **Option A for the Public Alpha**, migrating to **Option C in a later iteration**. To be decided before seeding `daily_events_catalog`.
 
 Decision criteria:
 
@@ -74,5 +74,5 @@ Decision criteria:
 
 - **If Option A:** change the constraint to `unique(user_id, date(resolved_at))` (no `event_id` mention — forces 1 total event per day). Trivial pre-launch schema migration.
 - **Affected metric:** "return after first event" (Public Alpha health gate) — more conservative under Option A, because the user **cannot** resolve multiple events in the same day, so a return must be on a different day. That is exactly the signal we want.
-- **Content needed for v0.2:** if Option C lands, we must define the unlock condition AND ensure a sufficient pool (catalog grows to ~25–30 events).
+- **Content needed for the next iteration:** if Option C lands, we must define the unlock condition AND ensure a sufficient pool (catalog grows to ~25–30 events).
 - **Economic calibration:** balance docs need to fix "Daily Event = 1 byte source per day, value X bytes" as a reference.

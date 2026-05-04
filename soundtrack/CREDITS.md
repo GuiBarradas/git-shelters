@@ -27,7 +27,7 @@ If any track here is mislicensed or you are the author and want it removed, plea
 - [OpenGameArt](https://opengameart.org)
 - [Freesound](https://freesound.org)
 
-## When implementing Static FM (v0.7+)
+## When implementing Static FM (later in the roadmap)
 
 These files are kept here as **source / reference**. They are not served from `public/` — that would bloat Vercel deployments and burn free-tier bandwidth.
 

@@ -1,8 +1,8 @@
 ---
-status: ready (Wave 1.C closed — FTUE timeline + UI hierarchy material available)
+status: ready (FTUE timeline + UI hierarchy designed)
 target_publish: Friday after post 2
 estimated_writing_time: 3h
-source_material: FTUE timeline + UI hierarchy (Wave 1.C)
+source_material: FTUE timeline + UI hierarchy
 ---
 
 # Post 3 — "FTUE for a feature that doesn't exist yet"
@@ -22,7 +22,7 @@ Designing the player's first 10 minutes (FTUE = First Time User Experience) befo
 - Each FTUE step maps to 1 event of the funnel defined in post 2 (`signup_completed` → `region_chosen` → `first_build` → `first_event_resolved` → `ftue_completed`).
 
 ### Concrete example — the FTUE Daily Event
-The first Daily Event is hardcoded fixed (`ftue_first_event_static_1` "Strange Packet at the Door"). Pulled quote from the GDD with the actual narrative + 2 outcomes. This single event renders better in screenshot/quote than any abstract description.
+The first Daily Event is hardcoded fixed (`ftue_first_event_static_1` "Strange Packet at the Door"). Pulled quote of the actual narrative + 2 outcomes. This single event renders better in screenshot/quote than any abstract description.
 
 ### The silent tutorial
 - No "PRESS X TO CONTINUE" modals. Arrows + highlights + the game teaches itself.
@@ -30,7 +30,7 @@ The first Daily Event is hardcoded fixed (`ftue_first_event_static_1` "Strange P
 - Why this matters for cozy/idle tone: the tutorial *is* the game already.
 
 ### What the exercise revealed
-- Some "essential" feature became superfluous when viewed inside the first 10 minutes (e.g., 2nd Home Region — kept for v0.4+ instead of Public Alpha).
+- Some "essential" feature became superfluous when viewed inside the first 10 minutes (e.g., 2nd Home Region — kept for a later iteration instead of the Public Alpha).
 - Some feature I'd ignored became critical (offline catch-up — without it, day-2 return is broken).
 - `region_chosen` analytics event is trivial in Public Alpha (only 1 region) but kept for funnel symmetry — same pattern from post 2.
 

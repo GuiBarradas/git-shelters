@@ -9,7 +9,7 @@
 The Public Alpha has a settings screen with growing scope:
 
 - Account (connected GitHub login, logout, view `github_login`)
-- Privacy (public profile toggle, opt-in for private repos in v0.2+)
+- Privacy (public profile toggle, opt-in for private repos in a later iteration)
 - Data export (LGPD compliance — right to data portability)
 - Data delete (LGPD compliance — right to erasure; destructive flow with two-step confirmation)
 - Sessions / devices (future)
@@ -93,6 +93,6 @@ Criteria:
   - The "Settings" HUD item in `/play` does `router.push('/settings')`, not `setSettingsOpen(true)`.
 - **If Option A (decision reversed):**
   - LGPD pages (privacy/terms) would still need to live outside the modal for accessibility — `/legal/*` routes stay.
-  - Risk of rework when v0.2 adds more sub-settings.
+  - Risk of rework when later iterations add more sub-settings.
 - **Affected metric:** none from the Public Alpha health gates. This is a UX/architecture decision, not a product one.
 - **Recruiter signal:** a dedicated route reads cleaner in the `app/` tree. Marginal but consistent with treating the README and repo structure as a portfolio piece.

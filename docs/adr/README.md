@@ -16,7 +16,7 @@ This directory captures architecture and design decisions with long-term consequ
 
 ## Index
 
-- [0001 — Public profile RLS strategy](./0001-public-profile-rls-strategy.md) — *Proposed* — how `/u/<login>` reads other users' data without breaking RLS.
+- [0001 — Public profile RLS strategy](./0001-public-profile-rls-strategy.md) — *Accepted* — `/u/<login>` reads via isolated API endpoint with service-role + strict column whitelist + CI-gated leak test.
 - [0002 — Daily Event resolution cardinality](./0002-daily-event-resolution-cardinality.md) — *Proposed* — how many Daily Events a user can resolve per day.
 - [0003 — Settings: route vs modal](./0003-settings-modal-vs-route.md) — *Proposed* — settings lives at `/settings` or in a modal over `/play`.
 
@@ -29,7 +29,7 @@ Copy to `NNNN-short-title-in-kebab.md`:
 
 - **Status:** Proposed | Accepted | Deprecated | Superseded by ADR XXXX
 - **Decision:** <final decision or TBD with deadline>
-- **Related:** <links to GDD, other ADRs, issues>
+- **Related:** <links to other ADRs, issues, external resources>
 - **Date:** YYYY-MM-DD
 
 ## Context

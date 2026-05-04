@@ -6,7 +6,7 @@
 
 Each commit, PR, and issue you author on GitHub generates **Bytes** — the in-game currency you spend to build rooms, recruit Forks (survivors), craft Payload (ammo), and defend your Repo (bunker) against waves of Crawlers (zombie bots) roaming the **404 Lands** since *The Great Merge Conflict*.
 
-This is a side project in pre-production. The full design document is kept private as an internal working artifact. Architectural decisions that affect the public surface — schemas, security boundaries, UX patterns — are captured publicly in [`docs/adr/`](./docs/adr/). Devlog posts in [`devlog/`](./devlog/) explain product decisions in narrative form.
+This is a side project in pre-production. The full design document is kept private as an internal working artifact; a public summary of the product thinking lives in [`DESIGN.md`](./DESIGN.md). Architectural decisions that affect the public surface — schemas, security boundaries, UX patterns — are captured in [`docs/adr/`](./docs/adr/). Devlog posts in [`devlog/`](./devlog/) explain product decisions in narrative form.
 
 ---
 
