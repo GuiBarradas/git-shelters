@@ -156,6 +156,10 @@ export type Database = {
         }
         Returns: number
       }
+      credit_bytes_tx_batch: {
+        Args: { p_credits: Json; p_user_id: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never

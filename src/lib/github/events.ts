@@ -16,6 +16,15 @@ export type GitHubEvent = {
   type: string;
   /** ISO 8601 timestamp in UTC. */
   created_at: string;
+  /**
+   * Account that triggered the event. For PushEvents authored by an
+   * automation account (Dependabot, etc.), `actor.login` matches a bot
+   * pattern and the anti-cheese layer rejects it.
+   */
+  actor?: {
+    id?: number;
+    login?: string;
+  };
   payload?: {
     /**
      * On PushEvent: stable id for the push. Used as the dedup key in
@@ -88,6 +97,47 @@ export function countCommitsToday(events: GitHubEvent[], now: Date): number {
         event.created_at.startsWith(todayPrefix),
     )
     .reduce((sum, event) => sum + commitCountFromPayload(event), 0);
+}
+
+/**
+ * Pure mapper: a list of GitHub events and a user id → an array of credit
+ * descriptors ready to feed into `credit_bytes_tx_batch`.
+ *
+ * Filters out non-PushEvents and entries we cannot dedup (no usable
+ * source_ref). Source is always 'github_sync' here; the cron handler is
+ * the only caller and that is its taxonomy slot in ADR 0004.
+ */
+export function eventsToCredits(
+  events: GitHubEvent[],
+): Array<{ delta: number; source: string; source_ref: string }> {
+  const credits: Array<{ delta: number; source: string; source_ref: string }> = [];
+
+  for (const event of events) {
+    if (event.type !== "PushEvent") continue;
+
+    const sourceRef = pushSourceRef(event);
+    if (!sourceRef) continue;
+
+    const delta = commitCountFromPayload(event);
+    if (delta <= 0) continue;
+
+    credits.push({
+      delta,
+      source: "github_sync",
+      source_ref: sourceRef,
+    });
+  }
+
+  return credits;
+}
+
+function pushSourceRef(event: GitHubEvent): string | null {
+  const pushId = event.payload?.push_id;
+  if (typeof pushId === "number") return `push:${pushId}`;
+  if (typeof event.id === "string" && event.id.length > 0) {
+    return `event:${event.id}`;
+  }
+  return null;
 }
 
 /**

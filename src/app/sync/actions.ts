@@ -2,26 +2,29 @@
 
 import { revalidatePath } from "next/cache";
 
-import {
-  commitCountFromPayload,
-  fetchUserEvents,
-  type GitHubEvent,
-} from "@/lib/github/events";
+import { applyDailyCap } from "@/lib/anti-cheese/apply-daily-cap";
+import { fetchDailyCapRemaining } from "@/lib/anti-cheese/daily-cap-query";
+import { rejectBotEvents } from "@/lib/anti-cheese/reject-bot-events";
+import { eventsToCredits, fetchUserEvents } from "@/lib/github/events";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
-const GITHUB_SYNC_SOURCE = "github_sync";
-
 /**
- * Pulls the authenticated user's recent public GitHub activity and credits
- * bytes via the `credit_bytes_tx` SQL function. Idempotency is handled by
- * the unique constraint on `(user_id, source, source_ref)`: the same
- * `push_id` cannot credit twice, so this action is safe to call repeatedly.
+ * On-demand byte sync triggered by the user pressing "Sync".
+ *
+ * Shares the credit-mapping path with the Vercel Cron handler — both go
+ * through `eventsToCredits` and a single `credit_bytes_tx_batch` RPC per
+ * user (per ADR 0005). This guarantees the on-demand button and the
+ * background cron cannot diverge in what they consider a creditable event.
+ *
+ * Anti-cheese (ADR 0006):
+ *   - rejectBotEvents strips automation accounts before mapping.
+ *   - applyDailyCap caps cumulative github_sync bytes at 100/day per user.
  *
  * No-ops:
  *   - Anonymous caller → returns silently.
  *   - Authenticated but no GitHub login on the OAuth profile → returns.
- *   - Push event without `push_id` (rare) → skipped, not retried.
+ *   - User has no creditable events → returns without an RPC call.
  */
 export async function syncBytes() {
   const supabase = await createClient();
@@ -36,41 +39,26 @@ export async function syncBytes() {
       : null;
   if (!githubLogin) return;
 
-  const events = await fetchUserEvents(githubLogin);
+  const events = rejectBotEvents(await fetchUserEvents(githubLogin));
+  const proposed = eventsToCredits(events);
+  if (proposed.length === 0) {
+    revalidatePath("/");
+    return;
+  }
+
   const admin = createAdminClient();
+  const capRemaining = await fetchDailyCapRemaining(admin, user.id);
+  const credits = applyDailyCap(proposed, capRemaining);
 
-  for (const event of events) {
-    if (event.type !== "PushEvent") continue;
-
-    const sourceRef = pushSourceRef(event);
-    if (!sourceRef) continue;
-
-    const delta = commitCountFromPayload(event);
-    if (delta <= 0) continue;
-
-    // We do not await every call sequentially because order does not matter
-    // (each push is independent and idempotency is enforced by the DB).
-    // We DO await the loop as a whole so revalidation only fires after all
-    // writes have settled.
-    await admin.rpc("credit_bytes_tx", {
-      p_user_id: user.id,
-      p_delta: delta,
-      p_source: GITHUB_SYNC_SOURCE,
-      p_source_ref: sourceRef,
-    });
+  if (credits.length === 0) {
+    revalidatePath("/");
+    return;
   }
 
-  // Force the home page to re-render with the fresh balance.
+  await admin.rpc("credit_bytes_tx_batch", {
+    p_user_id: user.id,
+    p_credits: credits,
+  });
+
   revalidatePath("/");
-}
-
-function pushSourceRef(event: GitHubEvent): string | null {
-  const pushId = event.payload?.push_id;
-  if (typeof pushId === "number") return `push:${pushId}`;
-  // Fallback: events API sometimes omits push_id, but always includes
-  // event.id (the top-level unique event id). Use that as backup ref.
-  if (typeof event.id === "string" && event.id.length > 0) {
-    return `event:${event.id}`;
-  }
-  return null;
 }

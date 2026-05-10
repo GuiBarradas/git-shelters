@@ -18,6 +18,11 @@ export default defineConfig({
     // Integration tests cross the network; the fast inner-loop unit timeout
     // (5s) would flake on cold connections. Bump to 15s.
     testTimeout: 15_000,
+    // Vitest parallelises files by default. Multiple integration files
+    // mutate the same fixture user's `users.bytes` row, so file-level
+    // parallelism causes balance assertions to race. Run files in
+    // sequence; tests within a file already run sequentially.
+    fileParallelism: false,
   },
   resolve: {
     alias: {
