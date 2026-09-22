@@ -2,6 +2,7 @@ import * as Sentry from "@sentry/nextjs";
 
 import { AuthBar } from "@/components/auth/AuthBar";
 import { DailyEventCard, type DailyEventView } from "@/components/events/DailyEventCard";
+import { Landing } from "@/components/landing/Landing";
 import { BunkerSceneClient } from "@/components/scene/BunkerSceneClient";
 import { parseOption } from "@/lib/events/option";
 import { isRoomKind, isSlot, type Room } from "@/lib/rooms/catalog";
@@ -12,6 +13,7 @@ export default async function Home() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  if (!user) return <Landing />;
 
   // Supabase populates user_metadata from the OAuth provider profile.
   // For GitHub, `user_name` is the @handle (e.g. "GuiBarradas").
@@ -25,14 +27,12 @@ export default async function Home() {
   // tagged source = 'github_sync' with created_at on today's UTC date.
   // The sync server action (src/app/sync/actions.ts) is what populates it.
   const todayUtc = new Date().toISOString().slice(0, 10);
-  const [activeToday, bytes, rooms, dailyEvent] = user
-    ? await Promise.all([
-        checkActivityToday(supabase, user.id, todayUtc),
-        fetchBytes(supabase, user.id),
-        fetchRooms(supabase, user.id),
-        fetchDailyEvent(supabase, user.id, todayUtc),
-      ])
-    : [false, null, [], null];
+  const [activeToday, bytes, rooms, dailyEvent] = await Promise.all([
+    checkActivityToday(supabase, user.id, todayUtc),
+    fetchBytes(supabase, user.id),
+    fetchRooms(supabase, user.id),
+    fetchDailyEvent(supabase, user.id, todayUtc),
+  ]);
 
   return (
     <main className="relative w-full h-dvh">

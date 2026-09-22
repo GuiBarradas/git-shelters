@@ -1,0 +1,54 @@
+import { signInWithGithub } from "@/app/auth/actions";
+import { BunkerSceneClient } from "@/components/scene/BunkerSceneClient";
+import type { Room } from "@/lib/rooms/catalog";
+
+/** Prefab bunker every visitor sees: the three Public Alpha rooms, lights on. */
+const DEMO_ROOMS: Room[] = [
+  { slot: 1, kind: "cache_storage" },
+  { slot: 2, kind: "power_plant" },
+];
+
+/** Real profile shown as "what this looks like after a while". */
+const SHOWCASE_LOGIN = "GuiBarradas";
+
+/**
+ * Anonymous landing: the demo bunker orbiting behind the pitch and the
+ * single call to action. Read-only by construction (bytes = null, demo).
+ */
+export function Landing() {
+  return (
+    <main className="relative w-full h-dvh">
+      <BunkerSceneClient rooms={DEMO_ROOMS} bytes={null} activeToday demo />
+
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center px-4 pt-10 sm:pt-16">
+        <div className="max-w-xl space-y-4 text-center font-mono">
+          <p className="text-xs uppercase tracking-[0.3em] text-[#7FFF6A]/70">Git Shelters</p>
+          <h1 className="text-xl leading-snug text-[#E6DFC8] sm:text-2xl">
+            Your commits build the bunker. Your idle still earns. Your absence is canon.
+          </h1>
+          <p className="text-sm text-[#E6DFC8]/60">
+            An idle base-builder where real GitHub activity feeds an apocalypse.
+          </p>
+          <form action={signInWithGithub} className="pointer-events-auto pt-2">
+            <button
+              type="submit"
+              className="border border-[#7FFF6A] bg-[#0F0F0F]/80 px-5 py-2 text-sm text-[#7FFF6A] transition hover:bg-[#7FFF6A]/10"
+            >
+              Connect with GitHub
+            </button>
+          </form>
+          <a
+            href={`/u/${SHOWCASE_LOGIN}`}
+            className="pointer-events-auto inline-block text-xs text-[#E6DFC8]/50 underline underline-offset-4 hover:text-[#E6DFC8]"
+          >
+            or peek at a real Repo
+          </a>
+        </div>
+      </div>
+
+      <p className="pointer-events-none absolute bottom-6 left-6 z-10 hidden font-mono text-[10px] uppercase tracking-widest text-[#E6DFC8]/30 sm:block">
+        drag to look around
+      </p>
+    </main>
+  );
+}

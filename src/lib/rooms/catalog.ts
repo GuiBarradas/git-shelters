@@ -13,13 +13,18 @@ export const ROOM_CATALOG = {
     name: "Cache Storage",
     cost: 50,
     color: palette.mustardWarning,
+    blurb: "Cache Storage — feeds Forks. Built with bytes.",
   },
   power_plant: {
     name: "Power Plant",
     cost: 80,
     color: palette.glowYellow,
+    blurb: "Power Plant — generates Uptime. Without it, the lights go out.",
   },
-} as const satisfies Record<string, { name: string; cost: number; color: PaletteColor }>;
+} as const satisfies Record<string, { name: string; cost: number; color: PaletteColor; blurb: string }>;
+
+export const MAIN_BRANCH_BLURB = "Main Branch — the heart of the Repo. Always present.";
+export const EMPTY_SLOT_BLURB = "Empty slot — bytes turn this into a room.";
 
 export type RoomKind = keyof typeof ROOM_CATALOG;
 

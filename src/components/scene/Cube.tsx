@@ -9,6 +9,8 @@ type CubeProps = {
   /** 1 = solid. Anything below switches the material to transparent. */
   opacity?: number;
   onClick?: () => void;
+  /** Fired with true on pointer enter, false on leave. */
+  onHover?: (hovered: boolean) => void;
 };
 
 export function Cube({
@@ -17,6 +19,7 @@ export function Cube({
   color = palette.concreteTan,
   opacity = 1,
   onClick,
+  onHover,
 }: CubeProps) {
   return (
     <mesh
@@ -29,12 +32,15 @@ export function Cube({
             }
           : undefined
       }
-      onPointerOver={
-        onClick ? () => (document.body.style.cursor = "pointer") : undefined
-      }
-      onPointerOut={
-        onClick ? () => (document.body.style.cursor = "auto") : undefined
-      }
+      onPointerOver={(e) => {
+        e.stopPropagation();
+        if (onClick) document.body.style.cursor = "pointer";
+        onHover?.(true);
+      }}
+      onPointerOut={() => {
+        if (onClick) document.body.style.cursor = "auto";
+        onHover?.(false);
+      }}
     >
       <boxGeometry args={[size, size, size]} />
       <meshToonMaterial
