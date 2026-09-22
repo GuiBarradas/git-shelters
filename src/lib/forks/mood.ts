@@ -40,6 +40,57 @@ export function hungerShift(mood: Mood): Mood {
   return MOODS[Math.max(0, MOODS.indexOf(mood) - 1)]!;
 }
 
+/**
+ * How today's Daily Event lands on the crew (design doc §15.3, "Forks
+ * reacting to events"): a packet nobody opened yet, a decision that paid,
+ * one that cost, or one that changed nothing.
+ */
+export type EventEcho = "pending" | "good" | "bad" | "flat";
+
+export function eventEcho(
+  event: { resolved: { outcome: { bytes_delta: number } } | null } | null,
+): EventEcho | null {
+  if (!event) return null;
+  if (!event.resolved) return "pending";
+  const d = event.resolved.outcome.bytes_delta;
+  return d > 0 ? "good" : d < 0 ? "bad" : "flat";
+}
+
+/** A decision that paid lifts the crew a step for the day; one that cost weighs on it. */
+export function eventShift(mood: Mood, echo: EventEcho | null): Mood {
+  const step = echo === "good" ? 1 : echo === "bad" ? -1 : 0;
+  return MOODS[Math.min(MOODS.length - 1, Math.max(0, MOODS.indexOf(mood) + step))]!;
+}
+
+/** The day's mood in one place: commits and trait first, then the packet, then the pantry. */
+export function settleMood(mood: Mood, ctx: { echo: EventEcho | null; starving: boolean }): Mood {
+  const shifted = eventShift(mood, ctx.echo);
+  return ctx.starving ? hungerShift(shifted) : shifted;
+}
+
+export const EVENT_LINES: Record<EventEcho, readonly string[]> = {
+  pending: [
+    "That packet on the terminal is still blinking. Somebody decide.",
+    "Are you going to open it, or do I have to?",
+    "The Main Branch is waiting on you. So are we.",
+  ],
+  good: [
+    "Good call today. The whole Repo felt it.",
+    "Told them you'd pick right. Nobody bet against me.",
+    "Bytes came out of that one. Keep making those calls.",
+  ],
+  bad: [
+    "We don't talk about the packet.",
+    "Next time, maybe ask the crew first?",
+    "That cost us. I'm not saying it was you. I'm not not saying it.",
+  ],
+  flat: [
+    "So that happened. Nothing changed. Somehow that's worse.",
+    "The terminal printed OK. Just OK.",
+    "One decision, zero bytes. Story of this shift.",
+  ],
+};
+
 export const MOOD_LINES: Record<Mood, readonly string[]> = {
   happy: [
     "Saw the push land. Lights are steady tonight.",
@@ -71,20 +122,44 @@ export const MOOD_LABEL: Record<Mood, string> = {
 };
 
 /** What the crew as a whole says about the situation, for the HUD. */
-export function describeCrew(base: Mood, lastPushAt: string | null, now: Date = new Date()): string {
-  if (lastPushAt === null) return "crew mood: content — no pushes seen yet";
-  const days = daysSince(lastPushAt, now);
-  const since = days === 0 ? "pushed today" : days === 1 ? "1 day since last push" : `${days} days since last push`;
-  return `crew mood: ${MOOD_LABEL[base]} — ${since}`;
+export function describeCrew(
+  mood: Mood,
+  lastPushAt: string | null,
+  now: Date = new Date(),
+  echo: EventEcho | null = null,
+): string {
+  const days = lastPushAt === null ? null : daysSince(lastPushAt, now);
+  const since =
+    days === null
+      ? "no pushes seen yet"
+      : days === 0
+        ? "pushed today"
+        : days === 1
+          ? "1 day since last push"
+          : `${days} days since last push`;
+  const packet = { pending: "a packet is waiting", good: "lifted by today's packet", bad: "rattled by today's packet", flat: "" };
+  const tail = echo ? packet[echo] : "";
+  return `crew mood: ${MOOD_LABEL[mood]} — ${since}${tail ? ` · ${tail}` : ""}`;
 }
 
 /**
  * The line a Fork says when poked: half the time its mood, half its trait
- * (the caller supplies the trait line). Seeded by the Fork plus a salt so
- * repeated clicks vary without React state.
+ * (the caller supplies the trait line); when a Daily Event is in the air,
+ * a third of the pokes are about it instead. Seeded by the Fork plus a
+ * salt so repeated clicks vary without React state.
  */
-export function pickLine(seed: number, salt: number, mood: Mood, traitLine: string): string {
+export function pickLine(
+  seed: number,
+  salt: number,
+  mood: Mood,
+  traitLine: string,
+  echo: EventEcho | null = null,
+): string {
   const rand = mulberry32((seed ^ (salt * 0x9e3779b1)) >>> 0);
+  if (echo && rand() < 1 / 3) {
+    const lines = EVENT_LINES[echo];
+    return lines[Math.floor(rand() * lines.length)]!;
+  }
   if (rand() < 0.5) return traitLine;
   const lines = MOOD_LINES[mood];
   return lines[Math.floor(rand() * lines.length)]!;

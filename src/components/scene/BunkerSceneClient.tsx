@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 import { buildRoom } from "@/app/rooms/actions";
 import { FORK_TRAITS, type Fork as ForkData } from "@/lib/forks/catalog";
-import { pickLine } from "@/lib/forks/mood";
+import { type EventEcho, pickLine } from "@/lib/forks/mood";
 import { ROOM_CATALOG, type Room, type RoomKind, type Slot } from "@/lib/rooms/catalog";
 
 const BunkerScene = dynamic(() => import("./BunkerScene"), {
@@ -31,6 +31,8 @@ type BunkerSceneClientProps = {
   activeToday: boolean;
   /** Today's Daily Event still unresolved: the Main Branch terminal glows. */
   eventPending?: boolean;
+  /** How today's Daily Event sits with the crew; colours their poke lines. */
+  echo?: EventEcho | null;
   /** Landing mode: auto-orbit, drag to rotate, tooltips, no interaction. */
   demo?: boolean;
   powered?: boolean;
@@ -49,6 +51,7 @@ export function BunkerSceneClient({
   eventPending = false,
   demo = false,
   powered = true,
+  echo = null,
 }: BunkerSceneClientProps) {
   const router = useRouter();
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
@@ -59,7 +62,7 @@ export function BunkerSceneClient({
 
   const poke = (f: ForkData) => {
     setPokes((n) => n + 1);
-    setSpeech({ name: f.name, line: pickLine(f.seed, pokes, f.mood, FORK_TRAITS[f.trait].line) });
+    setSpeech({ name: f.name, line: pickLine(f.seed, pokes, f.mood, FORK_TRAITS[f.trait].line, echo) });
   };
 
   useEffect(() => {

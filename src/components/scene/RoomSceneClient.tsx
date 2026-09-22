@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { FORK_TRAITS, type Fork as ForkData } from "@/lib/forks/catalog";
-import { MOOD_LABEL, pickLine } from "@/lib/forks/mood";
+import { type EventEcho, MOOD_LABEL, pickLine } from "@/lib/forks/mood";
 import type { RoomKind } from "@/lib/rooms/catalog";
 
 import { SceneBooting, SpeechBubble } from "./BunkerSceneClient";
@@ -15,6 +15,7 @@ type Props = {
   kind: RoomKind | null;
   activeToday: boolean;
   eventPending: boolean;
+  echo?: EventEcho | null;
   panel?: ReactNode;
   forks?: ForkData[];
   powered?: boolean;
@@ -38,7 +39,7 @@ export function RoomSceneClient(props: Props) {
         {...props}
         onForkClick={(f) => {
           setPokes((n) => n + 1);
-          setSpeech({ name: f.name, line: pickLine(f.seed, pokes, f.mood, FORK_TRAITS[f.trait].line) });
+          setSpeech({ name: f.name, line: pickLine(f.seed, pokes, f.mood, FORK_TRAITS[f.trait].line, props.echo ?? null) });
         }}
         onForkHover={setHovered}
       />

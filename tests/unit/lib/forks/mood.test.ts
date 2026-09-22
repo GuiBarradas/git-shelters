@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { describeCrew, MOOD_LINES, MOODS, moodFor, moodFromActivity, pickLine } from "@/lib/forks/mood";
+import { describeCrew, EVENT_LINES, eventEcho, eventShift, MOOD_LINES, moodFor, moodFromActivity, MOODS, pickLine, settleMood } from "@/lib/forks/mood";
 
 const NOW = new Date("2026-09-22T12:00:00Z");
 const daysAgo = (d: number) => new Date(NOW.getTime() - d * 86_400_000).toISOString();
@@ -31,6 +31,29 @@ describe("fork mood", () => {
     expect(describeCrew("happy", daysAgo(0), NOW)).toContain("pushed today");
     expect(describeCrew("bitter", daysAgo(9), NOW)).toContain("9 days since last push");
     expect(describeCrew("content", null, NOW)).toContain("no pushes");
+  });
+
+  it("today's packet lands on the mood, then the pantry", () => {
+    const resolved = (bytes_delta: number) => ({ resolved: { outcome: { label: "", outcome_text: "", bytes_delta } } });
+    expect(eventEcho(null)).toBeNull();
+    expect(eventEcho({ resolved: null })).toBe("pending");
+    expect(eventEcho(resolved(10))).toBe("good");
+    expect(eventEcho(resolved(-5))).toBe("bad");
+    expect(eventEcho(resolved(0))).toBe("flat");
+    expect(eventShift("content", "good")).toBe("happy");
+    expect(eventShift("content", "bad")).toBe("stressed");
+    expect(eventShift("happy", "good")).toBe("happy");
+    expect(eventShift("content", "pending")).toBe("content");
+    expect(settleMood("content", { echo: "good", starving: true })).toBe("content");
+    expect(settleMood("content", { echo: "bad", starving: true })).toBe("bitter");
+    expect(describeCrew("happy", daysAgo(0), NOW, "good")).toContain("lifted by today's packet");
+    expect(describeCrew("happy", daysAgo(0), NOW, "flat")).not.toContain("·");
+  });
+
+  it("pickLine talks about the packet when there is one", () => {
+    const seen = new Set(Array.from({ length: 60 }, (_, i) => pickLine(42, i, "content", "TRAIT", "pending")));
+    expect([...seen].some((l) => EVENT_LINES.pending.includes(l))).toBe(true);
+    expect(seen.has("TRAIT")).toBe(true);
   });
 
   it("pickLine is deterministic per seed and salt, and mixes trait and mood lines", () => {

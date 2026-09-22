@@ -11,7 +11,7 @@ import { settleResources, workforce } from "@/lib/economy/resources";
 import { cacheCap } from "@/lib/economy/tick";
 import { fetchDailyEvent } from "@/lib/events/daily";
 import { loadCrew } from "@/lib/forks/load";
-import { describeCrew, hungerShift } from "@/lib/forks/mood";
+import { describeCrew, eventEcho, settleMood } from "@/lib/forks/mood";
 import { isRoomKind, isSlot, type Room } from "@/lib/rooms/catalog";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -47,7 +47,12 @@ export default async function Home() {
 
   // Catch-up: what the crew produced and ate since the last visit.
   const resources = await settleResources(supabase, admin, user.id, crew.forks, rooms);
-  const forks = resources.cache === 0 ? crew.forks.map((f) => ({ ...f, mood: hungerShift(f.mood) })) : crew.forks;
+
+  // Today's packet and an empty pantry both land on the crew's mood.
+  const echo = eventEcho(dailyEvent);
+  const moodCtx = { echo, starving: resources.cache === 0 };
+  const forks = crew.forks.map((f) => ({ ...f, mood: settleMood(f.mood, moodCtx) }));
+  const crewMood = settleMood(crew.mood, moodCtx);
 
   // "While you were away": what the ledger and the simulation did since the last tick.
   const work = workforce(crew.forks, rooms);
@@ -58,7 +63,7 @@ export default async function Home() {
     bytesIn: await bytesSince(supabase, user.id, resources.since),
     cooks: work.cooks,
     engineers: work.engineers,
-    crewMood: resources.cache === 0 ? hungerShift(crew.mood) : crew.mood,
+    crewMood,
   });
 
   return (
@@ -69,7 +74,8 @@ export default async function Home() {
         forks={forks}
         bytes={bytes}
         activeToday={activeToday}
-        eventPending={Boolean(dailyEvent && !dailyEvent.resolved)}
+        eventPending={echo === "pending"}
+        echo={echo}
         powered={resources.uptime > 0}
       />
       <div className="pointer-events-none absolute top-4 right-4 z-10">
@@ -89,7 +95,7 @@ export default async function Home() {
         {dailyEvent && !dailyEvent.resolved && (
           <p className="text-[#7FFF6A]/80">&gt; incoming packet on the Main Branch terminal</p>
         )}
-        <p className="text-[#E6DFC8]/50">&gt; {describeCrew(crew.mood, crew.lastPushAt)}</p>
+        <p className="text-[#E6DFC8]/50">&gt; {describeCrew(crewMood, crew.lastPushAt, new Date(), echo)}</p>
       </div>
     </main>
   );

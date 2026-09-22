@@ -15,7 +15,7 @@ import { cacheCap, type TickResult } from "@/lib/economy/tick";
 import { fetchDailyEvent, todayUtc } from "@/lib/events/daily";
 import { RECRUIT_COST, type Fork } from "@/lib/forks/catalog";
 import { loadCrew } from "@/lib/forks/load";
-import { hungerShift } from "@/lib/forks/mood";
+import { eventEcho, settleMood } from "@/lib/forks/mood";
 import {
   isRoomKind,
   isSlot,
@@ -55,7 +55,7 @@ export default async function RoomPage({ params }: Props) {
     fetchRooms(supabase, user.id),
     loadCrew(supabase, admin, user.id),
     pushedToday(supabase, user.id, today),
-    isMain ? fetchDailyEvent(supabase, user.id, today) : null,
+    fetchDailyEvent(supabase, user.id, today),
     supabase.from("users").select("bytes").eq("id", user.id).maybeSingle(),
   ]);
 
@@ -63,7 +63,9 @@ export default async function RoomPage({ params }: Props) {
   if (!isMain && kind === null) notFound();
 
   const resources = await settleResources(supabase, admin, user.id, crew.forks, rooms);
-  const allForks = resources.cache === 0 ? crew.forks.map((f) => ({ ...f, mood: hungerShift(f.mood) })) : crew.forks;
+  const echo = eventEcho(dailyEvent);
+  const moodCtx = { echo, starving: resources.cache === 0 };
+  const allForks = crew.forks.map((f) => ({ ...f, mood: settleMood(f.mood, moodCtx) }));
   const forks = allForks.filter((f) => (f.roomSlot ?? 0) === slotNumber);
   const bytes = me?.bytes ?? 0;
 
@@ -82,7 +84,8 @@ export default async function RoomPage({ params }: Props) {
       <RoomSceneClient
         kind={kind}
         activeToday={activeToday}
-        eventPending={Boolean(dailyEvent && !dailyEvent.resolved)}
+        eventPending={echo === "pending"}
+        echo={echo}
         panel={panel}
         forks={forks}
         powered={resources.uptime > 0}
