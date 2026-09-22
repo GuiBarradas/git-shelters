@@ -36,12 +36,12 @@ export default async function ProfilePage({ params }: Props) {
           &larr; your Repo
         </Link>
         {profile.badges.length > 0 && (
-          <ul className="mt-4 flex max-w-sm flex-wrap gap-2 text-xs">
+          <ul className="pointer-events-auto mt-4 flex max-w-sm flex-wrap gap-2 text-xs">
             {profile.badges.map((b) => (
               <li
                 key={b.badge}
-                title={b.blurb}
-                className={`border px-2 py-0.5 ${
+                tabIndex={0}
+                className={`group relative cursor-help border px-2 py-0.5 ${
                   b.kind === "achievement"
                     ? "border-[#7FFF6A]/50 text-[#7FFF6A]"
                     : b.kind === "region"
@@ -50,6 +50,13 @@ export default async function ProfilePage({ params }: Props) {
                 }`}
               >
                 {b.name}
+                {/* the blurb, on hover or keyboard focus; no delay, no native tooltip */}
+                <span
+                  role="tooltip"
+                  className="pointer-events-none absolute top-full left-0 z-20 mt-1 hidden w-56 border border-[#E6DFC8]/30 bg-[#0F0F0F] px-2 py-1 font-normal normal-case text-[#E6DFC8]/85 group-hover:block group-focus-visible:block"
+                >
+                  {b.blurb}
+                </span>
               </li>
             ))}
           </ul>
