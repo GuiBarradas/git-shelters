@@ -22,7 +22,9 @@ export function AuthBar({ githubLogin, bytes }: AuthBarProps) {
   if (githubLogin) {
     return (
       <div className="pointer-events-auto flex items-center gap-3 font-mono text-sm text-[#7FFF6A]">
-        <span>{githubLogin}</span>
+        <a href={`/u/${githubLogin}`} className="hover:text-[#E6DFC8]" title="Your public Repo">
+          {githubLogin}
+        </a>
         <span
           className="border border-[#7FFF6A]/40 px-3 py-1 tabular-nums"
           title="Bytes"
