@@ -23,12 +23,19 @@ type Props = {
  */
 export const SCREEN = {
   // On the front face of the terminal body (body front is z = -0.5).
-  position: [0.55, 1.07, -0.495] as [number, number, number],
-  width: 0.98,
-  height: 0.7,
+  position: [0.55, 1.14, -0.515] as [number, number, number],
+  width: 0.95,
+  height: 0.68,
 };
 
-/** Where a Fork can pace and what it can do here. Chair seat is at y = 0.42. */
+/** Key rows: z offset, key count, x offset (stagger). */
+const KEY_ROWS: Array<[number, number, number]> = [
+  [-0.085, 10, 0],
+  [-0.025, 10, 0.02],
+  [0.035, 9, 0.045],
+];
+
+/** Where a Fork can pace and what it can do here. Chair seat is at y = 0.3. */
 export const LAYOUT: RoomLayout = {
   // The whole layout stays left of the terminal: its HTML panel is DOM and
   // paints over the canvas, so a Fork crossing the screen's area (even in
@@ -84,24 +91,54 @@ export function MainBranchRoom({ pending = false, active = false }: Props) {
           <meshToonMaterial color={palette.oldWoodBrown} />
         </mesh>
       ))}
-      {/* terminal body + screen bezel + screen */}
-      <mesh position={[0.55, 1.07, -0.75]}>
-        <boxGeometry args={[1.12, 0.86, 0.5]} />
+      {/* terminal: base plate, neck, body with a stepped bezel, screen, power LED */}
+      <mesh position={[0.55, 0.735, -0.75]}>
+        <boxGeometry args={[0.5, 0.03, 0.36]} />
+        <meshToonMaterial color="#8a7d5c" />
+      </mesh>
+      <mesh position={[0.55, 0.8, -0.78]}>
+        <boxGeometry args={[0.16, 0.1, 0.14]} />
+        <meshToonMaterial color="#6f6448" />
+      </mesh>
+      <mesh position={[0.55, 1.14, -0.78]}>
+        <boxGeometry args={[1.12, 0.86, 0.44]} />
         <meshToonMaterial color={palette.concreteTan} />
       </mesh>
-      <mesh position={[0.55, 1.07, -0.5]}>
-        <planeGeometry args={[1.06, 0.78]} />
+      <mesh position={[0.55, 1.14, -0.545]}>
+        <boxGeometry args={[1.04, 0.78, 0.04]} />
+        <meshToonMaterial color="#5a523c" />
+      </mesh>
+      <mesh position={[0.55, 1.14, -0.52]}>
+        <planeGeometry args={[0.99, 0.72]} />
         <meshToonMaterial color={palette.coalBlack} />
       </mesh>
       <mesh position={SCREEN.position}>
         <planeGeometry args={[SCREEN.width, SCREEN.height]} />
         <meshToonMaterial ref={screen} color="#062a0c" emissive={screenColor} emissiveIntensity={1} />
       </mesh>
-      {/* keyboard */}
-      <mesh position={[-0.05, 0.74, -0.25]} rotation={[0, 0.35, 0]}>
-        <boxGeometry args={[0.7, 0.05, 0.24]} />
-        <meshToonMaterial color={palette.coalBlack} />
+      <mesh position={[1.02, 0.78, -0.54]}>
+        <boxGeometry args={[0.04, 0.04, 0.02]} />
+        <meshToonMaterial color={palette.coalBlack} emissive={palette.radioactiveGreen} emissiveIntensity={1.4} />
       </mesh>
+      {/* keyboard: tilted base with three rows of keys and a space bar */}
+      <group position={[-0.05, 0.71, -0.22]} rotation={[0.12, 0.35, 0]}>
+        <mesh position={[0, 0.02, 0]}>
+          <boxGeometry args={[0.72, 0.04, 0.26]} />
+          <meshToonMaterial color="#2b2d31" />
+        </mesh>
+        {KEY_ROWS.map(([z, count, offset], row) =>
+          Array.from({ length: count }, (_, i) => (
+            <mesh key={`${row}-${i}`} position={[-0.3 + offset + i * 0.062, 0.055, z]}>
+              <boxGeometry args={[0.05, 0.03, 0.05]} />
+              <meshToonMaterial color={palette.boneWhite} />
+            </mesh>
+          )),
+        )}
+        <mesh position={[0.02, 0.055, 0.095]}>
+          <boxGeometry args={[0.3, 0.03, 0.05]} />
+          <meshToonMaterial color={palette.boneWhite} />
+        </mesh>
+      </group>
       {/* chair at the desk, facing the screen; the Fork sits here to type */}
       <group position={[-0.32, 0, 0.42]} rotation={[0, -0.35, 0]}>
         <mesh position={[0, 0.3, 0]}>
