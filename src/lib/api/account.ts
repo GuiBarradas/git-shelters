@@ -20,6 +20,7 @@ export type AccountExport = {
     last_seen_at: string;
     bytes: number;
   };
+  badges: Array<{ badge_id: string; earned_at: string }>;
   byte_transactions: Array<{
     delta: number;
     source: string;
@@ -48,7 +49,7 @@ export type AccountExport = {
  * not the person, and mean nothing outside this database.
  */
 export async function exportAccount(admin: Admin, userId: string): Promise<AccountExport | null> {
-  const [user, transactions, rooms, outcomes, sync, analytics] = await Promise.all([
+  const [user, transactions, rooms, outcomes, sync, analytics, badges] = await Promise.all([
     admin
       .from("users")
       .select("github_login, github_id, email, created_at, last_seen_at, bytes")
@@ -75,9 +76,10 @@ export async function exportAccount(admin: Admin, userId: string): Promise<Accou
       .select("event_name, props_json, occurred_at")
       .eq("user_id", userId)
       .order("occurred_at"),
+    admin.from("user_badges").select("badge_id, earned_at").eq("user_id", userId).order("earned_at"),
   ]);
 
-  const firstError = [user, transactions, rooms, outcomes, sync, analytics].find((r) => r.error)?.error;
+  const firstError = [user, transactions, rooms, outcomes, sync, analytics, badges].find((r) => r.error)?.error;
   if (firstError) throw firstError;
   if (!user.data) return null;
 
@@ -91,6 +93,7 @@ export async function exportAccount(admin: Admin, userId: string): Promise<Accou
     daily_event_outcomes: outcomes.data ?? [],
     github_sync_state: sync.data,
     analytics_events: analytics.data ?? [],
+    badges: badges.data ?? [],
   };
 }
 

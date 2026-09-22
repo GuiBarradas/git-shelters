@@ -27,6 +27,7 @@ export type AnalyticsEvent = {
   daily_event_resolved: { event_id: string; choice: "a" | "b"; outcome_delta_bytes: number };
   session_start: { days_since_signup: number; days_since_last_session: number | null };
   session_end: { duration_ms: number };
+  badge_earned: { badge_id: string };
 };
 
 export type EventName = keyof AnalyticsEvent;

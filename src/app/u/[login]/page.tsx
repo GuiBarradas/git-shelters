@@ -35,6 +35,25 @@ export default async function ProfilePage({ params }: Props) {
         <Link href="/" className="pointer-events-auto mt-2 inline-block hover:text-[#E6DFC8]">
           &larr; your Repo
         </Link>
+        {profile.badges.length > 0 && (
+          <ul className="mt-4 flex max-w-sm flex-wrap gap-2 text-xs">
+            {profile.badges.map((b) => (
+              <li
+                key={b.badge}
+                title={b.blurb}
+                className={`border px-2 py-0.5 ${
+                  b.kind === "achievement"
+                    ? "border-[#7FFF6A]/50 text-[#7FFF6A]"
+                    : b.kind === "region"
+                      ? "border-[#A14545]/70 text-[#E6DFC8]/80"
+                      : "border-[#FFD66B]/60 text-[#FFD66B]"
+                }`}
+              >
+                {b.name}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </main>
   );

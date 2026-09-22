@@ -26,17 +26,20 @@ const user = {
 
 describe("toPublicProfile", () => {
   it("exposes exactly the documented whitelist", () => {
-    const profile = toPublicProfile(user, [{ slot: 1, kind: "cache_storage", level: 1 }]);
+    const profile = toPublicProfile(user, [{ slot: 1, kind: "cache_storage", level: 1 }], ["hello_world", "nope"]);
     expect(profile).toEqual({
       login: "GuiBarradas",
       memberSince: user.created_at,
       bytes: 42,
       rooms: [{ slot: 1, kind: "cache_storage", level: 1 }],
+      badges: [
+        { badge: "hello_world", name: "Hello World", blurb: expect.any(String), kind: "achievement" },
+      ],
     });
   });
 
   it("leaks no sensitive field, even when the row carries them", () => {
-    const json = JSON.stringify(toPublicProfile(user, []));
+    const json = JSON.stringify(toPublicProfile(user, [], ["first_commit", "the_vibe_coder"]));
     for (const field of FORBIDDEN) {
       expect(json, `field '${field}' leaked`).not.toContain(`"${field}"`);
     }

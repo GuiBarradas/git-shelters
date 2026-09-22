@@ -1,5 +1,6 @@
 import { cache } from "react";
 
+import { type BadgeKind, describeBadges } from "@/lib/badges/catalog";
 import { isRoomKind, isSlot, type Room } from "@/lib/rooms/catalog";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -19,6 +20,8 @@ export type PublicProfile = {
   memberSince: string;
   bytes: number;
   rooms: (Room & { level: number })[];
+  /** Earned badges in catalog order; `badge` is the catalog id. */
+  badges: { badge: string; name: string; blurb: string; kind: BadgeKind }[];
 };
 
 type UserRow = {
@@ -33,7 +36,7 @@ type RoomRow = { slot: number; kind: string; level: number };
 /** GitHub login grammar: alphanumerics and hyphens, at most 39 chars. */
 const LOGIN_PATTERN = /^[a-zA-Z0-9-]{1,39}$/;
 
-export function toPublicProfile(user: UserRow, rooms: RoomRow[]): PublicProfile | null {
+export function toPublicProfile(user: UserRow, rooms: RoomRow[], badgeIds: string[] = []): PublicProfile | null {
   // LGPD: a deleted account is gone from the outside, not "deleted: true".
   if (user.deleted_at) return null;
 
@@ -44,6 +47,7 @@ export function toPublicProfile(user: UserRow, rooms: RoomRow[]): PublicProfile 
     rooms: rooms.flatMap(({ slot, kind, level }) =>
       isSlot(slot) && isRoomKind(kind) ? [{ slot, kind, level }] : [],
     ),
+    badges: describeBadges(badgeIds).map(({ id, ...rest }) => ({ badge: id, ...rest })),
   };
 }
 
@@ -66,10 +70,10 @@ export const getPublicProfile = cache(async (login: string): Promise<PublicProfi
     .maybeSingle();
   if (!user) return null;
 
-  const { data: rooms } = await admin
-    .from("rooms")
-    .select("slot, kind, level")
-    .eq("user_id", user.id);
+  const [{ data: rooms }, { data: badges }] = await Promise.all([
+    admin.from("rooms").select("slot, kind, level").eq("user_id", user.id),
+    admin.from("user_badges").select("badge_id").eq("user_id", user.id),
+  ]);
 
-  return toPublicProfile(user, rooms ?? []);
+  return toPublicProfile(user, rooms ?? [], (badges ?? []).map((b) => b.badge_id));
 });

@@ -3,9 +3,11 @@ import { after } from "next/server";
 import { SessionBeacon } from "@/components/analytics/SessionBeacon";
 import { AuthBar } from "@/components/auth/AuthBar";
 import { AwaySummary } from "@/components/hud/AwaySummary";
+import { BadgeToast } from "@/components/hud/BadgeToast";
 import { Landing } from "@/components/landing/Landing";
 import { BunkerSceneClient } from "@/components/scene/BunkerSceneClient";
 import { trackSessionStart } from "@/lib/analytics/track";
+import { awardBadges } from "@/lib/badges/award";
 import { awayReport } from "@/lib/economy/away";
 import { settleResources, workforce } from "@/lib/economy/resources";
 import { cacheCap, payloadCap } from "@/lib/economy/tick";
@@ -37,13 +39,26 @@ export default async function Home() {
   // Anyone who pushed today will have at least one byte_transactions row
   // tagged source = 'github_sync' with created_at on today's UTC date.
   const todayUtc = new Date().toISOString().slice(0, 10);
-  const [activeToday, bytes, rooms, dailyEvent, crew] = await Promise.all([
+  const [activeToday, rooms, dailyEvent, crew, commitsCounted] = await Promise.all([
     checkActivityToday(supabase, user.id, todayUtc),
-    fetchBytes(supabase, user.id),
     fetchRooms(supabase, user.id),
     fetchDailyEvent(supabase, user.id, todayUtc),
     loadCrew(supabase, admin, user.id),
+    countCommits(supabase, user.id),
   ]);
+
+  // Badges are derived from the state above; a bonus lands in the ledger
+  // before the balance is read so the HUD shows it on the same visit.
+  const { fresh: freshBadges } = await awardBadges(supabase, admin, user.id, {
+    createdAt: user.created_at,
+    commitsCounted,
+    rooms: rooms.length,
+    forks: crew.forks.length,
+    traits: crew.forks.map((f) => f.trait),
+    region: "the_outage",
+    now: new Date(),
+  });
+  const bytes = await fetchBytes(supabase, user.id);
 
   // Catch-up: what the crew produced and ate since the last visit.
   const resources = await settleResources(supabase, admin, user.id, crew.forks, rooms);
@@ -83,6 +98,7 @@ export default async function Home() {
         <AuthBar githubLogin={githubLogin} bytes={bytes} />
       </div>
       {report && <AwaySummary report={report} />}
+      <BadgeToast badges={freshBadges} />
       <div className="pointer-events-none absolute top-16 left-6 z-10 space-y-1 font-mono text-xs">
         <p className="text-[#E6DFC8]/70">
           <span className={resources.cache === 0 ? "text-[#A14545]" : ""}>
@@ -106,6 +122,16 @@ export default async function Home() {
       </div>
     </main>
   );
+}
+
+/** Pushes the sync has credited, all time: the badge counter for "commits counted". */
+async function countCommits(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<number> {
+  const { data } = await supabase
+    .from("byte_transactions")
+    .select("delta")
+    .eq("user_id", userId)
+    .in("source", ["github_sync", "backfill"]);
+  return (data ?? []).reduce((sum, r) => sum + r.delta, 0);
 }
 
 /** Positive ledger movements since `sinceIso`: what came in while the player was away. */
