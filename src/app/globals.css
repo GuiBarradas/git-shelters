@@ -82,6 +82,20 @@ body,
   }
 }
 
+/* One-shot HUD notice: holds, then fades out and stays gone. */
+@keyframes hud-fade {
+  0%,
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.hud-fade {
+  animation: hud-fade 4s ease-in forwards;
+}
+
 /* Terminal cursor for loading states. */
 @keyframes blink {
   50% {
