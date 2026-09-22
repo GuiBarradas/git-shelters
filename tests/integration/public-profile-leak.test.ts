@@ -1,6 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { getPublicProfile } from "@/lib/api/public-profile";
+import { createAdminClient } from "@/lib/supabase/admin";
+
+import { createThrowawayUser, type ThrowawayUser } from "./fixture";
 
 /**
  * ADR 0001: end-to-end leak check against the real dev Supabase. The unit
@@ -11,9 +14,18 @@ import { getPublicProfile } from "@/lib/api/public-profile";
 const FORBIDDEN = ["email", "github_id", "deleted_at", "last_seen_at", "user_id"];
 
 describe("getPublicProfile", () => {
+  const admin = createAdminClient();
+  let user: ThrowawayUser;
+
+  beforeAll(async () => {
+    user = await createThrowawayUser(admin, "profile");
+  });
+
+  afterAll(() => user.destroy());
+
   it("returns the fixture user's public fields only, case-insensitively", async () => {
-    const profile = await getPublicProfile("guibarradas");
-    expect(profile?.login).toBe("GuiBarradas");
+    const profile = await getPublicProfile(user.login.toUpperCase());
+    expect(profile?.login).toBe(user.login);
     expect(typeof profile?.bytes).toBe("number");
     expect(Array.isArray(profile?.rooms)).toBe(true);
 

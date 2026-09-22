@@ -2,6 +2,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 
+import { createThrowawayUser, type ThrowawayUser } from "./fixture";
+
 /**
  * Integration tests for credit_bytes_tx_batch() against the remote dev
  * Supabase. Mirrors the per-row test harness from credit-bytes-tx.test.ts.
@@ -14,44 +16,18 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 const TEST_RUN = crypto.randomUUID();
 const TEST_SOURCE = "integration_test";
-const TEST_LOGIN = "GuiBarradas";
 
 describe("credit_bytes_tx_batch", () => {
   const admin = createAdminClient();
+  let user: ThrowawayUser;
   let testUserId: string;
-  let initialBytes: number;
 
   beforeAll(async () => {
-    const { data, error } = await admin
-      .from("users")
-      .select("id, bytes")
-      .eq("github_login", TEST_LOGIN)
-      .single();
-
-    if (error || !data) {
-      throw new Error(
-        `Test fixture user '${TEST_LOGIN}' not found in public.users: ${
-          error?.message ?? "no row"
-        }`,
-      );
-    }
-
-    testUserId = data.id;
-    initialBytes = data.bytes;
+    user = await createThrowawayUser(admin, "batch");
+    testUserId = user.id;
   });
 
-  afterAll(async () => {
-    await admin
-      .from("byte_transactions")
-      .delete()
-      .eq("user_id", testUserId)
-      .like("source_ref", `${TEST_RUN}-%`);
-
-    await admin
-      .from("users")
-      .update({ bytes: initialBytes })
-      .eq("id", testUserId);
-  });
+  afterAll(() => user.destroy());
 
   beforeEach(async () => {
     await admin.from("users").update({ bytes: 100 }).eq("id", testUserId);

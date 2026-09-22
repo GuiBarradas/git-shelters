@@ -2,12 +2,13 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 
+import { createThrowawayUser, type ThrowawayUser } from "./fixture";
+
 /**
  * Integration tests for build_room() against the remote dev Supabase.
  *
  * Same fixture discipline as credit-bytes-tx.test.ts: reuse the
- * GuiBarradas user, snapshot and restore their balance, and clean up
- * every rooms row and 'build' ledger row this suite writes.
+ * throwaway auth user per run, wiped between tests, gone on teardown.
  *
  * Because slots are a (user_id, slot) primary key and the ledger keys the
  * debit on the slot number, this suite owns the fixture user's slots for
@@ -15,12 +16,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * user whose real bunker you care about.
  */
 
-const TEST_LOGIN = "GuiBarradas";
 
 describe("build_room", () => {
   const admin = createAdminClient();
+  let user: ThrowawayUser;
   let userId: string;
-  let initialBytes: number;
 
   async function wipeRooms() {
     await admin.from("rooms").delete().eq("user_id", userId);
@@ -32,22 +32,11 @@ describe("build_room", () => {
   }
 
   beforeAll(async () => {
-    const { data, error } = await admin
-      .from("users")
-      .select("id, bytes")
-      .eq("github_login", TEST_LOGIN)
-      .single();
-    if (error || !data) {
-      throw new Error(`Fixture user '${TEST_LOGIN}' not found: ${error?.message}`);
-    }
-    userId = data.id;
-    initialBytes = data.bytes;
+    user = await createThrowawayUser(admin, "rooms");
+    userId = user.id;
   });
 
-  afterAll(async () => {
-    await wipeRooms();
-    await admin.from("users").update({ bytes: initialBytes }).eq("id", userId);
-  });
+  afterAll(() => user.destroy());
 
   beforeEach(async () => {
     await wipeRooms();

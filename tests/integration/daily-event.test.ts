@@ -3,19 +3,19 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { parseOption } from "@/lib/events/option";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+import { createThrowawayUser, type ThrowawayUser } from "./fixture";
+
 /**
  * Integration tests for pick_daily_event() and resolve_daily_event()
  * against the remote dev Supabase. Same fixture discipline as the other
- * integration suites: reuse the GuiBarradas user, restore their balance,
- * wipe every daily_event row this suite writes.
+ * integration suites: throwaway auth user, wiped between tests, gone on teardown.
  */
 
-const TEST_LOGIN = "GuiBarradas";
 
 describe("daily event", () => {
   const admin = createAdminClient();
+  let user: ThrowawayUser;
   let userId: string;
-  let initialBytes: number;
 
   async function wipe() {
     await admin.from("daily_event_outcomes").delete().eq("user_id", userId);
@@ -27,22 +27,11 @@ describe("daily event", () => {
   }
 
   beforeAll(async () => {
-    const { data, error } = await admin
-      .from("users")
-      .select("id, bytes")
-      .eq("github_login", TEST_LOGIN)
-      .single();
-    if (error || !data) {
-      throw new Error(`Fixture user '${TEST_LOGIN}' not found: ${error?.message}`);
-    }
-    userId = data.id;
-    initialBytes = data.bytes;
+    user = await createThrowawayUser(admin, "event");
+    userId = user.id;
   });
 
-  afterAll(async () => {
-    await wipe();
-    await admin.from("users").update({ bytes: initialBytes }).eq("id", userId);
-  });
+  afterAll(() => user.destroy());
 
   beforeEach(async () => {
     await wipe();

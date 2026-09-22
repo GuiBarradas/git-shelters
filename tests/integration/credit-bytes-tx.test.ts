@@ -3,12 +3,13 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 
+import { createThrowawayUser, type ThrowawayUser } from "./fixture";
+
 /**
  * Integration tests for credit_bytes_tx() against the remote dev Supabase.
  *
  * These tests mutate the dev project. They:
- *   - Read the existing GuiBarradas user as the test fixture.
- *   - Snapshot their bytes balance, run assertions, restore on teardown.
+ *   - Create a throwaway auth user, hard-delete it on teardown.
  *   - Use a unique TEST_RUN UUID in source_ref so reruns never collide.
  *   - Use a dedicated `source = 'integration_test'` so cleanup is targeted.
  *
@@ -24,46 +25,18 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 const TEST_RUN = crypto.randomUUID();
 const TEST_SOURCE = "integration_test";
-const TEST_LOGIN = "GuiBarradas";
 
 describe("credit_bytes_tx", () => {
   const admin = createAdminClient();
+  let user: ThrowawayUser;
   let testUserId: string;
-  let initialBytes: number;
 
   beforeAll(async () => {
-    const { data, error } = await admin
-      .from("users")
-      .select("id, bytes")
-      .eq("github_login", TEST_LOGIN)
-      .single();
-
-    if (error || !data) {
-      throw new Error(
-        `Test fixture user '${TEST_LOGIN}' not found in public.users: ${
-          error?.message ?? "no row"
-        }`,
-      );
-    }
-
-    testUserId = data.id;
-    initialBytes = data.bytes;
+    user = await createThrowawayUser(admin, "ledger");
+    testUserId = user.id;
   });
 
-  afterAll(async () => {
-    // Wipe ledger rows written by this run.
-    await admin
-      .from("byte_transactions")
-      .delete()
-      .eq("user_id", testUserId)
-      .like("source_ref", `${TEST_RUN}-%`);
-
-    // Restore the user's bytes to whatever they were before the suite ran.
-    await admin
-      .from("users")
-      .update({ bytes: initialBytes })
-      .eq("id", testUserId);
-  });
+  afterAll(() => user.destroy());
 
   beforeEach(async () => {
     // Deterministic starting balance per test.

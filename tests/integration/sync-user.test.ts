@@ -2,20 +2,19 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 
 import { syncUser } from "@/lib/github/sync";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { Database } from "@/lib/supabase/database.types";
 
-type SyncStateRow = Database["public"]["Tables"]["github_sync_state"]["Row"];
+import { createThrowawayUser, type ThrowawayUser } from "./fixture";
 
 /**
  * Integration tests for syncUser(): real Supabase, fake GitHub.
  *
  * `fetch` is stubbed so the test controls the event feed; the ledger, the
  * sync-state row and both RPCs are the real ones. Same fixture discipline
- * as the other suites: snapshot the GuiBarradas user's balance and
- * sync-state row, wipe what we write, restore on teardown.
+ * as the other suites: a throwaway auth user per run, wiped between
+ * tests, hard-deleted on teardown.
  */
 
-const TEST_LOGIN = "GuiBarradas";
+let TEST_LOGIN = ""; // assigned from the throwaway user in beforeAll
 const NOW = new Date("2026-09-22T12:00:00Z");
 const daysAgo = (d: number) => new Date(NOW.getTime() - d * 86_400_000).toISOString();
 
@@ -48,9 +47,8 @@ const pages = (feed: Ev[][]) => (page: number) =>
 
 describe("syncUser", () => {
   const admin = createAdminClient();
+  let user: ThrowawayUser;
   let userId: string;
-  let initialBytes: number;
-  let initialState: SyncStateRow | null;
 
   async function wipe() {
     await admin.from("github_sync_state").delete().eq("user_id", userId);
@@ -63,27 +61,12 @@ describe("syncUser", () => {
   }
 
   beforeAll(async () => {
-    const { data, error } = await admin
-      .from("users")
-      .select("id, bytes")
-      .eq("github_login", TEST_LOGIN)
-      .single();
-    if (error || !data) throw new Error(`Fixture user '${TEST_LOGIN}' not found: ${error?.message}`);
-    userId = data.id;
-    initialBytes = data.bytes;
-    const { data: state } = await admin
-      .from("github_sync_state")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
-    initialState = state;
+    user = await createThrowawayUser(admin, "sync");
+    userId = user.id;
+    TEST_LOGIN = user.login;
   });
 
-  afterAll(async () => {
-    await wipe();
-    if (initialState) await admin.from("github_sync_state").insert(initialState);
-    await admin.from("users").update({ bytes: initialBytes }).eq("id", userId);
-  });
+  afterAll(() => user.destroy());
 
   beforeEach(async () => {
     await wipe();
