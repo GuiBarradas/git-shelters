@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { track } from "@/lib/analytics/track";
 import { deleteAccount, exportAccount } from "@/lib/api/account";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -29,6 +30,7 @@ describe("account export and deletion", () => {
     await admin.from("users").update({ bytes: 200 }).eq("id", userId);
     await admin.rpc("build_room", { p_user_id: userId, p_slot: 1, p_kind: "cache_storage" });
     await admin.rpc("resolve_daily_event", { p_user_id: userId, p_choice: "a" });
+    await track(admin, userId, "room_built", { room_type: "cache_storage", level: 1, bytes_spent: 50 });
   });
 
   afterAll(async () => {
@@ -47,6 +49,7 @@ describe("account export and deletion", () => {
     ]);
     expect(data!.daily_event_outcomes).toHaveLength(1);
     expect(data!.byte_transactions.map((t) => t.source).sort()).toEqual(["build", "daily_event"]);
+    expect(data!.analytics_events.map((e) => e.event_name)).toEqual(["room_built"]);
 
     const json = JSON.stringify(data);
     expect(json).not.toContain(userId);
@@ -79,6 +82,13 @@ describe("account export and deletion", () => {
       admin.from("github_sync_state").select("*", { count: "exact", head: true }).eq("user_id", userId),
     ]);
     expect(counts.map((r) => r.count)).toEqual([0, 0, 0, 0, 0]);
+
+    // Analytics rows survive anonymised: the aggregate stays, the person is gone.
+    const { count: named } = await admin
+      .from("analytics_events")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId);
+    expect(named).toBe(0);
 
     const { data: audit } = await admin
       .from("audit_log")

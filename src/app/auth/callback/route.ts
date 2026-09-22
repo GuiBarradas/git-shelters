@@ -15,6 +15,7 @@ import * as Sentry from "@sentry/nextjs";
 import { NextResponse, type NextRequest } from "next/server";
 import { after } from "next/server";
 
+import { ONCE, track } from "@/lib/analytics/track";
 import { syncUser } from "@/lib/github/sync";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -46,8 +47,16 @@ export async function GET(request: NextRequest) {
     typeof user?.user_metadata?.user_name === "string" ? user.user_metadata.user_name : null;
   if (user) {
     after(async () => {
+      const admin = createAdminClient();
       try {
-        await syncUser(createAdminClient(), { id: user.id, github_login: githubLogin });
+        // A row created by this very sign-in is a signup, not a login.
+        // Supabase stamps auth.users.created_at at creation, so "younger
+        // than a minute" is the whole test.
+        if (Date.now() - Date.parse(user.created_at) < 60_000) {
+          await track(admin, user.id, "signup_completed", { time_to_complete_ms: null }, ONCE);
+          await track(admin, user.id, "region_chosen", { region_id: "outage", was_default: true }, ONCE);
+        }
+        await syncUser(admin, { id: user.id, github_login: githubLogin });
       } catch (err) {
         Sentry.captureException(err, { tags: { user_id: user.id, entrypoint: "login" } });
       }

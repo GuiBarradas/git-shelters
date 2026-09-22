@@ -23,6 +23,7 @@ This directory captures architecture and design decisions with long-term consequ
 - [0005 — Vercel Cron sync policy](./0005-vercel-cron-sync-policy.md) — *Accepted* — every 15 min, one `credit_bytes_tx_batch` per user, `CRON_SECRET`-gated route handler, idempotency via the same unique constraint.
 - [0006 — Anti-cheese filter scope for the Public Alpha](./0006-anti-cheese-filters-scope.md) — *Accepted* — bot rejection (pure) + daily 100-byte cap on `github_sync`; four other filters explicitly deferred with criteria for when they land.
 - [0007 — LGPD: account export and deletion](./0007-lgpd-account-export-and-deletion.md) — *Accepted* — hard delete via auth cascade, JSON export, audit trail.
+- [0008 — Analytics: server-side events only](./0008-analytics-server-side-events.md) — *Accepted* — typed `track()` into `analytics_events`, no third-party analytics, session end via beacon.
 
 ## Template
 

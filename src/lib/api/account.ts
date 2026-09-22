@@ -39,6 +39,7 @@ export type AccountExport = {
     last_event_id: string | null;
     backfill_status: string;
   } | null;
+  analytics_events: Array<{ event_name: string; props_json: unknown; occurred_at: string }>;
 };
 
 /**
@@ -47,7 +48,7 @@ export type AccountExport = {
  * not the person, and mean nothing outside this database.
  */
 export async function exportAccount(admin: Admin, userId: string): Promise<AccountExport | null> {
-  const [user, transactions, rooms, outcomes, sync] = await Promise.all([
+  const [user, transactions, rooms, outcomes, sync, analytics] = await Promise.all([
     admin
       .from("users")
       .select("github_login, github_id, email, created_at, last_seen_at, bytes")
@@ -69,9 +70,14 @@ export async function exportAccount(admin: Admin, userId: string): Promise<Accou
       .select("last_synced_at, last_event_id, backfill_status")
       .eq("user_id", userId)
       .maybeSingle(),
+    admin
+      .from("analytics_events")
+      .select("event_name, props_json, occurred_at")
+      .eq("user_id", userId)
+      .order("occurred_at"),
   ]);
 
-  const firstError = [user, transactions, rooms, outcomes, sync].find((r) => r.error)?.error;
+  const firstError = [user, transactions, rooms, outcomes, sync, analytics].find((r) => r.error)?.error;
   if (firstError) throw firstError;
   if (!user.data) return null;
 
@@ -84,13 +90,16 @@ export async function exportAccount(admin: Admin, userId: string): Promise<Accou
     rooms: rooms.data ?? [],
     daily_event_outcomes: outcomes.data ?? [],
     github_sync_state: sync.data,
+    analytics_events: analytics.data ?? [],
   };
 }
 
 /**
  * Hard delete (LGPD art. 18, VI — elimination). Removing the auth.users
  * row cascades through public.users into every game table by foreign
- * key, and drops the GitHub identity Supabase stored for OAuth. No
+ * key (analytics_events keeps its rows with user_id set to null, so
+ * aggregates survive without identifiability), and drops the GitHub
+ * identity Supabase stored for OAuth. No
  * GitHub token is held anywhere else. The audit row is written first so
  * a crash mid-way leaves proof of intent, and it survives because
  * audit_log.user_id has no foreign key.

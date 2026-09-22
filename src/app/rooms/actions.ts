@@ -3,7 +3,8 @@
 import * as Sentry from "@sentry/nextjs";
 import { revalidatePath } from "next/cache";
 
-import { isRoomKind, isSlot } from "@/lib/rooms/catalog";
+import { ONCE, track } from "@/lib/analytics/track";
+import { isRoomKind, isSlot, ROOM_CATALOG } from "@/lib/rooms/catalog";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -27,7 +28,8 @@ export async function buildRoom(formData: FormData) {
   } = await supabase.auth.getUser();
   if (!user) return;
 
-  const { error } = await createAdminClient().rpc("build_room", {
+  const admin = createAdminClient();
+  const { error } = await admin.rpc("build_room", {
     p_user_id: user.id,
     p_slot: slot,
     p_kind: kind,
@@ -35,6 +37,21 @@ export async function buildRoom(formData: FormData) {
 
   if (error && !isExpectedRejection(error.message)) {
     Sentry.captureException(error, { extra: { slot, kind } });
+  }
+
+  if (!error) {
+    await track(
+      admin,
+      user.id,
+      "first_build",
+      { room_type: kind, time_since_signup_ms: Date.now() - Date.parse(user.created_at) },
+      ONCE,
+    );
+    await track(admin, user.id, "room_built", {
+      room_type: kind,
+      level: 1,
+      bytes_spent: ROOM_CATALOG[kind].cost,
+    });
   }
 
   revalidatePath("/");

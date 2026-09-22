@@ -3,6 +3,8 @@
 import * as Sentry from "@sentry/nextjs";
 import { revalidatePath } from "next/cache";
 
+import { ONCE, track } from "@/lib/analytics/track";
+import { parseOption } from "@/lib/events/option";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -25,13 +27,33 @@ export async function resolveDailyEvent(formData: FormData) {
   } = await supabase.auth.getUser();
   if (!user) return;
 
-  const { error } = await createAdminClient().rpc("resolve_daily_event", {
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc("resolve_daily_event", {
     p_user_id: user.id,
     p_choice: choice,
   });
 
   if (error && !error.message.includes("already_resolved_today")) {
     Sentry.captureException(error, { extra: { choice } });
+  }
+
+  if (!error) {
+    const outcome = parseOption(data);
+    const { data: eventId } = await admin.rpc("pick_daily_event", { p_user_id: user.id });
+    if (outcome && eventId) {
+      await track(
+        admin,
+        user.id,
+        "first_event_resolved",
+        { event_id: eventId, choice, time_since_signup_ms: Date.now() - Date.parse(user.created_at) },
+        ONCE,
+      );
+      await track(admin, user.id, "daily_event_resolved", {
+        event_id: eventId,
+        choice,
+        outcome_delta_bytes: outcome.bytes_delta,
+      });
+    }
   }
 
   revalidatePath("/");

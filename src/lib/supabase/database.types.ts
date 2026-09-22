@@ -39,6 +39,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_events: {
+        Row: {
+          dedupe_key: string | null
+          event_name: string
+          id: string
+          occurred_at: string
+          props_json: Json
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          dedupe_key?: string | null
+          event_name: string
+          id?: string
+          occurred_at?: string
+          props_json?: Json
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          dedupe_key?: string | null
+          event_name?: string
+          id?: string
+          occurred_at?: string
+          props_json?: Json
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
