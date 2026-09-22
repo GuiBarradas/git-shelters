@@ -1,6 +1,6 @@
 import { AuthBar } from "@/components/auth/AuthBar";
 import { BunkerSceneClient } from "@/components/scene/BunkerSceneClient";
-import { palette } from "@/lib/palette";
+import { isRoomKind, isSlot, type Room } from "@/lib/rooms/catalog";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function Home() {
@@ -16,29 +16,45 @@ export default async function Home() {
       ? user.user_metadata.user_name
       : null;
 
-  // Cube color is driven by persisted state, not a live GitHub fetch.
+  // Main Branch tint is driven by persisted state, not a live GitHub fetch.
   // Anyone who pushed today will have at least one byte_transactions row
   // tagged source = 'github_sync' with created_at on today's UTC date.
   // The sync server action (src/app/sync/actions.ts) is what populates it.
   const todayUtc = new Date().toISOString().slice(0, 10);
-  const [hasActivityToday, bytes] = user
+  const [activeToday, bytes, rooms] = user
     ? await Promise.all([
         checkActivityToday(supabase, user.id, todayUtc),
         fetchBytes(supabase, user.id),
+        fetchRooms(supabase, user.id),
       ])
-    : [false, null];
-
-  const cubeColor = hasActivityToday
-    ? palette.radioactiveGreen
-    : palette.concreteTan;
+    : [false, null, []];
 
   return (
     <main className="relative w-full h-dvh">
-      <BunkerSceneClient cubeColor={cubeColor} />
+      <BunkerSceneClient rooms={rooms} bytes={bytes} activeToday={activeToday} />
       <div className="pointer-events-none absolute top-4 right-4 z-10">
         <AuthBar githubLogin={githubLogin} bytes={bytes} />
       </div>
     </main>
+  );
+}
+
+/**
+ * The player's built rooms (RLS `rooms_select_own`). Rows are narrowed
+ * through the catalog guards so a kind added in SQL before the catalog
+ * is simply not rendered instead of crashing the scene.
+ */
+async function fetchRooms(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+): Promise<Room[]> {
+  const { data } = await supabase
+    .from("rooms")
+    .select("slot, kind")
+    .eq("user_id", userId);
+
+  return (data ?? []).flatMap(({ slot, kind }) =>
+    isSlot(slot) && isRoomKind(kind) ? [{ slot, kind }] : [],
   );
 }
 
