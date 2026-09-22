@@ -21,9 +21,12 @@ export default async function Home() {
   // tagged source = 'github_sync' with created_at on today's UTC date.
   // The sync server action (src/app/sync/actions.ts) is what populates it.
   const todayUtc = new Date().toISOString().slice(0, 10);
-  const hasActivityToday = user
-    ? await checkActivityToday(supabase, user.id, todayUtc)
-    : false;
+  const [hasActivityToday, bytes] = user
+    ? await Promise.all([
+        checkActivityToday(supabase, user.id, todayUtc),
+        fetchBytes(supabase, user.id),
+      ])
+    : [false, null];
 
   const cubeColor = hasActivityToday
     ? palette.radioactiveGreen
@@ -33,10 +36,27 @@ export default async function Home() {
     <main className="relative w-full h-dvh">
       <BunkerSceneClient cubeColor={cubeColor} />
       <div className="pointer-events-none absolute top-4 right-4 z-10">
-        <AuthBar githubLogin={githubLogin} />
+        <AuthBar githubLogin={githubLogin} bytes={bytes} />
       </div>
     </main>
   );
+}
+
+/**
+ * Materialised balance from `users.bytes` (kept in sync by credit_bytes_tx).
+ * RLS `users_select_own` scopes this to the caller. Returns null if the
+ * row is somehow missing so the HUD can degrade instead of showing "0".
+ */
+async function fetchBytes(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+): Promise<number | null> {
+  const { data } = await supabase
+    .from("users")
+    .select("bytes")
+    .eq("id", userId)
+    .maybeSingle();
+  return data?.bytes ?? null;
 }
 
 /**

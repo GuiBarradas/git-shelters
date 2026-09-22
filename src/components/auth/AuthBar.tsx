@@ -4,6 +4,8 @@ import { syncBytes } from "@/app/sync/actions";
 type AuthBarProps = {
   /** GitHub login of the authenticated user, or null if anonymous. */
   githubLogin: string | null;
+  /** Materialised balance from users.bytes; null when anonymous or unavailable. */
+  bytes: number | null;
 };
 
 /**
@@ -16,11 +18,17 @@ type AuthBarProps = {
  * Visual: minimal Pip-Boy-ish styling using palette hexes inline. Will be
  * replaced by a proper `<Button>` atom (GDD §22.3) once that exists.
  */
-export function AuthBar({ githubLogin }: AuthBarProps) {
+export function AuthBar({ githubLogin, bytes }: AuthBarProps) {
   if (githubLogin) {
     return (
       <div className="pointer-events-auto flex items-center gap-3 font-mono text-sm text-[#7FFF6A]">
         <span>{githubLogin}</span>
+        <span
+          className="border border-[#7FFF6A]/40 px-3 py-1 tabular-nums"
+          title="Bytes"
+        >
+          {bytes === null ? "-- B" : `${bytes.toLocaleString("en-US")} B`}
+        </span>
         <form action={syncBytes}>
           <button
             type="submit"
