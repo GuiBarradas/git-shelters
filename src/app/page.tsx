@@ -2,10 +2,12 @@ import { after } from "next/server";
 
 import { SessionBeacon } from "@/components/analytics/SessionBeacon";
 import { AuthBar } from "@/components/auth/AuthBar";
+import { AwaySummary } from "@/components/hud/AwaySummary";
 import { Landing } from "@/components/landing/Landing";
 import { BunkerSceneClient } from "@/components/scene/BunkerSceneClient";
 import { trackSessionStart } from "@/lib/analytics/track";
-import { settleResources } from "@/lib/economy/resources";
+import { awayReport } from "@/lib/economy/away";
+import { settleResources, workforce } from "@/lib/economy/resources";
 import { cacheCap } from "@/lib/economy/tick";
 import { fetchDailyEvent } from "@/lib/events/daily";
 import { loadCrew } from "@/lib/forks/load";
@@ -47,6 +49,18 @@ export default async function Home() {
   const resources = await settleResources(supabase, admin, user.id, crew.forks, rooms);
   const forks = resources.cache === 0 ? crew.forks.map((f) => ({ ...f, mood: hungerShift(f.mood) })) : crew.forks;
 
+  // "While you were away": what the ledger and the simulation did since the last tick.
+  const work = workforce(crew.forks, rooms);
+  const report = awayReport({
+    hours: resources.hours,
+    before: resources.before,
+    after: resources,
+    bytesIn: await bytesSince(supabase, user.id, resources.since),
+    cooks: work.cooks,
+    engineers: work.engineers,
+    crewMood: resources.cache === 0 ? hungerShift(crew.mood) : crew.mood,
+  });
+
   return (
     <main className="relative w-full h-dvh">
       <SessionBeacon />
@@ -61,6 +75,7 @@ export default async function Home() {
       <div className="pointer-events-none absolute top-4 right-4 z-10">
         <AuthBar githubLogin={githubLogin} bytes={bytes} />
       </div>
+      {report && <AwaySummary report={report} />}
       <div className="pointer-events-none absolute top-16 left-6 z-10 space-y-1 font-mono text-xs">
         <p className="text-[#E6DFC8]/70">
           <span className={resources.cache === 0 ? "text-[#A14545]" : ""}>
@@ -78,6 +93,21 @@ export default async function Home() {
       </div>
     </main>
   );
+}
+
+/** Positive ledger movements since `sinceIso`: what came in while the player was away. */
+async function bytesSince(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  sinceIso: string,
+): Promise<number> {
+  const { data } = await supabase
+    .from("byte_transactions")
+    .select("delta")
+    .eq("user_id", userId)
+    .gt("delta", 0)
+    .gt("created_at", sinceIso);
+  return (data ?? []).reduce((sum, r) => sum + r.delta, 0);
 }
 
 /**

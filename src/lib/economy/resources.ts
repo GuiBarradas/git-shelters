@@ -8,6 +8,15 @@ import type { Database } from "@/lib/supabase/database.types";
 
 type Db = SupabaseClient<Database>;
 
+export type Settled = TickResult & {
+  /** Stored state before this settle; the "while you were away" delta base. */
+  before: { cache: number; uptime: number };
+  /** ISO time of the previous tick, i.e. when the player was last seen. */
+  since: string;
+  /** Hours the simulation covered. */
+  hours: number;
+};
+
 /**
  * Brings the bunker's resources up to now (catch-up offline, §10.3.1):
  * reads the stored state, runs the pure simulation for the elapsed time,
@@ -23,19 +32,24 @@ export async function settleResources(
   forks: Fork[],
   rooms: Room[],
   now: Date = new Date(),
-): Promise<TickResult> {
+): Promise<Settled> {
   const { data: row } = await supabase
     .from("users")
     .select("cache, uptime, last_tick_at")
     .eq("id", userId)
     .maybeSingle();
-  if (!row) return { cache: 0, uptime: 0, starved: false, blackout: true };
+  if (!row) {
+    const iso = now.toISOString();
+    return { cache: 0, uptime: 0, starved: false, blackout: true, before: { cache: 0, uptime: 0 }, since: iso, hours: 0 };
+  }
 
-  const result = simulate(row, workforce(forks, rooms), hoursBetween(row.last_tick_at, now));
+  const hours = hoursBetween(row.last_tick_at, now);
+  const meta = { before: { cache: row.cache, uptime: row.uptime }, since: row.last_tick_at, hours };
+  const result = { ...simulate(row, workforce(forks, rooms), hours), ...meta };
 
   // Under a minute since the last write: nothing meaningful to store.
   if (now.getTime() - Date.parse(row.last_tick_at) < 60_000) {
-    return { ...result, cache: row.cache, uptime: row.uptime };
+    return { ...result, cache: row.cache, uptime: row.uptime, hours: 0 };
   }
 
   const { data: applied, error } = await admin.rpc("apply_tick", {
