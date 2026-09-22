@@ -71,3 +71,9 @@ Lands when we add per-repo bonuses or repo-creation-as-event credits (today neit
 - A future ADR 0008 may revisit the deferred filters when the user count makes the API budget viable, or when an actual exploit is observed and mitigation is needed.
 - Daily cap is not retroactive: a user who farmed bytes before this ADR keeps them. The cap only constrains *new* credits.
 - The cap is per UTC day, not per local day. Users in extreme timezones may notice the boundary; this matches our analytics convention (everything is UTC-bucketed).
+
+## Errata
+
+### 2026-09-22 — Lifetime cap on the 30-day backfill
+
+The daily cap is measured on `created_at`, so a backfill that lands 30 days of history in one run would be truncated to 100 bytes on signup day, defeating the GDD's "arrive with 100–500 bytes" intent. Backfill credits therefore use `source = 'backfill'`, which the daily-cap query ignores, and are bounded instead by `BACKFILL_CAP = 500` bytes lifetime per user (`fetchBackfillCapRemaining` in `lib/anti-cheese/daily-cap-query.ts`, same pure `applyDailyCap` truncation). Fabricated history yields at most 500 bytes, once. Retries of a failed backfill share the same budget.

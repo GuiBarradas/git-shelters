@@ -11,8 +11,12 @@
  * actionable info.
  */
 
+import * as Sentry from "@sentry/nextjs";
 import { NextResponse, type NextRequest } from "next/server";
+import { after } from "next/server";
 
+import { syncUser } from "@/lib/github/sync";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
@@ -25,12 +29,29 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
     return NextResponse.redirect(
       new URL(`/auth/error?reason=exchange_failed`, url.origin),
     );
+  }
+
+  // Kick the first sync (30-day backfill on a fresh account) without
+  // holding the redirect: `after` runs once the response is sent. A user
+  // who lands on the bunker a few seconds later sees bytes instead of
+  // waiting up to 15 minutes for the cron.
+  const user = data.user;
+  const githubLogin =
+    typeof user?.user_metadata?.user_name === "string" ? user.user_metadata.user_name : null;
+  if (user) {
+    after(async () => {
+      try {
+        await syncUser(createAdminClient(), { id: user.id, github_login: githubLogin });
+      } catch (err) {
+        Sentry.captureException(err, { tags: { user_id: user.id, entrypoint: "login" } });
+      }
+    });
   }
 
   return NextResponse.redirect(new URL(next, url.origin));

@@ -2,10 +2,7 @@ import * as Sentry from "@sentry/nextjs";
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { applyDailyCap } from "@/lib/anti-cheese/apply-daily-cap";
-import { fetchDailyCapRemaining } from "@/lib/anti-cheese/daily-cap-query";
-import { rejectBotEvents } from "@/lib/anti-cheese/reject-bot-events";
-import { eventsToCredits, fetchUserEvents } from "@/lib/github/events";
+import { syncUser } from "@/lib/github/sync";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
@@ -17,10 +14,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * which Vercel injects automatically on cron invocations. Manual hits to
  * this URL without the header are 401'd.
  *
- * Per-user iteration: one `credit_bytes_tx_batch` RPC per user, all of
- * that user's pending PushEvent credits in a single round-trip. A failure
- * for one user is captured to Sentry but does not abort the whole run —
- * one user's bad data should not starve the others.
+ * Per-user iteration: `syncUser` (lib/github/sync.ts) does the work —
+ * 30-day backfill on first contact, cursor-based incremental sync after
+ * (ADR 0005 erratum 2026-09-22). One `credit_bytes_tx_batch` RPC per
+ * user. A failure for one user is captured to Sentry but does not abort
+ * the whole run — one user's bad data should not starve the others.
  *
  * Idempotency: guaranteed by the unique constraint on byte_transactions
  * (ADR 0004). Two overlapping cron runs, or a cron run overlapping with
@@ -30,8 +28,6 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
-
-const SYNC_FETCH_LIMIT = 30;
 
 export async function GET(request: NextRequest) {
   const expected = process.env.CRON_SECRET;
@@ -77,43 +73,8 @@ export async function GET(request: NextRequest) {
 
   for (const user of users ?? []) {
     try {
-      if (!user.github_login) {
-        results.skipped += 1;
-        continue;
-      }
-
-      // Slicing here is belt-and-suspenders: GitHub's `/users/{u}/events/public`
-      // returns 30 per page by default, so we already get a single page. If
-      // pagination is added to fetchUserEvents later, this slice becomes the
-      // real ceiling per ADR 0005 §"Fetch policy".
-      const events = rejectBotEvents(
-        (await fetchUserEvents(user.github_login)).slice(0, SYNC_FETCH_LIMIT),
-      );
-      const proposed = eventsToCredits(events);
-
-      if (proposed.length === 0) {
-        results.skipped += 1;
-        continue;
-      }
-
-      const capRemaining = await fetchDailyCapRemaining(admin, user.id);
-      const credits = applyDailyCap(proposed, capRemaining);
-
-      if (credits.length === 0) {
-        results.skipped += 1;
-        continue;
-      }
-
-      const { error: rpcErr } = await admin.rpc("credit_bytes_tx_batch", {
-        p_user_id: user.id,
-        p_credits: credits,
-      });
-
-      if (rpcErr) {
-        throw rpcErr;
-      }
-
-      results.synced += 1;
+      const result = await syncUser(admin, user);
+      results[result.mode === "skipped" ? "skipped" : "synced"] += 1;
     } catch (err) {
       // Per-user failure isolation — surface to Sentry, keep going.
       Sentry.withScope((scope) => {

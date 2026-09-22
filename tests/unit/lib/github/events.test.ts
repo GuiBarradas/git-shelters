@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { countCommitsToday, type GitHubEvent } from "@/lib/github/events";
+import {
+  countCommitsToday,
+  eventsNewerThan,
+  eventsToCredits,
+  eventsWithinDays,
+  maxEventId,
+  type GitHubEvent,
+} from "@/lib/github/events";
 
 const FIXED_NOW = new Date("2026-05-04T15:30:00Z");
 
@@ -135,5 +142,55 @@ describe("countCommitsToday", () => {
     ];
 
     expect(countCommitsToday(events, FIXED_NOW)).toBe(2);
+  });
+});
+
+describe("cursor helpers", () => {
+  const push = (id: string, created_at: string, push_id?: number): GitHubEvent => ({
+    id,
+    type: "PushEvent",
+    created_at,
+    payload: push_id === undefined ? { size: 1 } : { push_id, size: 1 },
+  });
+
+  it("eventsNewerThan compares ids numerically, not lexically", () => {
+    const events = [push("100", "2026-05-04T10:00:00Z"), push("99", "2026-05-04T09:00:00Z")];
+    // "99" > "100" as strings; as numbers only 100 is newer.
+    expect(eventsNewerThan(events, "99").map((e) => e.id)).toEqual(["100"]);
+    expect(eventsNewerThan(events, "100")).toEqual([]);
+  });
+
+  it("eventsNewerThan returns everything when there is no cursor", () => {
+    const events = [push("2", "2026-05-04T10:00:00Z"), push("1", "2026-05-04T09:00:00Z")];
+    expect(eventsNewerThan(events, null)).toEqual(events);
+  });
+
+  it("eventsNewerThan drops events without a numeric id", () => {
+    const events = [push("5", "2026-05-04T10:00:00Z"), { type: "PushEvent", created_at: "2026-05-04T10:00:00Z" }];
+    expect(eventsNewerThan(events, "1").map((e) => e.id)).toEqual(["5"]);
+  });
+
+  it("maxEventId handles ids beyond Number.MAX_SAFE_INTEGER", () => {
+    const events = [push("9007199254740993", "x"), push("9007199254740992", "x")];
+    expect(maxEventId(events)).toBe("9007199254740993");
+    expect(maxEventId([])).toBeNull();
+  });
+
+  it("eventsWithinDays keeps the boundary and drops older", () => {
+    const now = new Date("2026-06-03T12:00:00Z");
+    const events = [
+      push("3", "2026-06-03T11:00:00Z"),
+      push("2", "2026-05-04T12:00:00Z"), // exactly 30 days
+      push("1", "2026-05-04T11:59:59Z"), // 30 days + 1s
+    ];
+    expect(eventsWithinDays(events, now, 30).map((e) => e.id)).toEqual(["3", "2"]);
+  });
+
+  it("eventsToCredits tags the requested source", () => {
+    const events = [push("1", "2026-05-04T10:00:00Z", 42)];
+    expect(eventsToCredits(events, "backfill")).toEqual([
+      { delta: 1, source: "backfill", source_ref: "push:42" },
+    ]);
+    expect(eventsToCredits(events)[0]?.source).toBe("github_sync");
   });
 });

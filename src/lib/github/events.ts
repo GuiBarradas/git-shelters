@@ -50,39 +50,63 @@ export type GitHubEvent = {
  * is acceptable for v1 (treat the GitHub clock as the truth).
  */
 /**
- * Fetches public events for a GitHub login.
+ * Fetches one page of public events for a GitHub login, newest first.
  *
- * Uses the unauthenticated REST API (rate limit: 60/h per IP). Good enough
- * for the spike — when sync becomes a real cron job, this should switch to
- * a per-user authenticated call (5000/h per user).
+ * GitHub serves at most 300 events / 90 days on this endpoint, in pages
+ * of up to 100, so three pages is the whole history it will ever give.
+ * With `GITHUB_TOKEN` set the limit is 5000 req/h; without, 60/h per IP.
  *
- * Cached at the Next.js fetch layer for 60s, so repeated SSR renders within
- * a minute don't hammer the rate limit.
- *
- * Returns an empty array on any error — the caller treats "no events" and
- * "fetch failed" the same: nothing to credit, no fail-state UX.
+ * Throws on any failure. Callers must not confuse "GitHub is down" with
+ * "no activity": the backfill in particular would otherwise mark itself
+ * done with zero events and set no cursor.
  */
-export async function fetchUserEvents(login: string): Promise<GitHubEvent[]> {
-  try {
-    const response = await fetch(
-      `https://api.github.com/users/${encodeURIComponent(login)}/events/public`,
-      {
-        headers: {
-          Accept: "application/vnd.github+json",
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
-        next: { revalidate: 60 },
-      },
-    );
-
-    if (!response.ok) {
-      return [];
-    }
-
-    return (await response.json()) as GitHubEvent[];
-  } catch {
-    return [];
+export async function fetchUserEvents(login: string, page = 1): Promise<GitHubEvent[]> {
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+  };
+  if (process.env.GITHUB_TOKEN) {
+    headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
   }
+
+  const response = await fetch(
+    `https://api.github.com/users/${encodeURIComponent(login)}/events/public?per_page=100&page=${page}`,
+    { headers, next: { revalidate: 60 } },
+  );
+
+  if (!response.ok) {
+    throw new Error(`GitHub events fetch failed for ${login}: ${response.status}`);
+  }
+
+  return (await response.json()) as GitHubEvent[];
+}
+
+/** Keeps events whose id is numerically greater than the cursor (null = all). */
+export function eventsNewerThan(events: GitHubEvent[], cursor: string | null): GitHubEvent[] {
+  if (cursor === null) return events;
+  const c = BigInt(cursor);
+  return events.filter((event) => isNumericId(event.id) && BigInt(event.id) > c);
+}
+
+/** Largest numeric event id in the list, or null. Event ids are monotonic. */
+export function maxEventId(events: GitHubEvent[]): string | null {
+  let max: bigint | null = null;
+  for (const event of events) {
+    if (!isNumericId(event.id)) continue;
+    const id = BigInt(event.id);
+    if (max === null || id > max) max = id;
+  }
+  return max === null ? null : max.toString();
+}
+
+/** Keeps events created within the last `days` days of `now`. */
+export function eventsWithinDays(events: GitHubEvent[], now: Date, days: number): GitHubEvent[] {
+  const since = now.getTime() - days * 86_400_000;
+  return events.filter((event) => Date.parse(event.created_at) >= since);
+}
+
+function isNumericId(id: unknown): id is string {
+  return typeof id === "string" && /^\d+$/.test(id);
 }
 
 export function countCommitsToday(events: GitHubEvent[], now: Date): number {
@@ -100,15 +124,18 @@ export function countCommitsToday(events: GitHubEvent[], now: Date): number {
 }
 
 /**
- * Pure mapper: a list of GitHub events and a user id → an array of credit
- * descriptors ready to feed into `credit_bytes_tx_batch`.
+ * Pure mapper: a list of GitHub events → credit descriptors ready to feed
+ * into `credit_bytes_tx_batch`.
  *
  * Filters out non-PushEvents and entries we cannot dedup (no usable
- * source_ref). Source is always 'github_sync' here; the cron handler is
- * the only caller and that is its taxonomy slot in ADR 0004.
+ * source_ref). `source` is the ADR 0004 taxonomy slot: 'github_sync' for
+ * the incremental cron/button path, 'backfill' for the one-time 30-day
+ * import. Same push, different source → different ledger key, which is
+ * why the cursor (not the unique constraint) keeps the two paths apart.
  */
 export function eventsToCredits(
   events: GitHubEvent[],
+  source: "github_sync" | "backfill" = "github_sync",
 ): Array<{ delta: number; source: string; source_ref: string }> {
   const credits: Array<{ delta: number; source: string; source_ref: string }> = [];
 
@@ -121,11 +148,7 @@ export function eventsToCredits(
     const delta = commitCountFromPayload(event);
     if (delta <= 0) continue;
 
-    credits.push({
-      delta,
-      source: "github_sync",
-      source_ref: sourceRef,
-    });
+    credits.push({ delta, source, source_ref: sourceRef });
   }
 
   return credits;

@@ -88,7 +88,7 @@ Cheaper as the project matures. Requires a query against `users.last_seen_at` (w
 - **Auth:** `Authorization: Bearer ${CRON_SECRET}`, env var only, never committed.
 - **Granularity:** one `credit_bytes_tx_batch(jsonb)` call per user, all that user's pending credits in one array.
 - **Concurrency:** unique constraint enforces idempotency; no application-level locks.
-- **Fetch policy:** read the public events feed for each iterated user, capped at `SYNC_FETCH_LIMIT = 30` events. Cursor migration tracked as a follow-up.
+- **Fetch policy:** cursor-based since 2026-09-22 (see errata). First contact runs the 30-day backfill; later runs read only events newer than `github_sync_state.last_event_id`.
 - **User scope:** all users, no dormancy filter, until counts make it expensive.
 - **Observability:** Sentry breadcrumbs at start/end of each cron invocation, plus per-user error capture without aborting the whole run.
 
@@ -120,3 +120,16 @@ Operationalisation (no code yet, just intent): the cron handler can log a Sentry
 ### 2026-05-04 — Constant-time comparison on `CRON_SECRET`
 
 The original auth check used a plain `!==` on the `Authorization` header. Strict-equality timing-attack surface against a 256-bit hex secret is theoretical, but the cost of `crypto.timingSafeEqual` is zero and matches industry baseline for cron auth. Updated to length-prefix-then-`timingSafeEqual` in `route.ts`. Behaviour unchanged for legitimate callers; closes the timing channel by construction.
+
+### 2026-09-22 — Cursor migration landed, plus the 30-day backfill
+
+`SYNC_FETCH_LIMIT = 30` is gone. The cron, the "Sync" button and the OAuth callback now share one function, `syncUser` in `lib/github/sync.ts`:
+
+- **First contact** (`github_sync_state.backfill_status` pending or failed): reads up to three pages of 100 events (all GitHub keeps for the public feed), credits pushes from the last 30 days as `source = 'backfill'` under a lifetime cap (ADR 0006 erratum), and stores the newest event id as the cursor. Status goes `in_progress → done`, or `failed` with the error rethrown; a stale `in_progress` older than 10 minutes is retried.
+- **Incremental** (status done): reads pages newest-first until one reaches the cursor, credits only events with a numerically greater id as `source = 'github_sync'` under the daily cap, and advances the cursor.
+- The OAuth callback triggers the first sync with Next's `after()` so a new account sees its backfill within seconds instead of waiting for the next cron tick.
+- Optional `GITHUB_TOKEN` raises the events API limit from 60/h per IP to 5000/h. Not needed at current user counts.
+
+Why two sources instead of one: the ledger's unique key is `(user, source, source_ref)`, so a push credited by the backfill and again by the incremental path would be two rows. The cursor is the guard between the paths; the unique constraint remains the guard within each. Keeping the sources distinct also leaves the ledger honest about where bytes came from, which the profile and future analytics can read.
+
+The trigger metric from the 2026-05-04 erratum is moot; the "did the cron hit the ceiling" breadcrumb was never wired and is no longer needed.
