@@ -46,6 +46,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: quality
+    # The dev server's auth proxy needs the Supabase project URL and anon
+    # key on every request. Both are public by design (they ship in the
+    # browser bundle), so they live as repository variables, not secrets.
+    # The anonymous E2E only renders the landing; it writes nothing.
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
     steps:
       - uses: actions/checkout@v4
