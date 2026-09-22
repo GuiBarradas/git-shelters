@@ -7,7 +7,7 @@ import { RoomShell } from "./RoomShell";
 
 /** Pinboard on the back wall; the room page pins the bunk roster here. */
 export const PINBOARD = {
-  position: [1.0, 1.95, -1.36] as [number, number, number],
+  position: [1.0, 1.95, -1.22] as [number, number, number],
   width: 1.0,
   height: 0.8,
 };

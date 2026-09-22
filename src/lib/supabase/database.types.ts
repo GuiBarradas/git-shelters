@@ -334,6 +334,7 @@ export type Database = {
           id: string
           last_seen_at: string
           last_tick_at: string
+          payload: number
           uptime: number
         }
         Insert: {
@@ -347,6 +348,7 @@ export type Database = {
           id: string
           last_seen_at?: string
           last_tick_at?: string
+          payload?: number
           uptime?: number
         }
         Update: {
@@ -360,6 +362,7 @@ export type Database = {
           id?: string
           last_seen_at?: string
           last_tick_at?: string
+          payload?: number
           uptime?: number
         }
         Relationships: []
@@ -374,6 +377,7 @@ export type Database = {
           p_cache: number
           p_expected_tick: string
           p_new_tick: string
+          p_payload: number
           p_uptime: number
           p_user_id: string
         }

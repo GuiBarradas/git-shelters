@@ -27,6 +27,12 @@ export const ROOM_CATALOG = {
     color: palette.steelBlue,
     blurb: "Dorm — two more beds. Nobody sleeps on the Main Branch floor forever.",
   },
+  workshop: {
+    name: "Workshop",
+    cost: 150,
+    color: palette.fadedRed,
+    blurb: "Workshop — packs Payload. Ammo for a fight that has not come yet.",
+  },
 } as const satisfies Record<string, { name: string; cost: number; color: PaletteColor; blurb: string }>;
 
 export const MAIN_BRANCH_BLURB = "Main Branch — the heart of the Repo. Always present.";

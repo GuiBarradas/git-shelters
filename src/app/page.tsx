@@ -8,7 +8,7 @@ import { BunkerSceneClient } from "@/components/scene/BunkerSceneClient";
 import { trackSessionStart } from "@/lib/analytics/track";
 import { awayReport } from "@/lib/economy/away";
 import { settleResources, workforce } from "@/lib/economy/resources";
-import { cacheCap } from "@/lib/economy/tick";
+import { cacheCap, payloadCap } from "@/lib/economy/tick";
 import { fetchDailyEvent } from "@/lib/events/daily";
 import { loadCrew } from "@/lib/forks/load";
 import { describeCrew, eventEcho, settleMood } from "@/lib/forks/mood";
@@ -63,6 +63,7 @@ export default async function Home() {
     bytesIn: await bytesSince(supabase, user.id, resources.since),
     cooks: work.cooks,
     engineers: work.engineers,
+    tinkerers: work.tinkerers,
     crewMood,
   });
 
@@ -89,6 +90,12 @@ export default async function Home() {
           </span>
           {" · "}
           <span className={resources.uptime === 0 ? "text-[#A14545]" : ""}>UPTIME {resources.uptime}%</span>
+          {work.workshops > 0 && (
+            <>
+              {" · "}
+              PAYLOAD {resources.payload}/{payloadCap(work.workshops)}
+            </>
+          )}
         </p>
         {resources.uptime === 0 && <p className="text-[#A14545]">&gt; blackout. Put an engineer on the Power Plant.</p>}
         {resources.cache === 0 && <p className="text-[#A14545]">&gt; the pantry is empty. Nobody is cooking.</p>}

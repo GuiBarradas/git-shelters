@@ -36,6 +36,7 @@ describe("resources and jobs", () => {
       p_new_tick: t1,
       p_cache: 33,
       p_uptime: 140, // clamps to 100
+      p_payload: 5,
     });
     expect(first.error).toBeNull();
     expect(first.data).toBe(true);
@@ -46,11 +47,12 @@ describe("resources and jobs", () => {
       p_new_tick: new Date(Date.parse(t1) + 60_000).toISOString(),
       p_cache: 1,
       p_uptime: 1,
+      p_payload: 1,
     });
     expect(second.data).toBe(false);
 
-    const { data: after } = await admin.from("users").select("cache, uptime, last_tick_at").eq("id", user.id).single();
-    expect(after).toEqual({ cache: 33, uptime: 100, last_tick_at: expect.stringContaining(t1.slice(0, 19)) });
+    const { data: after } = await admin.from("users").select("cache, uptime, payload, last_tick_at").eq("id", user.id).single();
+    expect(after).toEqual({ cache: 33, uptime: 100, payload: 5, last_tick_at: expect.stringContaining(t1.slice(0, 19)) });
   });
 
   it("assign_fork moves a survivor into a built room and refuses an unbuilt one", async () => {
@@ -90,8 +92,10 @@ describe("resources and jobs", () => {
     expect(result.blackout).toBe(true);
     expect(result.starved).toBe(false);
 
-    const { data: stored } = await admin.from("users").select("cache, uptime").eq("id", user.id).single();
-    expect(stored).toEqual({ cache: 70, uptime: 0 });
+    expect(result.payload).toBe(0); // no Workshop yet
+
+    const { data: stored } = await admin.from("users").select("cache, uptime, payload").eq("id", user.id).single();
+    expect(stored).toEqual({ cache: 70, uptime: 0, payload: 0 });
 
     // Immediately again: nothing new to write, same numbers.
     const again = await settleResources(admin, admin, user.id, forks, rooms);

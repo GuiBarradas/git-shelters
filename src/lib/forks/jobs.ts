@@ -9,6 +9,7 @@ export const JOB_BY_ROOM: Record<RoomKind, { title: string; does: string }> = {
   cache_storage: { title: "Cook", does: "puts meals on the shelf" },
   power_plant: { title: "Engineer", does: "keeps the charge up" },
   dorm: { title: "Resting", does: "sleeps between shifts" },
+  workshop: { title: "Tinkerer", does: "packs Payload at the bench" },
 };
 
 export const OFF_SHIFT = { title: "Off shift", does: "hangs around the Main Branch" } as const;

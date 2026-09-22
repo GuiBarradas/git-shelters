@@ -8,6 +8,7 @@ import { CacheStorageRoom, CLIPBOARD, LAYOUT as CACHE_LAYOUT } from "./CacheStor
 import { DormRoom, LAYOUT as DORM_LAYOUT, PINBOARD } from "./DormRoom";
 import { GAUGE, LAYOUT as POWER_LAYOUT, PowerPlantRoom } from "./PowerPlantRoom";
 import { LAYOUT as MAIN_LAYOUT, SCREEN } from "./MainBranchRoom";
+import { CHALKBOARD, LAYOUT as WORKSHOP_LAYOUT, WorkshopRoom } from "./WorkshopRoom";
 
 export { CELL } from "./RoomShell";
 export { EmptyCell } from "./EmptyCell";
@@ -26,6 +27,8 @@ export function panelAnchor(kind: RoomKind | null): PanelAnchor {
       return GAUGE;
     case "dorm":
       return PINBOARD;
+    case "workshop":
+      return CHALKBOARD;
   }
 }
 
@@ -40,6 +43,8 @@ export function roomLayout(kind: RoomKind | null): RoomLayout {
       return POWER_LAYOUT;
     case "dorm":
       return DORM_LAYOUT;
+    case "workshop":
+      return WORKSHOP_LAYOUT;
   }
 }
 
@@ -52,5 +57,7 @@ export function BuiltRoom({ kind, powered = true }: { kind: RoomKind; powered?: 
       return <PowerPlantRoom powered={powered} />;
     case "dorm":
       return <DormRoom powered={powered} />;
+    case "workshop":
+      return <WorkshopRoom powered={powered} />;
   }
 }

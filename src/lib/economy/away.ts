@@ -22,6 +22,8 @@ export type AwayInput = {
   bytesIn: number;
   cooks: number;
   engineers: number;
+  /** Forks on the Workshop bench; 0 also when there is no Workshop. */
+  tinkerers?: number;
   crewMood: Mood;
 };
 
@@ -31,7 +33,7 @@ export type AwayInput = {
  * short to matter, so the caller can skip the panel entirely.
  */
 export function awayReport(input: AwayInput): AwayReport | null {
-  const { hours, before, after, bytesIn, cooks, engineers, crewMood } = input;
+  const { hours, before, after, bytesIn, cooks, engineers, tinkerers = 0, crewMood } = input;
   if (hours < AWAY_MIN_HOURS) return null;
 
   const lines: string[] = [];
@@ -48,6 +50,9 @@ export function awayReport(input: AwayInput): AwayReport | null {
   const upDelta = after.uptime - before.uptime;
   if (engineers === 0) lines.push(`Nobody on the generator. Charge ${upDelta}%.`);
   else lines.push(`Generator crew held the charge${upDelta >= 0 ? "" : " badly"}: ${upDelta >= 0 ? "+" : ""}${upDelta}%.`);
+
+  const packed = after.payload - before.payload;
+  if (tinkerers > 0) lines.push(packed > 0 ? `The bench packed +${packed} Payload.` : "The bench packed nothing. Racks full, or lights out.");
 
   if (after.blackout) warnings.push("The lights went out. Put an engineer on the Power Plant.");
   if (after.starved) warnings.push("The pantry ran dry. Somebody has to cook.");

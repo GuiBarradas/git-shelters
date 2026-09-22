@@ -143,6 +143,39 @@ export function BunkPanel({ beds, crew, sleepers }: { beds: number; crew: number
   );
 }
 
+/** Workshop chalkboard: rounds on the rack, who packs them, and what is missing. */
+export function BenchPanel({
+  payload,
+  cap,
+  tinkerers,
+  powered,
+}: {
+  payload: number;
+  cap: number;
+  tinkerers: string[];
+  powered: boolean;
+}) {
+  return (
+    <div className={`${frame} bg-[#1a1d1a] px-3 py-2 text-[10px] text-[#E6DFC8] [text-shadow:0_0_2px_rgba(230,223,200,0.4)]`}>
+      <div className="mb-1 flex items-baseline justify-between border-b border-[#E6DFC8]/30 pb-1">
+        <span className="font-bold tracking-widest">PAYLOAD RACK</span>
+        <span className={payload >= cap ? "text-[#FFD66B]" : "text-[#7FFF6A]"}>{payload >= cap ? "○ FULL" : "● PACKING"}</span>
+      </div>
+      <p>
+        ROUNDS <span className="text-[#FFD66B]">{payload}</span>/{cap}
+      </p>
+      <p className="text-[#E6DFC8]/70">
+        {tinkerers.length === 0 ? "nobody at the bench." : `tinkerer: ${tinkerers.join(", ")}`}
+      </p>
+      <p className="mt-1 text-[#E6DFC8]/60">
+        {!powered
+          ? "No light. The bench waits."
+          : "No blueprints yet. Packing basic rounds for when the crawlers come."}
+      </p>
+    </div>
+  );
+}
+
 function minutesAgo(iso: string): number {
   return Math.max(0, Math.floor((Date.now() - Date.parse(iso)) / 60_000));
 }

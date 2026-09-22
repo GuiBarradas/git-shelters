@@ -7,11 +7,11 @@ import { recruitFork } from "@/app/forks/actions";
 import { SessionBeacon } from "@/components/analytics/SessionBeacon";
 import { DailyEventCard } from "@/components/events/DailyEventCard";
 import { CrewPanel } from "@/components/rooms/CrewPanel";
-import { BunkPanel, LedgerPanel, UptimePanel } from "@/components/rooms/RoomPanels";
+import { BenchPanel, BunkPanel, LedgerPanel, UptimePanel } from "@/components/rooms/RoomPanels";
 import { RoomSceneClient } from "@/components/scene/RoomSceneClient";
 import { daysBetween } from "@/lib/analytics/track";
 import { settleResources } from "@/lib/economy/resources";
-import { cacheCap, type TickResult } from "@/lib/economy/tick";
+import { cacheCap, payloadCap, type TickResult } from "@/lib/economy/tick";
 import { fetchDailyEvent, todayUtc } from "@/lib/events/daily";
 import { bedCount, RECRUIT_COST, type Fork } from "@/lib/forks/catalog";
 import { loadCrew } from "@/lib/forks/load";
@@ -177,6 +177,15 @@ async function roomPanel(
     }
     case "dorm":
       return <BunkPanel beds={bedCount(rooms)} crew={allForks.length} sleepers={names} />;
+    case "workshop":
+      return (
+        <BenchPanel
+          payload={resources.payload}
+          cap={payloadCap(rooms.filter((r) => r.kind === "workshop").length)}
+          tinkerers={names}
+          powered={resources.uptime > 0}
+        />
+      );
   }
 }
 
