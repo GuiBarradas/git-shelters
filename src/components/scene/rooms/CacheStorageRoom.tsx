@@ -1,5 +1,6 @@
 "use client";
 
+import type { RoomLayout } from "@/components/scene/Fork";
 import { palette } from "@/lib/palette";
 
 import { RoomShell } from "./RoomShell";
@@ -9,6 +10,15 @@ export const CLIPBOARD = {
   position: [-1.0, 1.95, -1.36] as [number, number, number],
   width: 1.0,
   height: 0.8,
+};
+
+/** Pace in front of the prep table; work at it; check the shelves. */
+export const LAYOUT: RoomLayout = {
+  walk: { z: 1.15, xMin: -1.2, xMax: 0.7 },
+  stations: [
+    { position: [0, 0, 0.55], facing: Math.PI, action: "work", hold: 6 },
+    { position: [0.9, 0, -0.5], facing: Math.PI, action: "inspect", hold: 4 },
+  ],
 };
 
 /** Cache Storage: the kitchen and pantry. Shelves, crates, a water barrel. */
@@ -62,11 +72,17 @@ export function CacheStorageRoom() {
         <meshToonMaterial color={palette.boneWhite} />
       </mesh>
       {/* prep table with a kettle */}
-      <mesh position={[0, 0.5, 0.6]}>
-        <boxGeometry args={[1.3, 0.08, 0.7]} />
+      <mesh position={[0, 0.66, 0.1]}>
+        <boxGeometry args={[1.3, 0.08, 0.6]} />
         <meshToonMaterial color={palette.concreteTan} />
       </mesh>
-      <mesh position={[-0.3, 0.68, 0.6]}>
+      {[-0.55, 0.55].map((x) => (
+        <mesh key={x} position={[x, 0.31, 0.1]}>
+          <boxGeometry args={[0.08, 0.62, 0.5]} />
+          <meshToonMaterial color={palette.concreteTan} />
+        </mesh>
+      ))}
+      <mesh position={[-0.3, 0.84, 0.1]}>
         <cylinderGeometry args={[0.14, 0.17, 0.26, 12]} />
         <meshToonMaterial color={palette.boneWhite} />
       </mesh>

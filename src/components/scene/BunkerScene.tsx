@@ -16,7 +16,7 @@ import {
 } from "@/lib/rooms/catalog";
 
 import { Fork } from "./Fork";
-import { BuiltRoom, CELL, EmptyCell, MainBranchRoom } from "./rooms";
+import { BuiltRoom, CELL, EmptyCell, MainBranchRoom, roomLayout } from "./rooms";
 
 type BunkerSceneProps = {
   rooms: Room[];
@@ -149,9 +149,7 @@ export default function BunkerScene({
       <group position={[slotX(0), 0, 0]}>
         <MainBranchRoom active={activeToday} pending={eventPending} />
         {forksIn(0).map((f) => (
-          <group key={f.id} position={[0, 0, 1.0]}>
-            <Fork fork={f} range={1.3} onClick={onForkClick} onHover={forkHover} />
-          </group>
+          <Fork key={f.id} fork={f} layout={roomLayout(null)} onClick={onForkClick} onHover={forkHover} />
         ))}
         <CellHitbox
           onClick={demo ? undefined : () => onSlotClick(0, true)}
@@ -166,9 +164,7 @@ export default function BunkerScene({
             {room ? <BuiltRoom kind={room.kind} /> : <EmptyCell highlight={hovered === slot && !demo} />}
             {room &&
               forksIn(slot).map((f) => (
-                <group key={f.id} position={[0, 0, 1.0]}>
-                  <Fork fork={f} range={1.3} onClick={onForkClick} onHover={forkHover} />
-                </group>
+                <Fork key={f.id} fork={f} layout={roomLayout(room.kind)} onClick={onForkClick} onHover={forkHover} />
               ))}
             <CellHitbox
               onClick={demo ? undefined : () => onSlotClick(slot, Boolean(room))}

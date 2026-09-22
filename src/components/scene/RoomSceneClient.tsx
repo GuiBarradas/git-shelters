@@ -6,9 +6,9 @@ import { useEffect, useState, type ReactNode } from "react";
 import { FORK_TRAITS, type Fork as ForkData } from "@/lib/forks/catalog";
 import type { RoomKind } from "@/lib/rooms/catalog";
 
-import { SpeechBubble } from "./BunkerSceneClient";
+import { SceneBooting, SpeechBubble } from "./BunkerSceneClient";
 
-const RoomScene = dynamic(() => import("./RoomScene"), { ssr: false });
+const RoomScene = dynamic(() => import("./RoomScene"), { ssr: false, loading: () => <SceneBooting /> });
 
 type Props = {
   kind: RoomKind | null;

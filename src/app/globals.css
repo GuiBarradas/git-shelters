@@ -3,6 +3,7 @@
 :root {
   --background: #0f0f0f;
   --foreground: #e6dfc8;
+  --accent: #7fff6a;
 }
 
 @theme inline {
@@ -23,4 +24,70 @@ html,
 body,
 #__next {
   height: 100%;
+}
+
+/* Tailwind v4's preflight resets buttons to `cursor: default`. Everything
+   clickable in the bunker is a control; it gets the hand. */
+@layer base {
+  button,
+  [role="button"],
+  a,
+  summary,
+  label:has(input[type="checkbox"]) {
+    cursor: pointer;
+  }
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+  button,
+  a {
+    transition:
+      background-color 120ms ease,
+      color 120ms ease,
+      border-color 120ms ease,
+      box-shadow 120ms ease,
+      transform 80ms ease;
+  }
+  button:not(:disabled):hover,
+  a:hover {
+    text-shadow: 0 0 8px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+  button:not(:disabled):active {
+    transform: translateY(1px);
+  }
+  :focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+/* Route enter: one short rise-and-fade on every page mount (template.tsx). */
+@keyframes route-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.route-enter {
+  animation: route-enter 260ms ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .route-enter {
+    animation: none;
+  }
+}
+
+/* Terminal cursor for loading states. */
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+.blink {
+  animation: blink 1s steps(1) infinite;
 }

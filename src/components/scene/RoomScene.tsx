@@ -9,7 +9,7 @@ import { palette } from "@/lib/palette";
 import type { RoomKind } from "@/lib/rooms/catalog";
 
 import { Fork } from "./Fork";
-import { BuiltRoom, CELL, MainBranchRoom, panelAnchor } from "./rooms";
+import { BuiltRoom, CELL, MainBranchRoom, panelAnchor, roomLayout } from "./rooms";
 
 /** CSS pixels per world unit in drei's transform mode (measured, camera-independent). */
 const CSS3D_PX = 40;
@@ -67,9 +67,7 @@ export default function RoomScene({
 
       {kind === null ? <MainBranchRoom active={activeToday} pending={eventPending} /> : <BuiltRoom kind={kind} />}
       {forks.map((f) => (
-        <group key={f.id} position={[0, 0, 1.1]}>
-          <Fork fork={f} range={1.4} onClick={onForkClick} onHover={onForkHover} />
-        </group>
+        <Fork key={f.id} fork={f} layout={roomLayout(kind)} onClick={onForkClick} onHover={onForkHover} />
       ))}
       {panel && (
         // CSS3D panel glued to the room's read-out surface (monitor, clipboard, gauge).

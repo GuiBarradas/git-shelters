@@ -7,64 +7,171 @@ import type { Group } from "three";
 import { forkLook, mulberry32, type Fork as ForkData } from "@/lib/forks/catalog";
 import { palette } from "@/lib/palette";
 
+/** Something a Fork can do somewhere in a room. */
+export type Station = {
+  /** Where the Fork's feet go while acting. */
+  position: [number, number, number];
+  /** Which way it faces (rotation around y) while acting. */
+  facing: number;
+  action: "sit" | "type" | "work" | "inspect";
+  /** How long it stays, in seconds. */
+  hold: number;
+  /** For "sit": seat height the hips rest on. */
+  seatY?: number;
+};
+
+/** The furniture-free strip a Fork can pace along, plus its stations. */
+export type RoomLayout = {
+  walk: { z: number; xMin: number; xMax: number };
+  stations: Station[];
+};
+
 type Props = {
   fork: ForkData;
-  /** Half-width of the strip the Fork paces, in world units. */
-  range?: number;
-  /** Overall size; 1 in the corridor, larger in the close-up. */
-  scale?: number;
+  layout: RoomLayout;
   onClick?: (fork: ForkData) => void;
   onHover?: (fork: ForkData | null) => void;
 };
 
+/** One voxel, in world units. Head top lands at about 1.45: shoulder height to the desk. */
+const VOXEL = 0.2;
+const WALK_SPEED = 0.55; // units per second
+
+type Phase = "pace" | "walk" | "act" | "leave";
+
 /**
- * A survivor: six blocks (head, torso, two arms, two legs), pacing the
- * room, arms and legs swinging, turning around at the edges, stopping
- * now and then to look at the player. Everything is driven by the seed
- * so the same Fork moves the same way on every visit.
+ * A survivor: six blocks (head, torso, arms, legs) driven by a tiny
+ * behaviour loop. It paces the room's free strip, picks a station, walks
+ * there, does the station's action (sits and types at the terminal,
+ * works a table, inspects a gauge), then walks back to the strip. All
+ * randomness comes from the Fork's seed, so a survivor is recognisable
+ * by how it moves, and the loop never touches React state.
  */
-export function Fork({ fork, range = 1.2, scale = 1, onClick, onHover }: Props) {
+export function Fork({ fork, layout, onClick, onHover }: Props) {
   const look = useMemo(() => forkLook(fork.seed), [fork.seed]);
-  const params = useMemo(() => {
-    const rand = mulberry32(fork.seed ^ 0x2545f491);
-    return {
-      speed: 0.35 + rand() * 0.3,
-      phase: rand() * Math.PI * 2,
-      x0: (rand() - 0.5) * range,
-      restEvery: 6 + rand() * 6,
-    };
-  }, [fork.seed, range]);
+  const rand = useMemo(() => mulberry32(fork.seed ^ 0x2545f491), [fork.seed]);
 
   const root = useRef<Group>(null);
   const armL = useRef<Group>(null);
   const armR = useRef<Group>(null);
   const legL = useRef<Group>(null);
   const legR = useRef<Group>(null);
+  const head = useRef<Group>(null);
 
-  useFrame(({ clock }) => {
-    const t = clock.elapsedTime + params.phase;
-    const g = root.current;
-    if (!g) return;
-
-    // Pace: a triangle wave across the strip, with a pause every so often.
-    const cycle = t % params.restEvery;
-    const resting = cycle > params.restEvery - 1.8;
-    const travel = ((t * params.speed) % 2 + 2) % 2; // 0..2
-    const x = params.x0 + (travel < 1 ? travel : 2 - travel) * range * 2 - range;
-    const dir = travel < 1 ? 1 : -1;
-
-    g.position.x = resting ? g.position.x : x;
-    g.rotation.y = resting ? 0 : dir > 0 ? Math.PI / 2 : -Math.PI / 2;
-    g.position.y = resting ? 0 : Math.abs(Math.sin(t * 8)) * 0.03;
-
-    const swing = resting ? 0 : Math.sin(t * 8) * 0.6;
-    if (armL.current) armL.current.rotation.x = swing;
-    if (armR.current) armR.current.rotation.x = -swing;
-    if (legL.current) legL.current.rotation.x = -swing;
-    if (legR.current) legR.current.rotation.x = swing;
+  // Behaviour state lives in a ref: mutated every frame, never rendered.
+  const state = useRef({
+    phase: "pace" as Phase,
+    x: layout.walk.xMin + rand() * (layout.walk.xMax - layout.walk.xMin),
+    z: layout.walk.z,
+    dir: rand() > 0.5 ? 1 : -1,
+    until: 4 + rand() * 6, // clock time when the current phase ends
+    station: null as Station | null,
+    target: [0, 0, 0] as [number, number, number],
+    facing: 0,
   });
 
-  const s = 0.16 * scale; // one voxel
+  useFrame(({ clock }, delta) => {
+    const g = root.current;
+    if (!g) return;
+    const t = clock.elapsedTime;
+    const s = state.current;
+    const { walk, stations } = layout;
+
+    let moving = false;
+    let action: Station["action"] | null = null;
+
+    switch (s.phase) {
+      case "pace": {
+        s.x += s.dir * WALK_SPEED * 0.6 * delta;
+        if (s.x > walk.xMax) {
+          s.x = walk.xMax;
+          s.dir = -1;
+        } else if (s.x < walk.xMin) {
+          s.x = walk.xMin;
+          s.dir = 1;
+        }
+        s.facing = s.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+        moving = true;
+        if (t > s.until && stations.length > 0) {
+          const station = stations[Math.floor(rand() * stations.length)]!;
+          s.station = station;
+          s.target = station.position;
+          s.phase = "walk";
+        }
+        break;
+      }
+      case "walk":
+      case "leave": {
+        const dx = s.target[0] - s.x;
+        const dz = s.target[2] - s.z;
+        const dist = Math.hypot(dx, dz);
+        if (dist < 0.03) {
+          s.x = s.target[0];
+          s.z = s.target[2];
+          if (s.phase === "walk" && s.station) {
+            s.phase = "act";
+            s.facing = s.station.facing;
+            s.until = t + s.station.hold;
+          } else {
+            s.phase = "pace";
+            s.dir = rand() > 0.5 ? 1 : -1;
+            s.until = t + 5 + rand() * 8;
+          }
+        } else {
+          const step = Math.min(dist, WALK_SPEED * delta);
+          s.x += (dx / dist) * step;
+          s.z += (dz / dist) * step;
+          s.facing = Math.atan2(dx, dz);
+          moving = true;
+        }
+        break;
+      }
+      case "act": {
+        action = s.station?.action ?? null;
+        if (t > s.until) {
+          s.phase = "leave";
+          s.target = [Math.min(walk.xMax, Math.max(walk.xMin, s.x)), 0, walk.z];
+          s.station = null;
+        }
+        break;
+      }
+    }
+
+    // Pose.
+    const sitting = action === "sit" || action === "type";
+    const hipY = sitting ? (s.station?.seatY ?? 0.3) : 0;
+    g.position.set(s.x, hipY + (moving ? Math.abs(Math.sin(t * 9)) * 0.02 : 0), s.z);
+    g.rotation.y = s.facing;
+
+    const swing = moving ? Math.sin(t * 9) * 0.65 : 0;
+    const legPose = sitting ? -Math.PI / 2 : 0;
+    if (legL.current) legL.current.rotation.x = legPose + (sitting ? 0 : -swing);
+    if (legR.current) legR.current.rotation.x = legPose + (sitting ? 0 : swing);
+
+    // Arms: swing while walking, forward on the keyboard/table, one raised to inspect.
+    let armLx = swing, armRx = -swing;
+    if (action === "type" || action === "work") {
+      const jitter = Math.sin(t * 14) * 0.08;
+      armLx = -1.1 + jitter;
+      armRx = -1.1 - jitter;
+    } else if (action === "sit") {
+      armLx = armRx = -0.6;
+    } else if (action === "inspect") {
+      armLx = -1.6 + Math.sin(t * 2) * 0.1;
+      armRx = 0;
+    }
+    if (armL.current) armL.current.rotation.x = armLx;
+    if (armR.current) armR.current.rotation.x = armRx;
+
+    // Head: nod while inspecting, tilt down while typing, glance around idle.
+    if (head.current) {
+      head.current.rotation.x =
+        action === "inspect" ? Math.sin(t * 2) * 0.12 : action === "type" || action === "work" ? 0.25 : 0;
+      head.current.rotation.y = !action && !moving ? Math.sin(t * 0.7) * 0.4 : 0;
+    }
+  });
+
+  const v = VOXEL;
   const stop = (e: { stopPropagation: () => void }) => e.stopPropagation();
 
   return (
@@ -84,55 +191,52 @@ export function Fork({ fork, range = 1.2, scale = 1, onClick, onHover }: Props) 
         onHover?.(null);
       }}
     >
-      {/* legs */}
-      <group ref={legL} position={[-s * 0.55, s * 2.2, 0]}>
-        <mesh position={[0, -s * 1.1, 0]}>
-          <boxGeometry args={[s, s * 2.2, s]} />
-          <meshToonMaterial color={look.pants} />
-        </mesh>
-      </group>
-      <group ref={legR} position={[s * 0.55, s * 2.2, 0]}>
-        <mesh position={[0, -s * 1.1, 0]}>
-          <boxGeometry args={[s, s * 2.2, s]} />
-          <meshToonMaterial color={look.pants} />
-        </mesh>
-      </group>
+      {/* legs hang from the hips at y = 2.2 voxels */}
+      {[-0.55, 0.55].map((side, i) => (
+        <group key={side} ref={i === 0 ? legL : legR} position={[side * v, v * 2.2, 0]}>
+          <mesh position={[0, -v * 1.1, 0]}>
+            <boxGeometry args={[v, v * 2.2, v]} />
+            <meshToonMaterial color={look.pants} />
+          </mesh>
+        </group>
+      ))}
       {/* torso */}
-      <mesh position={[0, s * 3.5, 0]}>
-        <boxGeometry args={[s * 2.2, s * 2.6, s * 1.2]} />
+      <mesh position={[0, v * 3.5, 0]}>
+        <boxGeometry args={[v * 2.2, v * 2.6, v * 1.2]} />
         <meshToonMaterial color={look.shirt} />
       </mesh>
-      {/* arms */}
-      <group ref={armL} position={[-s * 1.6, s * 4.6, 0]}>
-        <mesh position={[0, -s * 1.1, 0]}>
-          <boxGeometry args={[s * 0.8, s * 2.3, s * 0.8]} />
-          <meshToonMaterial color={look.shirt} />
-        </mesh>
-      </group>
-      <group ref={armR} position={[s * 1.6, s * 4.6, 0]}>
-        <mesh position={[0, -s * 1.1, 0]}>
-          <boxGeometry args={[s * 0.8, s * 2.3, s * 0.8]} />
-          <meshToonMaterial color={look.shirt} />
-        </mesh>
-      </group>
-      {/* head */}
-      <mesh position={[0, s * 5.9, 0]}>
-        <boxGeometry args={[s * 1.8, s * 1.8, s * 1.8]} />
-        <meshToonMaterial color={look.skin} />
-      </mesh>
-      {/* eyes: two dark voxels on the face */}
-      {[-0.45, 0.45].map((ex) => (
-        <mesh key={ex} position={[ex * s, s * 6.05, s * 0.92]}>
-          <boxGeometry args={[s * 0.3, s * 0.3, s * 0.1]} />
-          <meshToonMaterial color={palette.coalBlack} />
-        </mesh>
+      {/* arms hang from the shoulders at y = 4.6 voxels */}
+      {[-1.6, 1.6].map((side, i) => (
+        <group key={side} ref={i === 0 ? armL : armR} position={[side * v, v * 4.6, 0]}>
+          <mesh position={[0, -v * 1.1, 0]}>
+            <boxGeometry args={[v * 0.8, v * 2.3, v * 0.8]} />
+            <meshToonMaterial color={look.shirt} />
+          </mesh>
+          <mesh position={[0, -v * 2.4, 0]}>
+            <boxGeometry args={[v * 0.7, v * 0.4, v * 0.7]} />
+            <meshToonMaterial color={look.skin} />
+          </mesh>
+        </group>
       ))}
-      {look.helmet && (
-        <mesh position={[0, s * 6.9, 0]}>
-          <boxGeometry args={[s * 2.0, s * 0.6, s * 2.0]} />
-          <meshToonMaterial color={look.helmet} />
+      {/* head pivots at the neck */}
+      <group ref={head} position={[0, v * 5.0, 0]}>
+        <mesh position={[0, v * 0.9, 0]}>
+          <boxGeometry args={[v * 1.8, v * 1.8, v * 1.8]} />
+          <meshToonMaterial color={look.skin} />
         </mesh>
-      )}
+        {[-0.45, 0.45].map((ex) => (
+          <mesh key={ex} position={[ex * v, v * 1.05, v * 0.92]}>
+            <boxGeometry args={[v * 0.3, v * 0.3, v * 0.1]} />
+            <meshToonMaterial color={palette.coalBlack} />
+          </mesh>
+        ))}
+        {look.helmet && (
+          <mesh position={[0, v * 1.9, 0]}>
+            <boxGeometry args={[v * 2.0, v * 0.6, v * 2.0]} />
+            <meshToonMaterial color={look.helmet} />
+          </mesh>
+        )}
+      </group>
     </group>
   );
 }

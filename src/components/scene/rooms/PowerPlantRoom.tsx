@@ -4,6 +4,7 @@ import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import type { Group, MeshToonMaterial } from "three";
 
+import type { RoomLayout } from "@/components/scene/Fork";
 import { palette } from "@/lib/palette";
 
 import { RoomShell } from "./RoomShell";
@@ -13,6 +14,15 @@ export const GAUGE = {
   position: [-1.32, 1.35, -0.6] as [number, number, number],
   width: 0.9,
   height: 0.62,
+};
+
+/** Pace in front of the drum; read the gauge; watch the fan. */
+export const LAYOUT: RoomLayout = {
+  walk: { z: 1.15, xMin: -0.6, xMax: 1.4 },
+  stations: [
+    { position: [-1.0, 0, 0.0], facing: -Math.PI / 2, action: "inspect", hold: 5 },
+    { position: [0.9, 0, 1.05], facing: Math.PI, action: "inspect", hold: 3 },
+  ],
 };
 
 /** Power Plant: the generator. A humming drum, pipes, a spinning fan, a warning beacon. */

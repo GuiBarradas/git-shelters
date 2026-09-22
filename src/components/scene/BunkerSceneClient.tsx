@@ -8,7 +8,19 @@ import { buildRoom } from "@/app/rooms/actions";
 import { FORK_TRAITS, type Fork as ForkData } from "@/lib/forks/catalog";
 import { ROOM_CATALOG, type Room, type RoomKind, type Slot } from "@/lib/rooms/catalog";
 
-const BunkerScene = dynamic(() => import("./BunkerScene"), { ssr: false });
+const BunkerScene = dynamic(() => import("./BunkerScene"), {
+  ssr: false,
+  loading: () => <SceneBooting />,
+});
+
+/** Shown while the renderer chunk downloads; the page is never a black hole. */
+export function SceneBooting() {
+  return (
+    <p className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-mono text-sm text-[#7FFF6A]/70">
+      &gt; booting renderer<span className="blink">_</span>
+    </p>
+  );
+}
 
 type BunkerSceneClientProps = {
   rooms: Room[];

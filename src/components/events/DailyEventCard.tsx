@@ -18,7 +18,7 @@ export function DailyEventCard({
 }) {
   const frame =
     variant === "screen"
-      ? "pointer-events-auto h-full w-full overflow-y-auto bg-[#041a08] px-3 py-2 font-mono text-[11px] leading-snug text-[#9BFF8A] [text-shadow:0_0_6px_rgba(127,255,106,0.6)] [&_h2]:mb-1 [&_p]:mb-2 [&_button]:py-1"
+      ? "pointer-events-auto h-full w-full overflow-y-auto bg-[#041a08] px-3 py-2 font-mono text-[10px] leading-snug text-[#9BFF8A] [text-shadow:0_0_6px_rgba(127,255,106,0.6)] [&_h2]:mb-1 [&_p]:mb-2 [&_button]:py-1"
       : "pointer-events-auto max-w-sm border border-[#7FFF6A] bg-[#0F0F0F]/90 p-4 font-mono text-sm text-[#E6DFC8]";
   return (
     <aside className={frame}>
