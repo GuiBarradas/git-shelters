@@ -30,7 +30,11 @@ export const SCREEN = {
 
 /** Where a Fork can pace and what it can do here. Chair seat is at y = 0.42. */
 export const LAYOUT: RoomLayout = {
-  walk: { z: 1.05, xMin: -1.3, xMax: 1.4 },
+  // The whole layout stays left of the terminal: its HTML panel is DOM and
+  // paints over the canvas, so a Fork crossing the screen's area (even in
+  // front of the desk) would vanish behind the text. xMax keeps a head's
+  // width of clearance from the screen's left edge (x = 0.07).
+  walk: { z: 1.05, xMin: -1.35, xMax: -0.2 },
   stations: [
     // Off the screen's axis: the terminal's HTML panel is DOM, always drawn
     // over the canvas, so a Fork sitting dead-centre would vanish behind it.
