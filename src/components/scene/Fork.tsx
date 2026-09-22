@@ -5,6 +5,7 @@ import { useMemo, useRef } from "react";
 import type { Group } from "three";
 
 import { forkLook, mulberry32, type Fork as ForkData } from "@/lib/forks/catalog";
+import { MOOD_MOTION } from "@/lib/forks/mood";
 import { palette } from "@/lib/palette";
 
 /** Something a Fork can do somewhere in a room. */
@@ -89,6 +90,8 @@ export function Fork({ fork, layout, onClick, onHover }: Props) {
 
     let moving = false;
     let action: Station["action"] | null = null;
+    const motion = MOOD_MOTION[fork.mood];
+    const speed = WALK_SPEED * motion.speed;
 
     // Advance toward s.target; true once there.
     const step = () => {
@@ -100,7 +103,7 @@ export function Fork({ fork, layout, onClick, onHover }: Props) {
         s.z = s.target[2];
         return true;
       }
-      const d = Math.min(dist, WALK_SPEED * delta);
+      const d = Math.min(dist, speed * delta);
       s.x += (dx / dist) * d;
       s.z += (dz / dist) * d;
       s.facing = Math.atan2(dx, dz);
@@ -110,7 +113,7 @@ export function Fork({ fork, layout, onClick, onHover }: Props) {
 
     switch (s.phase) {
       case "pace": {
-        s.x += s.dir * WALK_SPEED * 0.6 * delta;
+        s.x += s.dir * speed * 0.6 * delta;
         if (s.x > walk.xMax) {
           s.x = walk.xMax;
           s.dir = -1;
@@ -179,7 +182,7 @@ export function Fork({ fork, layout, onClick, onHover }: Props) {
     // The model's origin is at the feet; the hips are HIP_HEIGHT above it.
     // Sitting puts the hips on the seat, so the origin drops below it.
     const originY = sitting ? (s.station?.seatY ?? 0.3) - HIP_HEIGHT : 0;
-    g.position.set(s.x, originY + (moving ? Math.abs(Math.sin(t * 9)) * 0.02 : 0), s.z);
+    g.position.set(s.x, originY + (moving ? Math.abs(Math.sin(t * 9)) * motion.bounce : 0), s.z);
     g.rotation.y = s.facing;
 
     // Legs: thighs swing from the hips while walking; sitting folds the
@@ -208,10 +211,12 @@ export function Fork({ fork, layout, onClick, onHover }: Props) {
     if (armL.current) armL.current.rotation.x = armLx;
     if (armR.current) armR.current.rotation.x = armRx;
 
-    // Head: nod while inspecting, tilt down while typing, glance around idle.
+    // Head: nod while inspecting, tilt down while typing, glance around
+    // idle; the mood adds a slump (stressed, bitter) or a lift (happy).
     if (head.current) {
       head.current.rotation.x =
-        action === "inspect" ? Math.sin(t * 2) * 0.12 : action === "type" || action === "work" ? 0.25 : 0;
+        motion.headPitch +
+        (action === "inspect" ? Math.sin(t * 2) * 0.12 : action === "type" || action === "work" ? 0.25 : 0);
       head.current.rotation.y = !action && !moving ? Math.sin(t * 0.7) * 0.4 : 0;
     }
   });

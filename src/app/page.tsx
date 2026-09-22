@@ -6,7 +6,8 @@ import { Landing } from "@/components/landing/Landing";
 import { BunkerSceneClient } from "@/components/scene/BunkerSceneClient";
 import { trackSessionStart } from "@/lib/analytics/track";
 import { fetchDailyEvent } from "@/lib/events/daily";
-import { loadForks } from "@/lib/forks/load";
+import { loadCrew } from "@/lib/forks/load";
+import { describeCrew } from "@/lib/forks/mood";
 import { isRoomKind, isSlot, type Room } from "@/lib/rooms/catalog";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -33,12 +34,12 @@ export default async function Home() {
   // tagged source = 'github_sync' with created_at on today's UTC date.
   // The sync server action (src/app/sync/actions.ts) is what populates it.
   const todayUtc = new Date().toISOString().slice(0, 10);
-  const [activeToday, bytes, rooms, dailyEvent, forks] = await Promise.all([
+  const [activeToday, bytes, rooms, dailyEvent, crew] = await Promise.all([
     checkActivityToday(supabase, user.id, todayUtc),
     fetchBytes(supabase, user.id),
     fetchRooms(supabase, user.id),
     fetchDailyEvent(supabase, user.id, todayUtc),
-    loadForks(supabase, createAdminClient(), user.id),
+    loadCrew(supabase, createAdminClient(), user.id),
   ]);
 
   return (
@@ -46,7 +47,7 @@ export default async function Home() {
       <SessionBeacon />
       <BunkerSceneClient
         rooms={rooms}
-        forks={forks}
+        forks={crew.forks}
         bytes={bytes}
         activeToday={activeToday}
         eventPending={Boolean(dailyEvent && !dailyEvent.resolved)}
@@ -54,11 +55,12 @@ export default async function Home() {
       <div className="pointer-events-none absolute top-4 right-4 z-10">
         <AuthBar githubLogin={githubLogin} bytes={bytes} />
       </div>
-      {dailyEvent && !dailyEvent.resolved && (
-        <p className="pointer-events-none absolute top-16 left-6 z-10 font-mono text-xs text-[#7FFF6A]/80">
-          &gt; incoming packet on the Main Branch terminal
-        </p>
-      )}
+      <div className="pointer-events-none absolute top-16 left-6 z-10 space-y-1 font-mono text-xs">
+        {dailyEvent && !dailyEvent.resolved && (
+          <p className="text-[#7FFF6A]/80">&gt; incoming packet on the Main Branch terminal</p>
+        )}
+        <p className="text-[#E6DFC8]/50">&gt; {describeCrew(crew.mood, crew.lastPushAt)}</p>
+      </div>
     </main>
   );
 }

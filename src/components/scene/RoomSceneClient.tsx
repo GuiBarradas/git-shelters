@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { FORK_TRAITS, type Fork as ForkData } from "@/lib/forks/catalog";
+import { MOOD_LABEL, pickLine } from "@/lib/forks/mood";
 import type { RoomKind } from "@/lib/rooms/catalog";
 
 import { SceneBooting, SpeechBubble } from "./BunkerSceneClient";
@@ -22,6 +23,7 @@ type Props = {
 export function RoomSceneClient(props: Props) {
   const [speech, setSpeech] = useState<{ name: string; line: string } | null>(null);
   const [hovered, setHovered] = useState<ForkData | null>(null);
+  const [pokes, setPokes] = useState(0);
 
   useEffect(() => {
     if (!speech) return;
@@ -33,14 +35,17 @@ export function RoomSceneClient(props: Props) {
     <>
       <RoomScene
         {...props}
-        onForkClick={(f) => setSpeech({ name: f.name, line: FORK_TRAITS[f.trait].line })}
+        onForkClick={(f) => {
+          setPokes((n) => n + 1);
+          setSpeech({ name: f.name, line: pickLine(f.seed, pokes, f.mood, FORK_TRAITS[f.trait].line) });
+        }}
         onForkHover={setHovered}
       />
       {speech ? (
         <SpeechBubble name={speech.name} line={speech.line} />
       ) : hovered ? (
         <p className="pointer-events-none absolute bottom-6 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border border-[#7FFF6A]/40 bg-[#0F0F0F]/90 px-3 py-1 font-mono text-xs text-[#E6DFC8]">
-          {hovered.name} · {FORK_TRAITS[hovered.trait].name}
+          {hovered.name} · {FORK_TRAITS[hovered.trait].name} · {MOOD_LABEL[hovered.mood]}
           <span className="text-[#E6DFC8]/50"> · click to talk</span>
         </p>
       ) : null}

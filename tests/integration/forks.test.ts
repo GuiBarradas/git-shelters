@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { RECRUIT_COST } from "@/lib/forks/catalog";
-import { loadForks } from "@/lib/forks/load";
+import { loadCrew, loadForks } from "@/lib/forks/load";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 import { createThrowawayUser, type ThrowawayUser } from "./fixture";
@@ -57,6 +57,39 @@ describe("forks", () => {
     expect(tx).toEqual({ delta: -RECRUIT_COST, source: "recruit", source_ref: forkId });
 
     expect(await loadForks(admin, admin, user.id)).toHaveLength(2);
+  });
+
+  it("derives the crew mood from the last push the ledger saw", async () => {
+    const now = new Date("2026-09-22T12:00:00Z");
+    const fresh = await loadCrew(admin, admin, user.id, now);
+    expect(fresh.mood).toBe("content");
+    expect(fresh.lastPushAt).toBeNull();
+
+    // A push credited 9 days ago: the bunker turns bitter.
+    await admin.from("byte_transactions").insert({
+      user_id: user.id,
+      delta: 1,
+      source: "backfill",
+      source_ref: "push:mood-test",
+      balance_after: 0,
+      created_at: new Date(now.getTime() - 9 * 86_400_000).toISOString(),
+    });
+    const stale = await loadCrew(admin, admin, user.id, now);
+    expect(stale.mood).toBe("bitter");
+    for (const f of stale.forks) {
+      expect(["bitter", "stressed"]).toContain(f.mood); // trait may lift one step
+    }
+
+    // A push today: happy again.
+    await admin.from("byte_transactions").insert({
+      user_id: user.id,
+      delta: 1,
+      source: "github_sync",
+      source_ref: "push:mood-test-2",
+      balance_after: 0,
+      created_at: now.toISOString(),
+    });
+    expect((await loadCrew(admin, admin, user.id, now)).mood).toBe("happy");
   });
 
   it("rejects a recruit the player cannot afford, leaving no Fork behind", async () => {

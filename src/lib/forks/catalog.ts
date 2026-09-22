@@ -1,3 +1,4 @@
+import type { Mood } from "@/lib/forks/mood";
 import { palette } from "@/lib/palette";
 
 /**
@@ -29,7 +30,7 @@ export type Fork = {
   id: string;
   name: string;
   trait: ForkTrait;
-  mood: string;
+  mood: Mood;
   roomSlot: number | null;
   seed: number;
 };

@@ -5,6 +5,7 @@ import { Canvas, useThree } from "@react-three/fiber";
 import { useLayoutEffect, useState } from "react";
 
 import { FORK_TRAITS, type Fork as ForkData } from "@/lib/forks/catalog";
+import { MOOD_LABEL } from "@/lib/forks/mood";
 import { palette } from "@/lib/palette";
 import {
   BUILDABLE_SLOTS,
@@ -102,7 +103,7 @@ export default function BunkerScene({
   // A Fork with no room wanders the Main Branch.
   const forksIn = (slot: number) => forks.filter((f) => (f.roomSlot ?? 0) === slot);
   const forkHover = (f: ForkData | null) =>
-    onHoverBlurb?.(f ? `${f.name} · ${FORK_TRAITS[f.trait].name}` : null);
+    onHoverBlurb?.(f ? `${f.name} · ${FORK_TRAITS[f.trait].name} · ${MOOD_LABEL[f.mood]}` : null);
   const hover = (slot: number, blurb: string) => (h: boolean) => {
     setHovered(h ? slot : null);
     onHoverBlurb?.(h ? blurb : null);

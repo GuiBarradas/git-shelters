@@ -11,7 +11,7 @@ import { daysBetween } from "@/lib/analytics/track";
 import { recruitFork } from "@/app/forks/actions";
 import { fetchDailyEvent, todayUtc } from "@/lib/events/daily";
 import { RECRUIT_COST } from "@/lib/forks/catalog";
-import { loadForks } from "@/lib/forks/load";
+import { loadCrew } from "@/lib/forks/load";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isRoomKind, isSlot, MAIN_BRANCH_BLURB, ROOM_CATALOG, type RoomKind } from "@/lib/rooms/catalog";
 import { createClient } from "@/lib/supabase/server";
@@ -52,13 +52,14 @@ export default async function RoomPage({ params }: Props) {
   }
 
   const today = todayUtc();
-  const [activeToday, panel, dailyEvent, allForks, { data: me }] = await Promise.all([
+  const [activeToday, panel, dailyEvent, crew, { data: me }] = await Promise.all([
     pushedToday(supabase, user.id, today),
     roomPanel(supabase, user, kind, today),
     isMain ? fetchDailyEvent(supabase, user.id, today) : null,
-    loadForks(supabase, createAdminClient(), user.id),
+    loadCrew(supabase, createAdminClient(), user.id),
     supabase.from("users").select("bytes").eq("id", user.id).maybeSingle(),
   ]);
+  const allForks = crew.forks;
   const forks = allForks.filter((f) => (f.roomSlot ?? 0) === slotNumber);
   const bytes = me?.bytes ?? 0;
 
