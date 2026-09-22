@@ -77,6 +77,81 @@ export type Database = {
           },
         ]
       }
+      daily_event_outcomes: {
+        Row: {
+          choice: string
+          event_id: string
+          id: string
+          outcome_json: Json
+          resolved_at: string
+          resolved_on: string
+          user_id: string
+        }
+        Insert: {
+          choice: string
+          event_id: string
+          id?: string
+          outcome_json: Json
+          resolved_at?: string
+          resolved_on?: string
+          user_id: string
+        }
+        Update: {
+          choice?: string
+          event_id?: string
+          id?: string
+          outcome_json?: Json
+          resolved_at?: string
+          resolved_on?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_event_outcomes_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "daily_events_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_event_outcomes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_events_catalog: {
+        Row: {
+          active: boolean
+          id: string
+          narrative: string
+          option_a: Json
+          option_b: Json
+          sort_order: number
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          id: string
+          narrative: string
+          option_a: Json
+          option_b: Json
+          sort_order: number
+          title: string
+        }
+        Update: {
+          active?: boolean
+          id?: string
+          narrative?: string
+          option_a?: Json
+          option_b?: Json
+          sort_order?: number
+          title?: string
+        }
+        Relationships: []
+      }
       github_sync_state: {
         Row: {
           backfill_at: string | null
@@ -195,6 +270,11 @@ export type Database = {
       credit_bytes_tx_batch: {
         Args: { p_credits: Json; p_user_id: string }
         Returns: number
+      }
+      pick_daily_event: { Args: { p_user_id: string }; Returns: string }
+      resolve_daily_event: {
+        Args: { p_choice: string; p_user_id: string }
+        Returns: Json
       }
     }
     Enums: {

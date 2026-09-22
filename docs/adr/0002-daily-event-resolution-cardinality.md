@@ -1,8 +1,8 @@
 # ADR 0002 — Daily Event resolution cardinality per day
 
-- **Status:** Proposed
-- **Decision:** TBD — before seeding `daily_events_catalog` in the Public Alpha.
-- **Date:** 2026-05-03
+- **Status:** Accepted
+- **Decision:** Option A — one event per user per UTC day.
+- **Date:** 2026-05-03 (proposed), 2026-09-22 (accepted)
 
 ## Context
 
@@ -62,7 +62,13 @@ The user resolves 1 "daily" event always available. A second event appears as "o
 
 ## Decision
 
-**TBD.** Current leaning is **Option A for the Public Alpha**, migrating to **Option C in a later iteration**. To be decided before seeding `daily_events_catalog`.
+**Option A for the Public Alpha.** Option C stays on the table for a later iteration, gated on D7 retention signal.
+
+Implemented as:
+
+- `daily_event_outcomes` carries a generated `resolved_on` date (UTC) with `unique (user_id, resolved_on)`. `date(resolved_at)` cannot be used directly in a constraint because it depends on the session timezone and is not immutable.
+- Which event a user sees is decided in SQL by `pick_daily_event(user_id)`: day N after signup shows the N-th active event ordered by `sort_order`, modulo pool size. Deterministic, so a refresh never changes today's event, and the FTUE event (`sort_order = 0`) is always day 0. The page and the resolve RPC both call it, so the client never chooses which event it resolves.
+- `resolve_daily_event(user_id, choice)` logs the outcome snapshot and credits `bytes_delta` through the ledger with `source = 'daily_event'` and the UTC date as `source_ref`. A second call on the same day raises `already_resolved_today`.
 
 Decision criteria:
 
@@ -72,7 +78,8 @@ Decision criteria:
 
 ## Consequences
 
-- **If Option A:** change the constraint to `unique(user_id, date(resolved_at))` (no `event_id` mention — forces 1 total event per day). Trivial pre-launch schema migration.
+- Constraint is `unique(user_id, resolved_on)` (no `event_id` mention — forces 1 total event per day).
+- Rotation ignores which events the user already resolved. Acceptable while rotation is the only selector; revisit with Option C eligibility conditions.
 - **Affected metric:** "return after first event" (Public Alpha health gate) — more conservative under Option A, because the user **cannot** resolve multiple events in the same day, so a return must be on a different day. That is exactly the signal we want.
 - **Content needed for the next iteration:** if Option C lands, we must define the unlock condition AND ensure a sufficient pool (catalog grows to ~25–30 events).
 - **Economic calibration:** balance docs need to fix "Daily Event = 1 byte source per day, value X bytes" as a reference.
