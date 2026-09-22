@@ -6,13 +6,14 @@ import { syncUser } from "@/lib/github/sync";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
- * Vercel Cron entrypoint — see ADR 0005.
+ * Sync cron entrypoint — see ADR 0005.
  *
- * Schedule: every 15 minutes (cron expression in vercel.json).
+ * Schedule: every 15 minutes, driven by the GitHub Actions workflow
+ * `.github/workflows/sync-cron.yml` (Vercel Hobby only allows daily crons).
  *
  * Auth: shared `CRON_SECRET` via `Authorization: Bearer <secret>` header,
- * which Vercel injects automatically on cron invocations. Manual hits to
- * this URL without the header are 401'd.
+ * sent by the workflow from a repository secret. Manual hits to this URL
+ * without the header are 401'd.
  *
  * Per-user iteration: `syncUser` (lib/github/sync.ts) does the work —
  * 30-day backfill on first contact, cursor-based incremental sync after

@@ -1,0 +1,26 @@
+name: Sync cron
+
+# Pulses /api/cron/sync every 15 minutes (ADR 0005, erratum 2026-09-22).
+# Vercel's Hobby plan only allows daily crons and rejects the deploy
+# otherwise, so the scheduler lives here. GitHub may delay scheduled runs
+# by a few minutes under load; the sync is idempotent, so that is fine.
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: sync-cron
+  cancel-in-progress: false
+
+jobs:
+  pulse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Call the sync route
+        run: |
+          curl --fail-with-body --silent --show-error --max-time 90 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ vars.APP_URL }}/api/cron/sync"

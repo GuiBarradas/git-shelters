@@ -133,3 +133,11 @@ The original auth check used a plain `!==` on the `Authorization` header. Strict
 Why two sources instead of one: the ledger's unique key is `(user, source, source_ref)`, so a push credited by the backfill and again by the incremental path would be two rows. The cursor is the guard between the paths; the unique constraint remains the guard within each. Keeping the sources distinct also leaves the ledger honest about where bytes came from, which the profile and future analytics can read.
 
 The trigger metric from the 2026-05-04 erratum is moot; the "did the cron hit the ceiling" breadcrumb was never wired and is no longer needed.
+
+### 2026-09-22 — Scheduler moved from Vercel Cron to GitHub Actions
+
+Vercel's Hobby plan allows crons that run at most once per day and **rejects the whole deployment** when `vercel.json` asks for more. The `*/15 * * * *` schedule adopted above therefore made every production deploy fail from 2026-05-10 until today; production kept serving the last pre-cron build while `main` moved on.
+
+Decision: keep the 15-minute cadence and the route handler unchanged, remove the `crons` block from `vercel.json`, and pulse `/api/cron/sync` from `.github/workflows/sync-cron.yml` (`schedule: */15 * * * *` plus `workflow_dispatch`). The workflow sends `Authorization: Bearer ${CRON_SECRET}` from a repository secret; the production URL is a repository variable. Free on a public repo, no plan dependency. GitHub may run scheduled jobs a few minutes late under load, which an idle game does not notice, and the sync is idempotent if two pulses overlap.
+
+The "Auth" decision above is unchanged in substance: the header is the same, only its sender moved.
