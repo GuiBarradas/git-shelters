@@ -4,6 +4,7 @@ import { OrbitControls, OrthographicCamera } from "@react-three/drei";
 import { Canvas, useThree } from "@react-three/fiber";
 import { useLayoutEffect, useState } from "react";
 
+import { FORK_TRAITS, type Fork as ForkData } from "@/lib/forks/catalog";
 import { palette } from "@/lib/palette";
 import {
   BUILDABLE_SLOTS,
@@ -14,10 +15,13 @@ import {
   type Slot,
 } from "@/lib/rooms/catalog";
 
+import { Fork } from "./Fork";
 import { BuiltRoom, CELL, EmptyCell, MainBranchRoom } from "./rooms";
 
 type BunkerSceneProps = {
   rooms: Room[];
+  forks?: ForkData[];
+  onForkClick?: (fork: ForkData) => void;
   /** The bunker pushed code today. */
   activeToday: boolean;
   /** Today's Daily Event is still waiting on the Main Branch terminal. */
@@ -85,6 +89,8 @@ function CellHitbox({ onClick, onHover }: { onClick?: () => void; onHover: (h: b
 
 export default function BunkerScene({
   rooms,
+  forks = [],
+  onForkClick,
   activeToday,
   eventPending = false,
   onSlotClick,
@@ -93,6 +99,10 @@ export default function BunkerScene({
 }: BunkerSceneProps) {
   const bySlot = new Map(rooms.map((room) => [room.slot, room]));
   const [hovered, setHovered] = useState<number | null>(null);
+  // A Fork with no room wanders the Main Branch.
+  const forksIn = (slot: number) => forks.filter((f) => (f.roomSlot ?? 0) === slot);
+  const forkHover = (f: ForkData | null) =>
+    onHoverBlurb?.(f ? `${f.name} · ${FORK_TRAITS[f.trait].name}` : null);
   const hover = (slot: number, blurb: string) => (h: boolean) => {
     setHovered(h ? slot : null);
     onHoverBlurb?.(h ? blurb : null);
@@ -138,6 +148,11 @@ export default function BunkerScene({
 
       <group position={[slotX(0), 0, 0]}>
         <MainBranchRoom active={activeToday} pending={eventPending} />
+        {forksIn(0).map((f) => (
+          <group key={f.id} position={[0, 0, 1.0]}>
+            <Fork fork={f} range={1.3} onClick={onForkClick} onHover={forkHover} />
+          </group>
+        ))}
         <CellHitbox
           onClick={demo ? undefined : () => onSlotClick(0, true)}
           onHover={hover(0, MAIN_BRANCH_BLURB)}
@@ -149,6 +164,12 @@ export default function BunkerScene({
         return (
           <group key={slot} position={[slotX(slot), 0, 0]}>
             {room ? <BuiltRoom kind={room.kind} /> : <EmptyCell highlight={hovered === slot && !demo} />}
+            {room &&
+              forksIn(slot).map((f) => (
+                <group key={f.id} position={[0, 0, 1.0]}>
+                  <Fork fork={f} range={1.3} onClick={onForkClick} onHover={forkHover} />
+                </group>
+              ))}
             <CellHitbox
               onClick={demo ? undefined : () => onSlotClick(slot, Boolean(room))}
               onHover={hover(slot, room ? ROOM_CATALOG[room.kind].blurb : EMPTY_SLOT_BLURB)}

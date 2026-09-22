@@ -1,11 +1,18 @@
 import { signInWithGithub } from "@/app/auth/actions";
 import { BunkerSceneClient } from "@/components/scene/BunkerSceneClient";
+import type { Fork } from "@/lib/forks/catalog";
 import type { Room } from "@/lib/rooms/catalog";
 
 /** Prefab bunker every visitor sees: the three Public Alpha rooms, lights on. */
 const DEMO_ROOMS: Room[] = [
   { slot: 1, kind: "cache_storage" },
   { slot: 2, kind: "power_plant" },
+];
+
+/** One survivor pacing the demo so the place looks lived in. */
+const DEMO_FORKS: Fork[] = [
+  { id: "demo-1", name: "Linus_77", trait: "caffeinated", mood: "content", roomSlot: 0, seed: 77 },
+  { id: "demo-2", name: "Margie_NULL", trait: "senior", mood: "content", roomSlot: 1, seed: 1204 },
 ];
 
 /** Real profile shown as "what this looks like after a while". */
@@ -18,7 +25,7 @@ const SHOWCASE_LOGIN = "GuiBarradas";
 export function Landing() {
   return (
     <main className="relative w-full h-dvh">
-      <BunkerSceneClient rooms={DEMO_ROOMS} bytes={null} activeToday demo />
+      <BunkerSceneClient rooms={DEMO_ROOMS} forks={DEMO_FORKS} bytes={null} activeToday demo />
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center px-4 pt-10 sm:pt-16">
         <div className="max-w-xl space-y-4 text-center font-mono">

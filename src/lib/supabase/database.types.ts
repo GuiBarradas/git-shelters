@@ -217,6 +217,47 @@ export type Database = {
         }
         Relationships: []
       }
+      forks: {
+        Row: {
+          created_at: string
+          id: string
+          mood: string
+          name: string
+          room_slot: number | null
+          seed: number
+          trait: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mood?: string
+          name: string
+          room_slot?: number | null
+          seed?: number
+          trait: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mood?: string
+          name?: string
+          room_slot?: number | null
+          seed?: number
+          trait?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       github_sync_state: {
         Row: {
           backfill_at: string | null
@@ -336,7 +377,20 @@ export type Database = {
         Args: { p_credits: Json; p_user_id: string }
         Returns: number
       }
+      ensure_starter_fork: {
+        Args: { p_name: string; p_trait: string; p_user_id: string }
+        Returns: string
+      }
       pick_daily_event: { Args: { p_user_id: string }; Returns: string }
+      recruit_fork: {
+        Args: {
+          p_cost: number
+          p_name: string
+          p_trait: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       resolve_daily_event: {
         Args: { p_choice: string; p_user_id: string }
         Returns: Json

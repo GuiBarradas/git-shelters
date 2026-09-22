@@ -8,7 +8,11 @@ import { DailyEventCard } from "@/components/events/DailyEventCard";
 import { LedgerPanel, UptimePanel } from "@/components/rooms/RoomPanels";
 import { RoomSceneClient } from "@/components/scene/RoomSceneClient";
 import { daysBetween } from "@/lib/analytics/track";
+import { recruitFork } from "@/app/forks/actions";
 import { fetchDailyEvent, todayUtc } from "@/lib/events/daily";
+import { RECRUIT_COST } from "@/lib/forks/catalog";
+import { loadForks } from "@/lib/forks/load";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { isRoomKind, isSlot, MAIN_BRANCH_BLURB, ROOM_CATALOG, type RoomKind } from "@/lib/rooms/catalog";
 import { createClient } from "@/lib/supabase/server";
 
@@ -48,11 +52,15 @@ export default async function RoomPage({ params }: Props) {
   }
 
   const today = todayUtc();
-  const [activeToday, panel, dailyEvent] = await Promise.all([
+  const [activeToday, panel, dailyEvent, allForks, { data: me }] = await Promise.all([
     pushedToday(supabase, user.id, today),
     roomPanel(supabase, user, kind, today),
     isMain ? fetchDailyEvent(supabase, user.id, today) : null,
+    loadForks(supabase, createAdminClient(), user.id),
+    supabase.from("users").select("bytes").eq("id", user.id).maybeSingle(),
   ]);
+  const forks = allForks.filter((f) => (f.roomSlot ?? 0) === slotNumber);
+  const bytes = me?.bytes ?? 0;
 
   const title = kind ? ROOM_CATALOG[kind].name : "Main Branch";
   const blurb = kind ? ROOM_CATALOG[kind].blurb : MAIN_BRANCH_BLURB;
@@ -65,6 +73,7 @@ export default async function RoomPage({ params }: Props) {
         activeToday={activeToday}
         eventPending={Boolean(dailyEvent && !dailyEvent.resolved)}
         panel={isMain ? (dailyEvent ? <DailyEventCard event={dailyEvent} variant="screen" /> : undefined) : panel}
+        forks={forks}
       />
       <div className="pointer-events-none absolute top-4 left-4 z-10 font-mono text-sm">
         <h1 className="text-[#7FFF6A]">{title}</h1>
@@ -72,6 +81,21 @@ export default async function RoomPage({ params }: Props) {
         <Link href="/" className="pointer-events-auto mt-2 inline-block text-[#7FFF6A] hover:text-[#E6DFC8]">
           &larr; back to the corridor
         </Link>
+        {isMain && (
+          <form action={recruitFork} className="pointer-events-auto mt-4">
+            <button
+              type="submit"
+              disabled={bytes < RECRUIT_COST}
+              title={bytes < RECRUIT_COST ? `Need ${RECRUIT_COST} B` : "Someone at the door"}
+              className="border border-[#7FFF6A] px-3 py-1 text-[#7FFF6A] transition hover:bg-[#7FFF6A]/10 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Recruit a Fork · {RECRUIT_COST} B
+            </button>
+            <p className="mt-1 text-xs text-[#E6DFC8]/50">
+              {allForks.length} {allForks.length === 1 ? "survivor" : "survivors"} in the Repo
+            </p>
+          </form>
+        )}
       </div>
     </main>
   );

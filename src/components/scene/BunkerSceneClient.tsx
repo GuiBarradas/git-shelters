@@ -2,15 +2,17 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { buildRoom } from "@/app/rooms/actions";
+import { FORK_TRAITS, type Fork as ForkData } from "@/lib/forks/catalog";
 import { ROOM_CATALOG, type Room, type RoomKind, type Slot } from "@/lib/rooms/catalog";
 
 const BunkerScene = dynamic(() => import("./BunkerScene"), { ssr: false });
 
 type BunkerSceneClientProps = {
   rooms: Room[];
+  forks?: ForkData[];
   /** Current balance; null when anonymous. Anonymous players cannot build. */
   bytes: number | null;
   activeToday: boolean;
@@ -27,6 +29,7 @@ type BunkerSceneClientProps = {
  */
 export function BunkerSceneClient({
   rooms,
+  forks = [],
   bytes,
   activeToday,
   eventPending = false,
@@ -35,7 +38,14 @@ export function BunkerSceneClient({
   const router = useRouter();
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [blurb, setBlurb] = useState<string | null>(null);
+  const [speech, setSpeech] = useState<{ name: string; line: string } | null>(null);
   const canBuild = bytes !== null && !demo;
+
+  useEffect(() => {
+    if (!speech) return;
+    const id = setTimeout(() => setSpeech(null), 3500);
+    return () => clearTimeout(id);
+  }, [speech]);
 
   const onSlotClick = (slot: 0 | Slot, built: boolean) => {
     if (built) {
@@ -49,6 +59,8 @@ export function BunkerSceneClient({
     <>
       <BunkerScene
         rooms={rooms}
+        forks={forks}
+        onForkClick={(f) => setSpeech({ name: f.name, line: FORK_TRAITS[f.trait].line })}
         activeToday={activeToday}
         eventPending={eventPending}
         onSlotClick={onSlotClick}
@@ -61,7 +73,8 @@ export function BunkerSceneClient({
         className="pointer-events-none absolute inset-0"
         style={{ background: "radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%)" }}
       />
-      {blurb && selectedSlot === null && (
+      {speech && <SpeechBubble name={speech.name} line={speech.line} />}
+      {blurb && selectedSlot === null && !speech && (
         <p className="pointer-events-none absolute bottom-6 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border border-[#7FFF6A]/40 bg-[#0F0F0F]/90 px-3 py-1 font-mono text-xs text-[#E6DFC8]">
           {blurb}
           {!demo && <span className="text-[#E6DFC8]/50"> · click to enter</span>}
@@ -71,6 +84,15 @@ export function BunkerSceneClient({
         <BuildMenu slot={selectedSlot} bytes={bytes} onClose={() => setSelectedSlot(null)} />
       )}
     </>
+  );
+}
+
+/** What a survivor says when poked; fades on its own. */
+export function SpeechBubble({ name, line }: { name: string; line: string }) {
+  return (
+    <p className="pointer-events-none absolute bottom-6 left-1/2 z-10 -translate-x-1/2 max-w-md border border-[#E6DFC8]/40 bg-[#0F0F0F]/95 px-4 py-2 text-center font-mono text-sm text-[#E6DFC8]">
+      <span className="text-[#7FFF6A]">{name}:</span> &ldquo;{line}&rdquo;
+    </p>
   );
 }
 

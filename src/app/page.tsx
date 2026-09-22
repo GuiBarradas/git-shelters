@@ -6,6 +6,7 @@ import { Landing } from "@/components/landing/Landing";
 import { BunkerSceneClient } from "@/components/scene/BunkerSceneClient";
 import { trackSessionStart } from "@/lib/analytics/track";
 import { fetchDailyEvent } from "@/lib/events/daily";
+import { loadForks } from "@/lib/forks/load";
 import { isRoomKind, isSlot, type Room } from "@/lib/rooms/catalog";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -32,11 +33,12 @@ export default async function Home() {
   // tagged source = 'github_sync' with created_at on today's UTC date.
   // The sync server action (src/app/sync/actions.ts) is what populates it.
   const todayUtc = new Date().toISOString().slice(0, 10);
-  const [activeToday, bytes, rooms, dailyEvent] = await Promise.all([
+  const [activeToday, bytes, rooms, dailyEvent, forks] = await Promise.all([
     checkActivityToday(supabase, user.id, todayUtc),
     fetchBytes(supabase, user.id),
     fetchRooms(supabase, user.id),
     fetchDailyEvent(supabase, user.id, todayUtc),
+    loadForks(supabase, createAdminClient(), user.id),
   ]);
 
   return (
@@ -44,6 +46,7 @@ export default async function Home() {
       <SessionBeacon />
       <BunkerSceneClient
         rooms={rooms}
+        forks={forks}
         bytes={bytes}
         activeToday={activeToday}
         eventPending={Boolean(dailyEvent && !dailyEvent.resolved)}
