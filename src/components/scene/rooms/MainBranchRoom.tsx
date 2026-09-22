@@ -38,7 +38,15 @@ export const LAYOUT: RoomLayout = {
   stations: [
     // Off the screen's axis: the terminal's HTML panel is DOM, always drawn
     // over the canvas, so a Fork sitting dead-centre would vanish behind it.
-    { position: [-0.32, 0, 0.42], facing: Math.PI - 0.35, action: "type", hold: 7, seatY: 0.42 },
+    // Enter and leave the chair from its open left side, never through the back.
+    {
+      position: [-0.32, 0, 0.42],
+      approach: [-0.95, 0, 0.55],
+      facing: Math.PI - 0.35,
+      action: "type",
+      hold: 7,
+      seatY: 0.3,
+    },
     { position: [-0.85, 0, -0.2], facing: -Math.PI / 2, action: "inspect", hold: 4 },
   ],
 };
@@ -96,16 +104,16 @@ export function MainBranchRoom({ pending = false, active = false }: Props) {
       </mesh>
       {/* chair at the desk, facing the screen; the Fork sits here to type */}
       <group position={[-0.32, 0, 0.42]} rotation={[0, -0.35, 0]}>
-        <mesh position={[0, 0.4, 0]}>
+        <mesh position={[0, 0.3, 0]}>
           <boxGeometry args={[0.5, 0.06, 0.5]} />
           <meshToonMaterial color={palette.fadedRed} />
         </mesh>
-        <mesh position={[0, 0.72, 0.24]}>
-          <boxGeometry args={[0.5, 0.6, 0.06]} />
+        <mesh position={[0, 0.6, 0.24]}>
+          <boxGeometry args={[0.5, 0.55, 0.06]} />
           <meshToonMaterial color={palette.fadedRed} />
         </mesh>
-        <mesh position={[0, 0.19, 0]}>
-          <cylinderGeometry args={[0.04, 0.04, 0.38, 8]} />
+        <mesh position={[0, 0.14, 0]}>
+          <cylinderGeometry args={[0.04, 0.04, 0.28, 8]} />
           <meshToonMaterial color={palette.coalBlack} />
         </mesh>
         <mesh position={[0, 0.02, 0]}>
