@@ -93,9 +93,9 @@ export default async function RoomPage({ params }: Props) {
         powered={resources.uptime > 0}
       />
       <div className="pointer-events-none absolute top-4 left-4 z-10 font-mono text-sm">
-        <h1 className="text-[#7FFF6A]">{title}</h1>
+        <h1 className="text-[#BD93F9]">{title}</h1>
         <p className="text-[#E6DFC8]/60">{blurb}</p>
-        <Link href="/" className="pointer-events-auto mt-2 inline-block text-[#7FFF6A] hover:text-[#E6DFC8]">
+        <Link href="/" className="pointer-events-auto mt-2 inline-block text-[#BD93F9] hover:text-[#E6DFC8]">
           &larr; back to the corridor
         </Link>
         {isMain && (
@@ -104,7 +104,7 @@ export default async function RoomPage({ params }: Props) {
               type="submit"
               disabled={noBed || bytes < RECRUIT_COST}
               title={noBed ? "No free bed. Build a Dorm." : bytes < RECRUIT_COST ? `Need ${RECRUIT_COST} B` : "Someone at the door"}
-              className="border border-[#7FFF6A] px-3 py-1 text-[#7FFF6A] transition hover:bg-[#7FFF6A]/10 disabled:cursor-not-allowed disabled:opacity-40"
+              className="border border-[#BD93F9] px-3 py-1 text-[#BD93F9] transition hover:bg-[#BD93F9]/10 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Recruit a Fork · {RECRUIT_COST} B
             </button>

@@ -34,20 +34,20 @@ export default async function SettingsPage({
             {"// maintainer :: settings"}
           </div>
           <h1 className="text-2xl">{login}</h1>
-          <Link href="/" className="inline-block text-[#7FFF6A] hover:text-[#E6DFC8]">
+          <Link href="/" className="inline-block text-[#BD93F9] hover:text-[#E6DFC8]">
             &larr; back to your Repo
           </Link>
         </header>
 
         <section className="space-y-3 border border-[#E6DFC8]/20 p-5">
-          <h2 className="text-[#7FFF6A]">Export your data</h2>
+          <h2 className="text-[#BD93F9]">Export your data</h2>
           <p className="text-[#E6DFC8]/80 leading-relaxed">
             Everything the bunker holds about you, as one JSON file: account, byte ledger,
             rooms, Daily Event history and sync state.
           </p>
           <a
             href="/api/account/export"
-            className="inline-block border border-[#7FFF6A] px-3 py-1 text-[#7FFF6A] transition hover:bg-[#7FFF6A]/10"
+            className="inline-block border border-[#BD93F9] px-3 py-1 text-[#BD93F9] transition hover:bg-[#BD93F9]/10"
           >
             Download JSON
           </a>

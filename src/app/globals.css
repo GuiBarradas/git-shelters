@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0f0f0f;
+  --background: #0b0713;
   --foreground: #e6dfc8;
-  --accent: #7fff6a;
+  --accent: #bd93f9;
 }
 
 @theme inline {
@@ -111,10 +111,10 @@ body,
 .crt {
   position: relative;
   background:
-    radial-gradient(ellipse at center, #0a2e12 0%, #06200c 60%, #03140a 100%);
+    radial-gradient(ellipse at center, #1c0f33 0%, #130a24 60%, #0b0713 100%);
   text-shadow:
-    0 0 4px rgba(127, 255, 106, 0.55),
-    0 0 12px rgba(127, 255, 106, 0.2);
+    0 0 4px rgba(189, 147, 249, 0.55),
+    0 0 12px rgba(189, 147, 249, 0.2);
   box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.75);
 }
 .crt::after {

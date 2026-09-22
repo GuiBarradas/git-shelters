@@ -41,7 +41,7 @@ export default function Error({
         <button
           type="button"
           onClick={reset}
-          className="border border-[#7FFF6A] px-4 py-2 text-[#7FFF6A] font-mono text-sm hover:bg-[#7FFF6A]/10 transition"
+          className="border border-[#BD93F9] px-4 py-2 text-[#BD93F9] font-mono text-sm hover:bg-[#BD93F9]/10 transition"
         >
           retry
         </button>

@@ -11,13 +11,13 @@ export function BadgeToast({ badges }: { badges: Array<{ name: string; blurb: st
       {badges.map((b, i) => (
         <li
           key={b.name}
-          className="hud-fade border border-[#7FFF6A]/60 bg-[#0F0F0F]/95 px-3 py-2 text-[#E6DFC8]"
+          className="hud-fade border border-[#BD93F9]/60 bg-[#0B0713]/95 px-3 py-2 text-[#E6DFC8]"
           style={{ animationDuration: `${6 + i * 2}s` }}
         >
-          <p className="text-[10px] uppercase tracking-[0.25em] text-[#7FFF6A]/70">
+          <p className="text-[10px] uppercase tracking-[0.25em] text-[#BD93F9]/70">
             {b.kind === "achievement" ? "achievement unlocked" : "badge earned"}
           </p>
-          <p className="text-[#7FFF6A]">{b.name}</p>
+          <p className="text-[#BD93F9]">{b.name}</p>
           <p className="text-[#E6DFC8]/60">{b.blurb}</p>
         </li>
       ))}

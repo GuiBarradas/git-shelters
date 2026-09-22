@@ -17,7 +17,7 @@ const BunkerScene = dynamic(() => import("./BunkerScene"), {
 /** Shown while the renderer chunk downloads; the page is never a black hole. */
 export function SceneBooting() {
   return (
-    <p className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-mono text-sm text-[#7FFF6A]/70">
+    <p className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-mono text-sm text-[#BD93F9]/70">
       &gt; booting renderer<span className="blink">_</span>
     </p>
   );
@@ -100,7 +100,7 @@ export function BunkerSceneClient({
       />
       {speech && <SpeechBubble name={speech.name} line={speech.line} />}
       {blurb && selectedSlot === null && !speech && (
-        <p className="pointer-events-none absolute bottom-6 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border border-[#7FFF6A]/40 bg-[#0F0F0F]/90 px-3 py-1 font-mono text-xs text-[#E6DFC8]">
+        <p className="pointer-events-none absolute bottom-6 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border border-[#BD93F9]/40 bg-[#0B0713]/90 px-3 py-1 font-mono text-xs text-[#E6DFC8]">
           {blurb}
           {!demo && <span className="text-[#E6DFC8]/50"> · click to enter</span>}
         </p>
@@ -115,15 +115,15 @@ export function BunkerSceneClient({
 /** What a survivor says when poked; fades on its own. */
 export function SpeechBubble({ name, line }: { name: string; line: string }) {
   return (
-    <p className="pointer-events-none absolute bottom-6 left-1/2 z-10 -translate-x-1/2 max-w-md border border-[#E6DFC8]/40 bg-[#0F0F0F]/95 px-4 py-2 text-center font-mono text-sm text-[#E6DFC8]">
-      <span className="text-[#7FFF6A]">{name}:</span> &ldquo;{line}&rdquo;
+    <p className="pointer-events-none absolute bottom-6 left-1/2 z-10 -translate-x-1/2 max-w-md border border-[#E6DFC8]/40 bg-[#0B0713]/95 px-4 py-2 text-center font-mono text-sm text-[#E6DFC8]">
+      <span className="text-[#BD93F9]">{name}:</span> &ldquo;{line}&rdquo;
     </p>
   );
 }
 
 function BuildMenu({ slot, bytes, onClose }: { slot: Slot; bytes: number; onClose: () => void }) {
   return (
-    <div className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 border border-[#7FFF6A] bg-[#0F0F0F]/90 p-4 font-mono text-sm text-[#7FFF6A]">
+    <div className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 border border-[#BD93F9] bg-[#0B0713]/90 p-4 font-mono text-sm text-[#BD93F9]">
       <div className="mb-3 flex items-center justify-between gap-6">
         <span>SLOT {slot} — BUILD</span>
         <button type="button" onClick={onClose} className="hover:text-[#E6DFC8]">
@@ -141,7 +141,7 @@ function BuildMenu({ slot, bytes, onClose }: { slot: Slot; bytes: number; onClos
               <button
                 type="submit"
                 disabled={!affordable}
-                className="border border-[#7FFF6A] px-3 py-1 transition hover:bg-[#7FFF6A]/10 disabled:cursor-not-allowed disabled:opacity-40"
+                className="border border-[#BD93F9] px-3 py-1 transition hover:bg-[#BD93F9]/10 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {name} · {cost} B
               </button>

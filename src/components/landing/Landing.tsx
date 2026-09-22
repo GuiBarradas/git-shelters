@@ -31,7 +31,7 @@ export function Landing() {
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center px-4 pt-10 sm:pt-16">
         <div className="max-w-xl space-y-4 text-center font-mono">
-          <p className="text-xs uppercase tracking-[0.3em] text-[#7FFF6A]/70">Git Shelters</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-[#BD93F9]/70">Git Shelters</p>
           <h1 className="text-xl leading-snug text-[#E6DFC8] sm:text-2xl">
             Your commits build the bunker. Your idle still earns. Your absence is canon.
           </h1>
@@ -41,7 +41,7 @@ export function Landing() {
           <form action={signInWithGithub} className="pointer-events-auto pt-2">
             <button
               type="submit"
-              className="border border-[#7FFF6A] bg-[#0F0F0F]/80 px-5 py-2 text-sm text-[#7FFF6A] transition hover:bg-[#7FFF6A]/10"
+              className="border border-[#BD93F9] bg-[#0B0713]/80 px-5 py-2 text-sm text-[#BD93F9] transition hover:bg-[#BD93F9]/10"
             >
               Connect with GitHub
             </button>

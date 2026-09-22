@@ -116,7 +116,7 @@ export default async function Home() {
         {resources.uptime === 0 && <p className="text-[#A14545]">&gt; blackout. Put an engineer on the Power Plant.</p>}
         {resources.cache === 0 && <p className="text-[#A14545]">&gt; the pantry is empty. Nobody is cooking.</p>}
         {dailyEvent && !dailyEvent.resolved && (
-          <p className="text-[#7FFF6A]/80">&gt; incoming packet on the Main Branch terminal</p>
+          <p className="text-[#BD93F9]/80">&gt; incoming packet on the Main Branch terminal</p>
         )}
         <p className="text-[#E6DFC8]/50">&gt; {describeCrew(crewMood, crew.lastPushAt, new Date(), echo)}</p>
       </div>

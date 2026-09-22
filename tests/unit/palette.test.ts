@@ -5,23 +5,27 @@ import { palette } from "@/lib/palette";
 const HEX = /^#[0-9A-Fa-f]{6}$/;
 
 describe("palette", () => {
-  it("exposes exactly 10 colors", () => {
-    expect(Object.keys(palette)).toHaveLength(10);
+  it("exposes exactly 14 colors", () => {
+    expect(Object.keys(palette)).toHaveLength(14);
   });
 
-  it("declares every Pip-Boy palette color", () => {
+  it("declares every named color of the bunker palette", () => {
     expect(Object.keys(palette).sort()).toEqual(
       [
+        "amber",
         "boneWhite",
+        "bunkerBlack",
         "coalBlack",
         "concreteTan",
         "fadedRed",
         "glowYellow",
+        "inactivePlum",
         "mustardWarning",
         "oldWoodBrown",
         "outageGray",
-        "radioactiveGreen",
+        "phosphorViolet",
         "steelBlue",
+        "violetDim",
       ].sort(),
     );
   });

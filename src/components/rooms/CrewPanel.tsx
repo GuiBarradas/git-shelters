@@ -35,7 +35,7 @@ export function CrewPanel({
             {here.map((f) => (
               <li key={f.id} className="flex items-center justify-between gap-3">
                 <span>
-                  <span className="text-[#7FFF6A]">{f.name}</span>{" "}
+                  <span className="text-[#BD93F9]">{f.name}</span>{" "}
                   <span className="text-[#E6DFC8]/60">
                     · {jobFor(kindOf(f.roomSlot)).title} · {MOOD_LABEL[f.mood]}
                   </span>
@@ -70,7 +70,7 @@ export function CrewPanel({
                 <form action={assignFork}>
                   <input type="hidden" name="fork" value={f.id} />
                   <input type="hidden" name="slot" value={slot} />
-                  <button type="submit" className="border border-[#7FFF6A] px-2 py-0.5 text-[#7FFF6A] hover:bg-[#7FFF6A]/10">
+                  <button type="submit" className="border border-[#BD93F9] px-2 py-0.5 text-[#BD93F9] hover:bg-[#BD93F9]/10">
                     {slot === 0 ? "call back" : "assign here"}
                   </button>
                 </form>

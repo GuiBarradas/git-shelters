@@ -27,7 +27,7 @@ export default async function ProfilePage({ params }: Props) {
   return (
     <main className="relative w-full h-dvh">
       <BunkerSceneClient rooms={profile.rooms} bytes={null} activeToday={false} />
-      <div className="pointer-events-none absolute top-4 left-4 z-10 font-mono text-sm text-[#7FFF6A]">
+      <div className="pointer-events-none absolute top-4 left-4 z-10 font-mono text-sm text-[#BD93F9]">
         <h1 className="text-base">{profile.login}&apos;s Repo</h1>
         <p className="text-[#E6DFC8]/70">
           {profile.bytes.toLocaleString("en-US")} B · maintainer since {memberSince}
@@ -43,17 +43,17 @@ export default async function ProfilePage({ params }: Props) {
                 tabIndex={0}
                 className={`group relative cursor-help border px-2 py-0.5 ${
                   b.kind === "achievement"
-                    ? "border-[#7FFF6A]/50 text-[#7FFF6A]"
+                    ? "border-[#BD93F9]/50 text-[#BD93F9]"
                     : b.kind === "region"
                       ? "border-[#A14545]/70 text-[#E6DFC8]/80"
-                      : "border-[#FFD66B]/60 text-[#FFD66B]"
+                      : "border-[#E67E22]/60 text-[#E67E22]"
                 }`}
               >
                 {b.name}
                 {/* the blurb, on hover or keyboard focus; no delay, no native tooltip */}
                 <span
                   role="tooltip"
-                  className="pointer-events-none absolute top-full left-0 z-20 mt-1 hidden w-56 border border-[#E6DFC8]/30 bg-[#0F0F0F] px-2 py-1 font-normal normal-case text-[#E6DFC8]/85 group-hover:block group-focus-visible:block"
+                  className="pointer-events-none absolute top-full left-0 z-20 mt-1 hidden w-56 border border-[#E6DFC8]/30 bg-[#0B0713] px-2 py-1 font-normal normal-case text-[#E6DFC8]/85 group-hover:block group-focus-visible:block"
                 >
                   {b.blurb}
                 </span>

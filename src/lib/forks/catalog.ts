@@ -80,7 +80,7 @@ export function pickTrait(seed: number): ForkTrait {
 export type ForkLook = { skin: string; shirt: string; pants: string; helmet: string | null };
 
 const SKINS = ["#f1c9a5", "#c68642", "#8d5524", "#e0ac69", "#5c3a21"];
-const SHIRTS = [palette.fadedRed, palette.steelBlue, palette.mustardWarning, palette.radioactiveGreen, palette.boneWhite, palette.concreteTan];
+const SHIRTS = [palette.fadedRed, palette.steelBlue, palette.mustardWarning, palette.phosphorViolet, palette.boneWhite, palette.concreteTan];
 
 export function forkLook(seed: number): ForkLook {
   const rand = mulberry32(seed ^ 0x5bd1e995);

@@ -18,7 +18,7 @@ export default function NotFound() {
         </p>
         <Link
           href="/"
-          className="inline-block border border-[#7FFF6A] px-3 py-1 font-mono text-sm text-[#7FFF6A] hover:bg-[#7FFF6A]/10 transition"
+          className="inline-block border border-[#BD93F9] px-3 py-1 font-mono text-sm text-[#BD93F9] hover:bg-[#BD93F9]/10 transition"
         >
           &larr; back to your Repo
         </Link>

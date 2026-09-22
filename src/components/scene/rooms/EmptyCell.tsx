@@ -28,10 +28,10 @@ export function EmptyCell({ highlight = false }: { highlight?: boolean }) {
       <mesh position={[0, 1.5, 0.3]}>
         <boxGeometry args={[2.6, 2.2, 1.6]} />
         <meshToonMaterial
-          color={palette.radioactiveGreen}
+          color={palette.phosphorViolet}
           transparent
           opacity={highlight ? 0.26 : 0.12}
-          emissive={palette.radioactiveGreen}
+          emissive={palette.phosphorViolet}
           emissiveIntensity={highlight ? 0.6 : 0.18}
         />
       </mesh>

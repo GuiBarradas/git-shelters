@@ -16,11 +16,11 @@ export function AwaySummary({ report }: { report: AwayReport }) {
 
   return (
     <div className="pointer-events-auto absolute inset-x-0 top-24 z-20 flex justify-center px-4">
-      <section className="route-enter w-full max-w-md border border-[#7FFF6A]/60 bg-[#0F0F0F]/95 p-4 font-mono text-sm text-[#E6DFC8] shadow-[0_0_30px_rgba(127,255,106,0.12)]">
-        <p className="mb-2 text-[10px] uppercase tracking-[0.25em] text-[#7FFF6A]/60">
+      <section className="route-enter w-full max-w-md border border-[#BD93F9]/60 bg-[#0B0713]/95 p-4 font-mono text-sm text-[#E6DFC8] shadow-[0_0_30px_rgba(189, 147, 249,0.12)]">
+        <p className="mb-2 text-[10px] uppercase tracking-[0.25em] text-[#BD93F9]/60">
           main-branch:~$ cat since_last_login.log
         </p>
-        <h2 className="mb-3 text-[#7FFF6A]">{report.headline}</h2>
+        <h2 className="mb-3 text-[#BD93F9]">{report.headline}</h2>
         <ul className="space-y-1 text-[#E6DFC8]/85">
           {report.lines.map((line) => (
             <li key={line}>&gt; {line}</li>
@@ -34,7 +34,7 @@ export function AwaySummary({ report }: { report: AwayReport }) {
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="mt-4 border border-[#7FFF6A] px-3 py-1 text-[#7FFF6A] transition hover:bg-[#7FFF6A]/10"
+          className="mt-4 border border-[#BD93F9] px-3 py-1 text-[#BD93F9] transition hover:bg-[#BD93F9]/10"
         >
           back to work
         </button>

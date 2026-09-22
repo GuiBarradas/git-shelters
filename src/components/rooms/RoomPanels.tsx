@@ -89,16 +89,16 @@ export function UptimePanel({
 }) {
   const ago = lastSyncAt ? minutesAgo(lastSyncAt) : null;
   return (
-    <div className={`${frame} bg-[#111] px-3 py-2 text-[10px] text-[#FFD66B] [text-shadow:0_0_5px_rgba(255,214,107,0.5)]`}>
-      <div className="mb-1 flex items-baseline justify-between border-b border-[#FFD66B]/30 pb-1">
+    <div className={`${frame} bg-[#111] px-3 py-2 text-[10px] text-[#E67E22] [text-shadow:0_0_5px_rgba(230, 126, 34,0.5)]`}>
+      <div className="mb-1 flex items-baseline justify-between border-b border-[#E67E22]/30 pb-1">
         <span className="font-bold tracking-widest">GENERATOR</span>
-        <span className={pushedToday ? "text-[#7FFF6A]" : "text-[#A14545]"}>
+        <span className={pushedToday ? "text-[#BD93F9]" : "text-[#A14545]"}>
           {pushedToday ? "● FEED LIVE" : "○ FEED IDLE"}
         </span>
       </div>
       <p>
         CHARGE <span className={uptime === 0 ? "text-[#A14545]" : "text-[#E6DFC8]"}>{uptime}%</span>
-        <span className="text-[#FFD66B]/60">
+        <span className="text-[#E67E22]/60">
           {" "}
           · {engineers.length === 0 ? "nobody on the crank" : `engineer: ${engineers.join(", ")}`}
         </span>
@@ -112,7 +112,7 @@ export function UptimePanel({
           {ago === null ? "never" : ago < 1 ? "just now" : ago < 60 ? `${ago} min ago` : `${Math.floor(ago / 60)} h ago`}
         </span>
       </p>
-      <p className="mt-1 text-[#FFD66B]/60">
+      <p className="mt-1 text-[#E67E22]/60">
         {pushedToday ? "Commits keep the lights on." : "No commits today. Running on reserve."}
       </p>
     </div>
@@ -126,12 +126,12 @@ export function BunkPanel({ beds, crew, sleepers }: { beds: number; crew: number
     <div className={`${frame} bg-[#3b3325] px-3 py-2 text-[10px] text-[#E6DFC8] [text-shadow:none]`}>
       <div className="mb-1 flex items-baseline justify-between border-b border-[#E6DFC8]/30 pb-1">
         <span className="font-bold tracking-widest">BUNK ROSTER</span>
-        <span className={free === 0 ? "text-[#A14545]" : "text-[#7FFF6A]"}>
+        <span className={free === 0 ? "text-[#A14545]" : "text-[#BD93F9]"}>
           {free === 0 ? "○ FULL" : `● ${free} FREE`}
         </span>
       </div>
       <p>
-        BEDS <span className="text-[#FFD66B]">{crew}</span>/{beds}
+        BEDS <span className="text-[#E67E22]">{crew}</span>/{beds}
       </p>
       <p className="text-[#E6DFC8]/70">
         {sleepers.length === 0 ? "nobody sleeping. The blankets are cold." : `sleeping: ${sleepers.join(", ")}`}
@@ -159,10 +159,10 @@ export function BenchPanel({
     <div className={`${frame} bg-[#1a1d1a] px-3 py-2 text-[10px] text-[#E6DFC8] [text-shadow:0_0_2px_rgba(230,223,200,0.4)]`}>
       <div className="mb-1 flex items-baseline justify-between border-b border-[#E6DFC8]/30 pb-1">
         <span className="font-bold tracking-widest">PAYLOAD RACK</span>
-        <span className={payload >= cap ? "text-[#FFD66B]" : "text-[#7FFF6A]"}>{payload >= cap ? "○ FULL" : "● PACKING"}</span>
+        <span className={payload >= cap ? "text-[#E67E22]" : "text-[#BD93F9]"}>{payload >= cap ? "○ FULL" : "● PACKING"}</span>
       </div>
       <p>
-        ROUNDS <span className="text-[#FFD66B]">{payload}</span>/{cap}
+        ROUNDS <span className="text-[#E67E22]">{payload}</span>/{cap}
       </p>
       <p className="text-[#E6DFC8]/70">
         {tinkerers.length === 0 ? "nobody at the bench." : `tinkerer: ${tinkerers.join(", ")}`}

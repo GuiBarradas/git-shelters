@@ -21,7 +21,7 @@ type RoomShellProps = {
 };
 
 /**
- * A bunker cell seen in cross-section, Fallout Shelter style: floor slab,
+ * A bunker cell seen in cross-section, like a dollhouse cut open: floor slab,
  * back wall, ceiling beam and two pillars, open at the front so the
  * camera looks straight into the room. Everything is primitive geometry
  * in the fixed palette, per the design rule of zero external models.

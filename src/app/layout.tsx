@@ -29,7 +29,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#0F0F0F] text-[#E6DFC8]">
+      <body className="min-h-full flex flex-col bg-[#0B0713] text-[#E6DFC8]">
         {children}
         <footer className="pointer-events-auto fixed bottom-2 right-4 z-10 font-mono text-[10px] uppercase tracking-widest text-[#E6DFC8]/40">
           <Link href="/legal/privacy" className="hover:text-[#E6DFC8]">Privacy</Link>

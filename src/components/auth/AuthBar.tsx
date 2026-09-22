@@ -15,18 +15,18 @@ type AuthBarProps = {
  * user's GitHub login + a logout button (authenticated). Both forms post
  * to Server Actions — no client-side auth client needed.
  *
- * Visual: minimal Pip-Boy-ish styling using palette hexes inline. Will be
+ * Visual: minimal terminal styling using palette hexes inline. Will be
  * replaced by a proper `<Button>` atom (GDD §22.3) once that exists.
  */
 export function AuthBar({ githubLogin, bytes }: AuthBarProps) {
   if (githubLogin) {
     return (
-      <div className="pointer-events-auto flex items-center gap-3 font-mono text-sm text-[#7FFF6A]">
+      <div className="pointer-events-auto flex items-center gap-3 font-mono text-sm text-[#BD93F9]">
         <a href={`/u/${githubLogin}`} className="hover:text-[#E6DFC8]" title="Your public Repo">
           {githubLogin}
         </a>
         <span
-          className="border border-[#7FFF6A]/40 px-3 py-1 tabular-nums"
+          className="border border-[#BD93F9]/40 px-3 py-1 tabular-nums"
           title="Bytes"
         >
           {bytes === null ? "-- B" : `${bytes.toLocaleString("en-US")} B`}
@@ -35,7 +35,7 @@ export function AuthBar({ githubLogin, bytes }: AuthBarProps) {
         <form action={signOut}>
           <button
             type="submit"
-            className="border border-[#7FFF6A] px-3 py-1 hover:bg-[#7FFF6A]/10 transition"
+            className="border border-[#BD93F9] px-3 py-1 hover:bg-[#BD93F9]/10 transition"
           >
             Logout
           </button>
@@ -51,7 +51,7 @@ export function AuthBar({ githubLogin, bytes }: AuthBarProps) {
     >
       <button
         type="submit"
-        className="border border-[#7FFF6A] px-4 py-2 text-[#7FFF6A] hover:bg-[#7FFF6A]/10 transition"
+        className="border border-[#BD93F9] px-4 py-2 text-[#BD93F9] hover:bg-[#BD93F9]/10 transition"
       >
         Connect GitHub
       </button>

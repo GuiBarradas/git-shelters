@@ -78,10 +78,10 @@ export function MainBranchRoom({ pending = false, active = false, powered = true
     });
   });
 
-  const screenColor = pending ? palette.radioactiveGreen : active ? palette.radioactiveGreen : palette.glowYellow;
+  const screenColor = pending ? palette.phosphorViolet : active ? palette.phosphorViolet : palette.glowYellow;
 
   return (
-    <RoomShell light={active ? palette.radioactiveGreen : palette.glowYellow} lightIntensity={active ? 5 : 3.5} powered={powered}>
+    <RoomShell light={active ? palette.amber : palette.glowYellow} lightIntensity={active ? 5 : 3.5} powered={powered}>
       {/* desk: waist height for a 1.45-tall survivor */}
       <mesh position={[0.55, 0.66, -0.55]}>
         <boxGeometry args={[2.1, 0.1, 0.9]} />
@@ -116,11 +116,11 @@ export function MainBranchRoom({ pending = false, active = false, powered = true
       </mesh>
       <mesh position={SCREEN.position}>
         <planeGeometry args={[SCREEN.width, SCREEN.height]} />
-        <meshToonMaterial ref={screen} color="#062a0c" emissive={screenColor} emissiveIntensity={1} />
+        <meshToonMaterial ref={screen} color="#150a26" emissive={screenColor} emissiveIntensity={1} />
       </mesh>
       <mesh position={[1.02, 0.78, -0.54]}>
         <boxGeometry args={[0.04, 0.04, 0.02]} />
-        <meshToonMaterial color={palette.coalBlack} emissive={palette.radioactiveGreen} emissiveIntensity={1.4} />
+        <meshToonMaterial color={palette.coalBlack} emissive={palette.phosphorViolet} emissiveIntensity={1.4} />
       </mesh>
       {/* keyboard: tilted base with three rows of keys and a space bar */}
       <group position={[-0.05, 0.71, -0.22]} rotation={[0.12, 0.35, 0]}>
@@ -174,7 +174,7 @@ export function MainBranchRoom({ pending = false, active = false, powered = true
           }}
         >
           <boxGeometry args={[0.08, 0.08, 0.03]} />
-          <meshToonMaterial color={palette.coalBlack} emissive={i % 3 === 0 ? palette.fadedRed : palette.radioactiveGreen} emissiveIntensity={1} />
+          <meshToonMaterial color={palette.coalBlack} emissive={i % 3 === 0 ? palette.fadedRed : palette.phosphorViolet} emissiveIntensity={1} />
         </mesh>
       ))}
       {/* pinned map on the wall */}

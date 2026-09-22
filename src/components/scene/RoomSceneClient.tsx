@@ -46,7 +46,7 @@ export function RoomSceneClient(props: Props) {
       {speech ? (
         <SpeechBubble name={speech.name} line={speech.line} />
       ) : hovered ? (
-        <p className="pointer-events-none absolute bottom-6 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border border-[#7FFF6A]/40 bg-[#0F0F0F]/90 px-3 py-1 font-mono text-xs text-[#E6DFC8]">
+        <p className="pointer-events-none absolute bottom-6 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border border-[#BD93F9]/40 bg-[#0B0713]/90 px-3 py-1 font-mono text-xs text-[#E6DFC8]">
           {hovered.name} · {FORK_TRAITS[hovered.trait].name} · {MOOD_LABEL[hovered.mood]}
           <span className="text-[#E6DFC8]/50"> · click to talk</span>
         </p>

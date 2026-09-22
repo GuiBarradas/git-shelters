@@ -20,7 +20,7 @@ export function SyncButton() {
         type="submit"
         disabled={pending}
         aria-busy={pending}
-        className="border border-[#7FFF6A] px-3 py-1 transition hover:bg-[#7FFF6A]/10 disabled:cursor-progress disabled:opacity-60"
+        className="border border-[#BD93F9] px-3 py-1 transition hover:bg-[#BD93F9]/10 disabled:cursor-progress disabled:opacity-60"
       >
         {pending ? (
           <>
@@ -35,7 +35,7 @@ export function SyncButton() {
           key={state.at}
           aria-live="polite"
           className={`hud-fade absolute right-0 top-full mt-1 whitespace-nowrap text-xs ${
-            state.tone === "ok" ? "text-[#7FFF6A]/80" : "text-[#A14545]"
+            state.tone === "ok" ? "text-[#BD93F9]/80" : "text-[#A14545]"
           }`}
         >
           &gt; {state.message}

@@ -22,14 +22,14 @@ export function DailyEventCard({
   if (variant === "screen") return <TerminalScreen event={event} />;
 
   return (
-    <aside className="pointer-events-auto max-w-sm border border-[#7FFF6A] bg-[#0F0F0F]/90 p-4 font-mono text-sm text-[#E6DFC8]">
-      <h2 className="mb-2 text-[#7FFF6A]">{event.title}</h2>
+    <aside className="pointer-events-auto max-w-sm border border-[#BD93F9] bg-[#0B0713]/90 p-4 font-mono text-sm text-[#E6DFC8]">
+      <h2 className="mb-2 text-[#BD93F9]">{event.title}</h2>
       <p className="mb-4 leading-relaxed">{event.narrative}</p>
       {event.resolved ? (
         <div className="space-y-2">
-          <p className="text-[#7FFF6A]/70">&gt; {event.options[event.resolved.choice].label}</p>
+          <p className="text-[#BD93F9]/70">&gt; {event.options[event.resolved.choice].label}</p>
           <p className="leading-relaxed">{event.resolved.outcome.outcome_text}</p>
-          <p className="text-[#7FFF6A]">
+          <p className="text-[#BD93F9]">
             {formatDelta(event.resolved.outcome.bytes_delta)}
             <span className="text-[#E6DFC8]/50"> · next packet at 00:00 UTC</span>
           </p>
@@ -41,7 +41,7 @@ export function DailyEventCard({
               <input type="hidden" name="choice" value={choice} />
               <button
                 type="submit"
-                className="w-full border border-[#7FFF6A] px-3 py-2 text-left text-[#7FFF6A] transition hover:bg-[#7FFF6A]/10"
+                className="w-full border border-[#BD93F9] px-3 py-2 text-left text-[#BD93F9] transition hover:bg-[#BD93F9]/10"
               >
                 {event.options[choice].label}
               </button>
@@ -55,41 +55,41 @@ export function DailyEventCard({
 
 function TerminalScreen({ event }: { event: DailyEventView }) {
   return (
-    <aside className="crt no-scrollbar pointer-events-auto h-full w-full overflow-y-auto px-3 pb-2 pt-1.5 font-mono text-[9.5px] leading-[1.35] text-[#9BFF8A]">
-      <p className="mb-1 flex justify-between text-[8px] uppercase tracking-[0.2em] text-[#7FFF6A]/45">
+    <aside className="crt no-scrollbar pointer-events-auto h-full w-full overflow-y-auto px-3 pb-2 pt-1.5 font-mono text-[9.5px] leading-[1.35] text-[#D8B4FE]">
+      <p className="mb-1 flex justify-between text-[8px] uppercase tracking-[0.2em] text-[#BD93F9]/45">
         <span>main-branch:~$ cat packet.log</span>
         <span>{event.resolved ? "resolved" : "pending"}</span>
       </p>
-      <h2 className="mb-1 font-bold text-[#C8FFB8]">{event.title}</h2>
+      <h2 className="mb-1 font-bold text-[#E9D5FF]">{event.title}</h2>
       <p className="mb-1.5">{event.narrative}</p>
 
       {event.resolved ? (
         <div className="space-y-1">
-          <p className="text-[#7FFF6A]/70">&gt; {event.options[event.resolved.choice].label}</p>
+          <p className="text-[#BD93F9]/70">&gt; {event.options[event.resolved.choice].label}</p>
           <p>{event.resolved.outcome.outcome_text}</p>
-          <p className="text-[#C8FFB8]">
+          <p className="text-[#E9D5FF]">
             {formatDelta(event.resolved.outcome.bytes_delta)}
-            <span className="text-[#7FFF6A]/45"> · next packet 00:00 UTC</span>
+            <span className="text-[#BD93F9]/45"> · next packet 00:00 UTC</span>
           </p>
-          <p className="text-[#7FFF6A]/70">
+          <p className="text-[#BD93F9]/70">
             main-branch:~$ <span className="blink">_</span>
           </p>
         </div>
       ) : (
         <div className="space-y-0.5">
-          <p className="text-[#7FFF6A]/60">select an option:</p>
+          <p className="text-[#BD93F9]/60">select an option:</p>
           {(["a", "b"] as const).map((choice) => (
             <form key={choice} action={resolveDailyEvent}>
               <input type="hidden" name="choice" value={choice} />
               <button
                 type="submit"
-                className="block w-full px-1 text-left text-[#9BFF8A] transition hover:bg-[#7FFF6A]/20 hover:text-[#0F0F0F] focus-visible:bg-[#7FFF6A]/20"
+                className="block w-full px-1 text-left text-[#D8B4FE] transition hover:bg-[#BD93F9]/20 hover:text-[#0B0713] focus-visible:bg-[#BD93F9]/20"
               >
-                <span className="text-[#7FFF6A]/60">[{choice.toUpperCase()}]</span> {event.options[choice].label}
+                <span className="text-[#BD93F9]/60">[{choice.toUpperCase()}]</span> {event.options[choice].label}
               </button>
             </form>
           ))}
-          <p className="text-[#7FFF6A]/70">
+          <p className="text-[#BD93F9]/70">
             main-branch:~$ <span className="blink">_</span>
           </p>
         </div>
