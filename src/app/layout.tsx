@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Link from "next/link";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -30,6 +31,13 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-[#0F0F0F] text-[#E6DFC8]">
         {children}
+        <footer className="pointer-events-auto fixed bottom-2 right-4 z-10 font-mono text-[10px] uppercase tracking-widest text-[#E6DFC8]/40">
+          <Link href="/legal/privacy" className="hover:text-[#E6DFC8]">Privacy</Link>
+          {" · "}
+          <Link href="/legal/terms" className="hover:text-[#E6DFC8]">Terms</Link>
+          {" · "}
+          <Link href="/settings" className="hover:text-[#E6DFC8]">Settings</Link>
+        </footer>
       </body>
     </html>
   );

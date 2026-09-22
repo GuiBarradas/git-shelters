@@ -18,10 +18,11 @@ This directory captures architecture and design decisions with long-term consequ
 
 - [0001 — Public profile RLS strategy](./0001-public-profile-rls-strategy.md) — *Accepted* — `/u/<login>` reads via isolated API endpoint with service-role + strict column whitelist + CI-gated leak test.
 - [0002 — Daily Event resolution cardinality](./0002-daily-event-resolution-cardinality.md) — *Accepted* — how many Daily Events a user can resolve per day.
-- [0003 — Settings: route vs modal](./0003-settings-modal-vs-route.md) — *Proposed* — settings lives at `/settings` or in a modal over `/play`.
+- [0003 — Settings: route vs modal](./0003-settings-modal-vs-route.md) — *Accepted* — settings lives at a dedicated `/settings` route.
 - [0004 — Bytes ledger and migration policy](./0004-bytes-ledger-and-migration-policy.md) — *Accepted* — append-only `byte_transactions` ledger with idempotency via unique constraint, Supabase CLI for forward-only migrations.
 - [0005 — Vercel Cron sync policy](./0005-vercel-cron-sync-policy.md) — *Accepted* — every 15 min, one `credit_bytes_tx_batch` per user, `CRON_SECRET`-gated route handler, idempotency via the same unique constraint.
 - [0006 — Anti-cheese filter scope for the Public Alpha](./0006-anti-cheese-filters-scope.md) — *Accepted* — bot rejection (pure) + daily 100-byte cap on `github_sync`; four other filters explicitly deferred with criteria for when they land.
+- [0007 — LGPD: account export and deletion](./0007-lgpd-account-export-and-deletion.md) — *Accepted* — hard delete via auth cascade, JSON export, audit trail.
 
 ## Template
 

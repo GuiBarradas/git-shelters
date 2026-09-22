@@ -1,8 +1,8 @@
 # ADR 0003 — Settings: dedicated route vs modal
 
-- **Status:** Proposed
-- **Decision:** TBD — leaning **Option B (dedicated route `/settings`)**. To be decided before implementing the settings screen in the Public Alpha.
-- **Date:** 2026-05-03
+- **Status:** Accepted
+- **Decision:** **Option B — dedicated route `/settings`.**
+- **Date:** 2026-05-03 (proposed), 2026-09-22 (accepted)
 
 ## Context
 
@@ -75,7 +75,7 @@ Hybrid: modal for "logout" and "see GitHub account" (1–2 clicks); route for de
 
 ## Decision
 
-**TBD — leaning Option B.** To be decided before implementing the settings screen in the Public Alpha.
+**Option B.** `/settings` shipped on 2026-09-22 with the two LGPD controls (ADR 0007). It is a plain server-rendered route with forms; no modal, no client state.
 
 Criteria:
 - LGPD requires compliance on any device → mobile responsive is a hard requirement → a route is the path of least resistance.

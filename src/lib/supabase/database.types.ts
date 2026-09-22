@@ -39,6 +39,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          action: string
+          id: string
+          ip_hash: string | null
+          meta_json: Json
+          occurred_at: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          id?: string
+          ip_hash?: string | null
+          meta_json?: Json
+          occurred_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          id?: string
+          ip_hash?: string | null
+          meta_json?: Json
+          occurred_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       byte_transactions: {
         Row: {
           balance_after: number
