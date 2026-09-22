@@ -9,10 +9,31 @@ const frame =
 
 export type LedgerRow = { delta: number; source: string; created_at: string };
 
-/** Cache Storage clipboard: the last byte movements, as a pantry manifest. */
-export function LedgerPanel({ bytes, rows }: { bytes: number; rows: LedgerRow[] }) {
+/** Cache Storage clipboard: the pantry count, who cooks, and the last byte movements. */
+export function LedgerPanel({
+  bytes,
+  rows,
+  cache,
+  cacheCap,
+  cooks,
+}: {
+  bytes: number;
+  rows: LedgerRow[];
+  cache: number;
+  cacheCap: number;
+  cooks: string[];
+}) {
   return (
     <div className={`${frame} bg-[#e9e2c9] px-3 py-2 text-[10px] text-[#2b2a24]`}>
+      <div className="mb-1 flex items-baseline justify-between border-b border-[#2b2a24]/30 pb-1">
+        <span className="font-bold tracking-widest">PANTRY</span>
+        <span className={cache === 0 ? "font-bold text-[#A14545]" : ""}>
+          {cache}/{cacheCap} meals
+        </span>
+      </div>
+      <p className="mb-1 text-[#2b2a24]/70">
+        {cooks.length === 0 ? "No cook on shift. Shelves only empty." : `Cook: ${cooks.join(", ")}`}
+      </p>
       <div className="mb-1 flex items-baseline justify-between border-b border-[#2b2a24]/30 pb-1">
         <span className="font-bold tracking-widest">MANIFEST</span>
         <span>{bytes.toLocaleString("en-US")} B in store</span>
@@ -57,10 +78,14 @@ export function UptimePanel({
   days,
   lastSyncAt,
   pushedToday,
+  uptime,
+  engineers,
 }: {
   days: number;
   lastSyncAt: string | null;
   pushedToday: boolean;
+  uptime: number;
+  engineers: string[];
 }) {
   const ago = lastSyncAt ? minutesAgo(lastSyncAt) : null;
   return (
@@ -71,6 +96,13 @@ export function UptimePanel({
           {pushedToday ? "● FEED LIVE" : "○ FEED IDLE"}
         </span>
       </div>
+      <p>
+        CHARGE <span className={uptime === 0 ? "text-[#A14545]" : "text-[#E6DFC8]"}>{uptime}%</span>
+        <span className="text-[#FFD66B]/60">
+          {" "}
+          · {engineers.length === 0 ? "nobody on the crank" : `engineer: ${engineers.join(", ")}`}
+        </span>
+      </p>
       <p>
         UPTIME <span className="text-[#E6DFC8]">{days}</span> {days === 1 ? "day" : "days"}
       </p>

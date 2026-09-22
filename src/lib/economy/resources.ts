@@ -1,0 +1,79 @@
+import * as Sentry from "@sentry/nextjs";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import { hoursBetween, simulate, type TickResult, type Workforce } from "@/lib/economy/tick";
+import type { Fork } from "@/lib/forks/catalog";
+import type { Room } from "@/lib/rooms/catalog";
+import type { Database } from "@/lib/supabase/database.types";
+
+type Db = SupabaseClient<Database>;
+
+/**
+ * Brings the bunker's resources up to now (catch-up offline, §10.3.1):
+ * reads the stored state, runs the pure simulation for the elapsed time,
+ * and writes the result once through apply_tick(). If another render won
+ * the write, the stored row is re-read so both show the same numbers.
+ * Never throws: a failed write leaves the player with the last stored
+ * state and a Sentry warning.
+ */
+export async function settleResources(
+  supabase: Db,
+  admin: Db,
+  userId: string,
+  forks: Fork[],
+  rooms: Room[],
+  now: Date = new Date(),
+): Promise<TickResult> {
+  const { data: row } = await supabase
+    .from("users")
+    .select("cache, uptime, last_tick_at")
+    .eq("id", userId)
+    .maybeSingle();
+  if (!row) return { cache: 0, uptime: 0, starved: false, blackout: true };
+
+  const result = simulate(row, workforce(forks, rooms), hoursBetween(row.last_tick_at, now));
+
+  // Under a minute since the last write: nothing meaningful to store.
+  if (now.getTime() - Date.parse(row.last_tick_at) < 60_000) {
+    return { ...result, cache: row.cache, uptime: row.uptime };
+  }
+
+  const { data: applied, error } = await admin.rpc("apply_tick", {
+    p_user_id: userId,
+    p_expected_tick: row.last_tick_at,
+    p_new_tick: now.toISOString(),
+    p_cache: result.cache,
+    p_uptime: result.uptime,
+  });
+  if (error) {
+    Sentry.captureMessage("apply_tick failed", { level: "warning", extra: { error: error.message } });
+    return { ...result, cache: row.cache, uptime: row.uptime };
+  }
+  if (!applied) {
+    const { data: fresh } = await supabase
+      .from("users")
+      .select("cache, uptime")
+      .eq("id", userId)
+      .maybeSingle();
+    return { ...result, cache: fresh?.cache ?? result.cache, uptime: fresh?.uptime ?? result.uptime };
+  }
+  return result;
+}
+
+export function workforce(forks: Fork[], rooms: Room[]): Workforce {
+  const kindOf = new Map(rooms.map((r) => [r.slot, r.kind]));
+  let cooks = 0;
+  let engineers = 0;
+  for (const f of forks) {
+    const kind = f.roomSlot === null ? undefined : kindOf.get(f.roomSlot as 1 | 2 | 3);
+    if (kind === "cache_storage") cooks++;
+    if (kind === "power_plant") engineers++;
+  }
+  return {
+    cooks,
+    engineers,
+    forks: forks.length,
+    cacheStorages: rooms.filter((r) => r.kind === "cache_storage").length,
+    powerPlants: rooms.filter((r) => r.kind === "power_plant").length,
+  };
+}

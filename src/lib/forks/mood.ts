@@ -35,6 +35,11 @@ export function moodFor(base: Mood, trait: ForkTrait): Mood {
   return MOODS[Math.min(MOODS.length - 1, Math.max(0, i))]!;
 }
 
+/** An empty pantry pulls every Fork one step down, whatever the commits say. */
+export function hungerShift(mood: Mood): Mood {
+  return MOODS[Math.max(0, MOODS.indexOf(mood) - 1)]!;
+}
+
 export const MOOD_LINES: Record<Mood, readonly string[]> = {
   happy: [
     "Saw the push land. Lights are steady tonight.",

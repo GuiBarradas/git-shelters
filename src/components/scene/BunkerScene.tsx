@@ -32,6 +32,8 @@ type BunkerSceneProps = {
   onHoverBlurb?: (blurb: string | null) => void;
   /** Landing mode: slow auto-orbit and drag to rotate, nothing else. */
   demo?: boolean;
+  /** False in a blackout: every lamp dies down. */
+  powered?: boolean;
 };
 
 /** Distance between cell centres (pillars sit in the gap). */
@@ -97,6 +99,7 @@ export default function BunkerScene({
   onSlotClick,
   onHoverBlurb,
   demo = false,
+  powered = true,
 }: BunkerSceneProps) {
   const bySlot = new Map(rooms.map((room) => [room.slot, room]));
   const [hovered, setHovered] = useState<number | null>(null);
@@ -148,7 +151,7 @@ export default function BunkerScene({
       </mesh>
 
       <group position={[slotX(0), 0, 0]}>
-        <MainBranchRoom active={activeToday} pending={eventPending} />
+        <MainBranchRoom active={activeToday} pending={eventPending} powered={powered} />
         {forksIn(0).map((f) => (
           <Fork key={f.id} fork={f} layout={roomLayout(null)} onClick={onForkClick} onHover={forkHover} />
         ))}
@@ -162,7 +165,7 @@ export default function BunkerScene({
         const room = bySlot.get(slot);
         return (
           <group key={slot} position={[slotX(slot), 0, 0]}>
-            {room ? <BuiltRoom kind={room.kind} /> : <EmptyCell highlight={hovered === slot && !demo} />}
+            {room ? <BuiltRoom kind={room.kind} powered={powered} /> : <EmptyCell highlight={hovered === slot && !demo} />}
             {room &&
               forksIn(slot).map((f) => (
                 <Fork key={f.id} fork={f} layout={roomLayout(room.kind)} onClick={onForkClick} onHover={forkHover} />

@@ -4,6 +4,7 @@ import * as Sentry from "@sentry/nextjs";
 import { revalidatePath } from "next/cache";
 
 import { generateForkName, pickTrait, RECRUIT_COST } from "@/lib/forks/catalog";
+import { isSlot } from "@/lib/rooms/catalog";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -35,4 +36,32 @@ export async function recruitFork() {
 
   revalidatePath("/");
   revalidatePath("/room/0");
+}
+
+/**
+ * Moves a survivor to a room (its job) or back to the Main Branch (off
+ * shift). The RPC checks the room is built and the Fork is the player's.
+ */
+export async function assignFork(formData: FormData) {
+  const forkId = formData.get("fork");
+  const slot = Number(formData.get("slot"));
+  if (typeof forkId !== "string" || !(slot === 0 || isSlot(slot))) return;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { error } = await createAdminClient().rpc("assign_fork", {
+    p_user_id: user.id,
+    p_fork_id: forkId,
+    p_slot: slot,
+  });
+  if (error && !error.message.includes("room_not_built") && !error.message.includes("fork_not_found")) {
+    Sentry.captureException(error, { tags: { user_id: user.id, entrypoint: "assign_fork" } });
+  }
+
+  revalidatePath("/");
+  revalidatePath(`/room/${slot}`);
 }

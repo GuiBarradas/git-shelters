@@ -26,6 +26,7 @@ type RoomSceneProps = {
   forks?: ForkData[];
   onForkClick?: (fork: ForkData) => void;
   onForkHover?: (fork: ForkData | null) => void;
+  powered?: boolean;
 };
 
 /** Closer, more frontal camera than the overview: one cell fills the view. */
@@ -53,6 +54,7 @@ export default function RoomScene({
   forks = [],
   onForkClick,
   onForkHover,
+  powered = true,
 }: RoomSceneProps) {
   const anchor = panelAnchor(kind);
   return (
@@ -65,7 +67,11 @@ export default function RoomScene({
       <ambientLight color={palette.boneWhite} intensity={0.55} />
       <directionalLight position={[6, 10, 8]} color={palette.boneWhite} intensity={0.45} />
 
-      {kind === null ? <MainBranchRoom active={activeToday} pending={eventPending} /> : <BuiltRoom kind={kind} />}
+      {kind === null ? (
+        <MainBranchRoom active={activeToday} pending={eventPending} powered={powered} />
+      ) : (
+        <BuiltRoom kind={kind} powered={powered} />
+      )}
       {forks.map((f) => (
         <Fork key={f.id} fork={f} layout={roomLayout(kind)} onClick={onForkClick} onHover={onForkHover} />
       ))}

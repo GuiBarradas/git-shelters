@@ -14,6 +14,8 @@ type Props = {
   pending?: boolean;
   /** The bunker pushed code today: the whole room feels alive. */
   active?: boolean;
+  /** False in a blackout. */
+  powered?: boolean;
 };
 
 /**
@@ -58,7 +60,7 @@ export const LAYOUT: RoomLayout = {
   ],
 };
 
-export function MainBranchRoom({ pending = false, active = false }: Props) {
+export function MainBranchRoom({ pending = false, active = false, powered = true }: Props) {
   const screen = useRef<MeshToonMaterial>(null);
   const leds = useRef<Mesh[]>([]);
 
@@ -79,7 +81,7 @@ export function MainBranchRoom({ pending = false, active = false }: Props) {
   const screenColor = pending ? palette.radioactiveGreen : active ? palette.radioactiveGreen : palette.glowYellow;
 
   return (
-    <RoomShell light={active ? palette.radioactiveGreen : palette.glowYellow} lightIntensity={active ? 5 : 3.5}>
+    <RoomShell light={active ? palette.radioactiveGreen : palette.glowYellow} lightIntensity={active ? 5 : 3.5} powered={powered}>
       {/* desk: waist height for a 1.45-tall survivor */}
       <mesh position={[0.55, 0.66, -0.55]}>
         <boxGeometry args={[2.1, 0.1, 0.9]} />

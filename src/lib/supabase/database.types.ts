@@ -325,6 +325,7 @@ export type Database = {
       users: {
         Row: {
           bytes: number
+          cache: number
           created_at: string
           deleted_at: string | null
           email: string | null
@@ -332,9 +333,12 @@ export type Database = {
           github_login: string
           id: string
           last_seen_at: string
+          last_tick_at: string
+          uptime: number
         }
         Insert: {
           bytes?: number
+          cache?: number
           created_at?: string
           deleted_at?: string | null
           email?: string | null
@@ -342,9 +346,12 @@ export type Database = {
           github_login: string
           id: string
           last_seen_at?: string
+          last_tick_at?: string
+          uptime?: number
         }
         Update: {
           bytes?: number
+          cache?: number
           created_at?: string
           deleted_at?: string | null
           email?: string | null
@@ -352,6 +359,8 @@ export type Database = {
           github_login?: string
           id?: string
           last_seen_at?: string
+          last_tick_at?: string
+          uptime?: number
         }
         Relationships: []
       }
@@ -360,6 +369,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_tick: {
+        Args: {
+          p_cache: number
+          p_expected_tick: string
+          p_new_tick: string
+          p_uptime: number
+          p_user_id: string
+        }
+        Returns: boolean
+      }
+      assign_fork: {
+        Args: { p_fork_id: string; p_slot: number; p_user_id: string }
+        Returns: undefined
+      }
       build_room: {
         Args: { p_kind: string; p_slot: number; p_user_id: string }
         Returns: number

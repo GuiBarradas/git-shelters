@@ -33,6 +33,7 @@ type BunkerSceneClientProps = {
   eventPending?: boolean;
   /** Landing mode: auto-orbit, drag to rotate, tooltips, no interaction. */
   demo?: boolean;
+  powered?: boolean;
 };
 
 /**
@@ -47,6 +48,7 @@ export function BunkerSceneClient({
   activeToday,
   eventPending = false,
   demo = false,
+  powered = true,
 }: BunkerSceneClientProps) {
   const router = useRouter();
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
@@ -85,6 +87,7 @@ export function BunkerSceneClient({
         onSlotClick={onSlotClick}
         onHoverBlurb={setBlurb}
         demo={demo}
+        powered={powered}
       />
       {/* Vignette in CSS: free, and it replaced a postprocessing pass that cost 40 fps on integrated GPUs. */}
       <div

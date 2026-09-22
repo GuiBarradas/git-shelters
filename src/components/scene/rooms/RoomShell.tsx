@@ -16,6 +16,8 @@ type RoomShellProps = {
   /** Concrete tint for the walls. */
   tone?: string;
   dim?: boolean;
+  /** False in a blackout: the lamp is a dying ember. */
+  powered?: boolean;
 };
 
 /**
@@ -32,7 +34,10 @@ export function RoomShell({
   lightIntensity = 5,
   tone = palette.outageGray,
   dim = false,
+  powered = true,
 }: RoomShellProps) {
+  const lamp = powered ? lightIntensity : lightIntensity * 0.12;
+  const lampGlow = powered ? 0.9 : 0.15;
   const { w, h, d } = CELL;
   const wall = dim ? "#24272c" : tone;
   const t = 0.25; // slab / wall thickness
@@ -66,9 +71,9 @@ export function RoomShell({
         <>
           <mesh position={[0, h - 0.15, 0.2]}>
             <cylinderGeometry args={[0.28, 0.16, 0.14, 12]} />
-            <meshToonMaterial color={palette.boneWhite} emissive={light} emissiveIntensity={0.9} />
+            <meshToonMaterial color={palette.boneWhite} emissive={light} emissiveIntensity={lampGlow} />
           </mesh>
-          <pointLight position={[0, h - 0.5, 0.6]} color={light} intensity={lightIntensity} distance={7.5} decay={2} />
+          <pointLight position={[0, h - 0.5, 0.6]} color={light} intensity={lamp} distance={7.5} decay={2} />
           {/* dust drifting through the lamp light: the cheapest "this place is lived in" */}
           <Sparkles
             count={14}

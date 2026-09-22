@@ -17,6 +17,7 @@ type Props = {
   eventPending: boolean;
   panel?: ReactNode;
   forks?: ForkData[];
+  powered?: boolean;
 };
 
 /** Client boundary for the room interior; the page passes the terminal content as children. */

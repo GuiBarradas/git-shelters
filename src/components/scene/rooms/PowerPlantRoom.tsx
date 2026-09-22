@@ -26,7 +26,7 @@ export const LAYOUT: RoomLayout = {
 };
 
 /** Power Plant: the generator. A humming drum, pipes, a spinning fan, a warning beacon. */
-export function PowerPlantRoom() {
+export function PowerPlantRoom({ powered = true }: { powered?: boolean }) {
   const beacon = useRef<MeshToonMaterial>(null);
   const fan = useRef<Group>(null);
 
@@ -37,7 +37,7 @@ export function PowerPlantRoom() {
   });
 
   return (
-    <RoomShell light={palette.mustardWarning} lightIntensity={3}>
+    <RoomShell light={palette.mustardWarning} lightIntensity={3} powered={powered}>
       {/* generator drum on a plinth */}
       <mesh position={[0, 0.15, -0.3]}>
         <boxGeometry args={[2.4, 0.3, 1.4]} />

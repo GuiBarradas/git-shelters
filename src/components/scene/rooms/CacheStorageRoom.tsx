@@ -22,7 +22,7 @@ export const LAYOUT: RoomLayout = {
 };
 
 /** Cache Storage: the kitchen and pantry. Shelves, crates, a water barrel. */
-export function CacheStorageRoom() {
+export function CacheStorageRoom({ powered = true }: { powered?: boolean }) {
   const crates: Array<[number, number, number, string, number]> = [
     // x, y, z, colour, size
     [-1.35, 0.3, -0.5, palette.oldWoodBrown, 0.6],
@@ -35,7 +35,7 @@ export function CacheStorageRoom() {
   ];
 
   return (
-    <RoomShell light={palette.mustardWarning} lightIntensity={3.5}>
+    <RoomShell light={palette.mustardWarning} lightIntensity={3.5} powered={powered}>
       {/* two wall shelves */}
       {[1.4, 1.9].map((y) => (
         <mesh key={y} position={[0.9, y, -1.05]}>

@@ -5,9 +5,11 @@ import { AuthBar } from "@/components/auth/AuthBar";
 import { Landing } from "@/components/landing/Landing";
 import { BunkerSceneClient } from "@/components/scene/BunkerSceneClient";
 import { trackSessionStart } from "@/lib/analytics/track";
+import { settleResources } from "@/lib/economy/resources";
+import { cacheCap } from "@/lib/economy/tick";
 import { fetchDailyEvent } from "@/lib/events/daily";
 import { loadCrew } from "@/lib/forks/load";
-import { describeCrew } from "@/lib/forks/mood";
+import { describeCrew, hungerShift } from "@/lib/forks/mood";
 import { isRoomKind, isSlot, type Room } from "@/lib/rooms/catalog";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -19,43 +21,56 @@ export default async function Home() {
   } = await supabase.auth.getUser();
   if (!user) return <Landing />;
 
+  const admin = createAdminClient();
+
   // Analytics after the response: never delays the bunker, never throws.
-  after(() => trackSessionStart(createAdminClient(), { id: user.id, created_at: user.created_at }));
+  after(() => trackSessionStart(admin, { id: user.id, created_at: user.created_at }));
 
   // Supabase populates user_metadata from the OAuth provider profile.
   // For GitHub, `user_name` is the @handle (e.g. "GuiBarradas").
   const githubLogin =
-    typeof user?.user_metadata?.user_name === "string"
-      ? user.user_metadata.user_name
-      : null;
+    typeof user?.user_metadata?.user_name === "string" ? user.user_metadata.user_name : null;
 
   // Main Branch tint is driven by persisted state, not a live GitHub fetch.
   // Anyone who pushed today will have at least one byte_transactions row
   // tagged source = 'github_sync' with created_at on today's UTC date.
-  // The sync server action (src/app/sync/actions.ts) is what populates it.
   const todayUtc = new Date().toISOString().slice(0, 10);
   const [activeToday, bytes, rooms, dailyEvent, crew] = await Promise.all([
     checkActivityToday(supabase, user.id, todayUtc),
     fetchBytes(supabase, user.id),
     fetchRooms(supabase, user.id),
     fetchDailyEvent(supabase, user.id, todayUtc),
-    loadCrew(supabase, createAdminClient(), user.id),
+    loadCrew(supabase, admin, user.id),
   ]);
+
+  // Catch-up: what the crew produced and ate since the last visit.
+  const resources = await settleResources(supabase, admin, user.id, crew.forks, rooms);
+  const forks = resources.cache === 0 ? crew.forks.map((f) => ({ ...f, mood: hungerShift(f.mood) })) : crew.forks;
 
   return (
     <main className="relative w-full h-dvh">
       <SessionBeacon />
       <BunkerSceneClient
         rooms={rooms}
-        forks={crew.forks}
+        forks={forks}
         bytes={bytes}
         activeToday={activeToday}
         eventPending={Boolean(dailyEvent && !dailyEvent.resolved)}
+        powered={resources.uptime > 0}
       />
       <div className="pointer-events-none absolute top-4 right-4 z-10">
         <AuthBar githubLogin={githubLogin} bytes={bytes} />
       </div>
       <div className="pointer-events-none absolute top-16 left-6 z-10 space-y-1 font-mono text-xs">
+        <p className="text-[#E6DFC8]/70">
+          <span className={resources.cache === 0 ? "text-[#A14545]" : ""}>
+            CACHE {resources.cache}/{cacheCap(rooms.filter((r) => r.kind === "cache_storage").length)}
+          </span>
+          {" · "}
+          <span className={resources.uptime === 0 ? "text-[#A14545]" : ""}>UPTIME {resources.uptime}%</span>
+        </p>
+        {resources.uptime === 0 && <p className="text-[#A14545]">&gt; blackout. Put an engineer on the Power Plant.</p>}
+        {resources.cache === 0 && <p className="text-[#A14545]">&gt; the pantry is empty. Nobody is cooking.</p>}
         {dailyEvent && !dailyEvent.resolved && (
           <p className="text-[#7FFF6A]/80">&gt; incoming packet on the Main Branch terminal</p>
         )}
@@ -74,14 +89,8 @@ async function fetchRooms(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
 ): Promise<Room[]> {
-  const { data } = await supabase
-    .from("rooms")
-    .select("slot, kind")
-    .eq("user_id", userId);
-
-  return (data ?? []).flatMap(({ slot, kind }) =>
-    isSlot(slot) && isRoomKind(kind) ? [{ slot, kind }] : [],
-  );
+  const { data } = await supabase.from("rooms").select("slot, kind").eq("user_id", userId);
+  return (data ?? []).flatMap(({ slot, kind }) => (isSlot(slot) && isRoomKind(kind) ? [{ slot, kind }] : []));
 }
 
 /**
@@ -93,21 +102,14 @@ async function fetchBytes(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
 ): Promise<number | null> {
-  const { data } = await supabase
-    .from("users")
-    .select("bytes")
-    .eq("id", userId)
-    .maybeSingle();
+  const { data } = await supabase.from("users").select("bytes").eq("id", userId).maybeSingle();
   return data?.bytes ?? null;
 }
 
 /**
- * Checks if the user has at least one `github_sync` byte_transactions row
- * for the given UTC date. Cheap query — one indexed lookup, head-only.
- *
- * The upper bound is the next day's midnight UTC (exclusive) rather than
- * 23:59:59.999 — that 1ms window would silently drop rows landing exactly
- * on the boundary. Pedantic but correct.
+ * Checks if the user has at least one push credited for the given UTC
+ * date. Cheap query — one indexed lookup, head-only. The upper bound is
+ * the next day's midnight UTC (exclusive).
  */
 async function checkActivityToday(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -119,10 +121,9 @@ async function checkActivityToday(
     .from("byte_transactions")
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId)
-    .eq("source", "github_sync")
+    .in("source", ["github_sync", "backfill"])
     .gte("created_at", `${todayUtc}T00:00:00Z`)
     .lt("created_at", `${tomorrowUtc}T00:00:00Z`);
-
   return (count ?? 0) > 0;
 }
 

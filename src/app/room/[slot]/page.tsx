@@ -3,17 +3,28 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
+import { recruitFork } from "@/app/forks/actions";
 import { SessionBeacon } from "@/components/analytics/SessionBeacon";
 import { DailyEventCard } from "@/components/events/DailyEventCard";
+import { CrewPanel } from "@/components/rooms/CrewPanel";
 import { LedgerPanel, UptimePanel } from "@/components/rooms/RoomPanels";
 import { RoomSceneClient } from "@/components/scene/RoomSceneClient";
 import { daysBetween } from "@/lib/analytics/track";
-import { recruitFork } from "@/app/forks/actions";
+import { settleResources } from "@/lib/economy/resources";
+import { cacheCap, type TickResult } from "@/lib/economy/tick";
 import { fetchDailyEvent, todayUtc } from "@/lib/events/daily";
-import { RECRUIT_COST } from "@/lib/forks/catalog";
+import { RECRUIT_COST, type Fork } from "@/lib/forks/catalog";
 import { loadCrew } from "@/lib/forks/load";
+import { hungerShift } from "@/lib/forks/mood";
+import {
+  isRoomKind,
+  isSlot,
+  MAIN_BRANCH_BLURB,
+  ROOM_CATALOG,
+  type Room,
+  type RoomKind,
+} from "@/lib/rooms/catalog";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isRoomKind, isSlot, MAIN_BRANCH_BLURB, ROOM_CATALOG, type RoomKind } from "@/lib/rooms/catalog";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = { params: Promise<{ slot: string }> };
@@ -24,9 +35,8 @@ export const metadata: Metadata = { title: "Inside the Repo · Git Shelters" };
 /**
  * Walk into one room. Slot 0 is the Main Branch, always present; slots
  * 1..3 must hold a built room or the visitor gets the 404 Lands. Each
- * room has one in-world read-out with real data: the terminal carries
- * today's Daily Event, the pantry clipboard the byte ledger, the
- * generator gauge uptime and the last sync.
+ * room has one in-world read-out with real data, and a crew roster to
+ * put survivors on shift here: a Fork's job is the room it stands in.
  */
 export default async function RoomPage({ params }: Props) {
   const supabase = await createClient();
@@ -39,29 +49,29 @@ export default async function RoomPage({ params }: Props) {
   const isMain = slotNumber === 0;
   if (!isMain && !isSlot(slotNumber)) notFound();
 
-  let kind: RoomKind | null = null;
-  if (!isMain) {
-    const { data } = await supabase
-      .from("rooms")
-      .select("kind")
-      .eq("user_id", user.id)
-      .eq("slot", slotNumber)
-      .maybeSingle();
-    if (!data || !isRoomKind(data.kind)) notFound();
-    kind = data.kind;
-  }
-
+  const admin = createAdminClient();
   const today = todayUtc();
-  const [activeToday, panel, dailyEvent, crew, { data: me }] = await Promise.all([
+  const [rooms, crew, activeToday, dailyEvent, { data: me }] = await Promise.all([
+    fetchRooms(supabase, user.id),
+    loadCrew(supabase, admin, user.id),
     pushedToday(supabase, user.id, today),
-    roomPanel(supabase, user, kind, today),
     isMain ? fetchDailyEvent(supabase, user.id, today) : null,
-    loadCrew(supabase, createAdminClient(), user.id),
     supabase.from("users").select("bytes").eq("id", user.id).maybeSingle(),
   ]);
-  const allForks = crew.forks;
+
+  const kind: RoomKind | null = isMain ? null : (rooms.find((r) => r.slot === slotNumber)?.kind ?? null);
+  if (!isMain && kind === null) notFound();
+
+  const resources = await settleResources(supabase, admin, user.id, crew.forks, rooms);
+  const allForks = resources.cache === 0 ? crew.forks.map((f) => ({ ...f, mood: hungerShift(f.mood) })) : crew.forks;
   const forks = allForks.filter((f) => (f.roomSlot ?? 0) === slotNumber);
   const bytes = me?.bytes ?? 0;
+
+  const panel = isMain
+    ? dailyEvent
+      ? <DailyEventCard event={dailyEvent} variant="screen" />
+      : undefined
+    : await roomPanel(supabase, user, kind!, today, resources, rooms, allForks, forks);
 
   const title = kind ? ROOM_CATALOG[kind].name : "Main Branch";
   const blurb = kind ? ROOM_CATALOG[kind].blurb : MAIN_BRANCH_BLURB;
@@ -73,8 +83,9 @@ export default async function RoomPage({ params }: Props) {
         kind={kind}
         activeToday={activeToday}
         eventPending={Boolean(dailyEvent && !dailyEvent.resolved)}
-        panel={isMain ? (dailyEvent ? <DailyEventCard event={dailyEvent} variant="screen" /> : undefined) : panel}
+        panel={panel}
         forks={forks}
+        powered={resources.uptime > 0}
       />
       <div className="pointer-events-none absolute top-4 left-4 z-10 font-mono text-sm">
         <h1 className="text-[#7FFF6A]">{title}</h1>
@@ -97,21 +108,25 @@ export default async function RoomPage({ params }: Props) {
             </p>
           </form>
         )}
+        <CrewPanel forks={allForks} rooms={rooms} slot={slotNumber} />
       </div>
     </main>
   );
 }
 
-/** The non-terminal read-outs. Main Branch returns null; its panel is the Daily Event. */
+/** The non-terminal read-outs, fed with the settled resources and who works here. */
 async function roomPanel(
   supabase: Db,
   user: { id: string; created_at: string },
-  kind: RoomKind | null,
+  kind: RoomKind,
   today: string,
+  resources: TickResult,
+  rooms: Room[],
+  allForks: Fork[],
+  here: Fork[],
 ): Promise<ReactNode> {
+  const names = here.map((f) => f.name);
   switch (kind) {
-    case null:
-      return null;
     case "cache_storage": {
       const [{ data: me }, { data: rows }] = await Promise.all([
         supabase.from("users").select("bytes").eq("id", user.id).maybeSingle(),
@@ -120,9 +135,17 @@ async function roomPanel(
           .select("delta, source, created_at")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
-          .limit(7),
+          .limit(5),
       ]);
-      return <LedgerPanel bytes={me?.bytes ?? 0} rows={rows ?? []} />;
+      return (
+        <LedgerPanel
+          bytes={me?.bytes ?? 0}
+          rows={rows ?? []}
+          cache={resources.cache}
+          cacheCap={cacheCap(rooms.filter((r) => r.kind === "cache_storage").length)}
+          cooks={names}
+        />
+      );
     }
     case "power_plant": {
       const [{ data: sync }, live] = await Promise.all([
@@ -141,10 +164,17 @@ async function roomPanel(
           days={daysBetween(Date.parse(user.created_at), Date.now())}
           lastSyncAt={sync?.created_at ?? null}
           pushedToday={live}
+          uptime={resources.uptime}
+          engineers={names}
         />
       );
     }
   }
+}
+
+async function fetchRooms(supabase: Db, userId: string): Promise<Room[]> {
+  const { data } = await supabase.from("rooms").select("slot, kind").eq("user_id", userId);
+  return (data ?? []).flatMap(({ slot, kind }) => (isSlot(slot) && isRoomKind(kind) ? [{ slot, kind }] : []));
 }
 
 async function pushedToday(supabase: Db, userId: string, today: string): Promise<boolean> {
