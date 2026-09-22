@@ -16,10 +16,12 @@ const RUBBLE: Array<[number, number, number, number]> = [
 export function EmptyCell({ highlight = false }: { highlight?: boolean }) {
   return (
     <RoomShell dim>
+      {/* cold work light so the rubble reads even before anyone builds */}
+      <pointLight position={[0, 2.4, 0.8]} color={palette.steelBlue} intensity={highlight ? 3 : 1.4} distance={6} decay={2} />
       {RUBBLE.map(([x, y, z, s], i) => (
         <mesh key={i} position={[x, y, z]} rotation={[0.2 * i, 0.5 * i, 0]}>
           <boxGeometry args={[s, s, s]} />
-          <meshToonMaterial color="#26282d" />
+          <meshToonMaterial color="#33363c" />
         </mesh>
       ))}
       {/* build frame */}
@@ -28,9 +30,9 @@ export function EmptyCell({ highlight = false }: { highlight?: boolean }) {
         <meshToonMaterial
           color={palette.radioactiveGreen}
           transparent
-          opacity={highlight ? 0.22 : 0.07}
+          opacity={highlight ? 0.26 : 0.12}
           emissive={palette.radioactiveGreen}
-          emissiveIntensity={highlight ? 0.4 : 0.05}
+          emissiveIntensity={highlight ? 0.6 : 0.18}
         />
       </mesh>
     </RoomShell>

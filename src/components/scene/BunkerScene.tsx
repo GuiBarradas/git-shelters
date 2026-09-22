@@ -2,7 +2,7 @@
 
 import { OrbitControls, OrthographicCamera } from "@react-three/drei";
 import { Canvas, useThree } from "@react-three/fiber";
-import { useLayoutEffect } from "react";
+import { useLayoutEffect, useState } from "react";
 
 import { palette } from "@/lib/palette";
 import {
@@ -92,7 +92,11 @@ export default function BunkerScene({
   demo = false,
 }: BunkerSceneProps) {
   const bySlot = new Map(rooms.map((room) => [room.slot, room]));
-  const hover = (blurb: string) => (h: boolean) => onHoverBlurb?.(h ? blurb : null);
+  const [hovered, setHovered] = useState<number | null>(null);
+  const hover = (slot: number, blurb: string) => (h: boolean) => {
+    setHovered(h ? slot : null);
+    onHoverBlurb?.(h ? blurb : null);
+  };
   // The landing keeps the hero text above the bunker: look higher, so the
   // row sits in the lower half of the screen.
   const lookY = demo ? CELL.h / 2 + 3.2 : CELL.h / 2;
@@ -136,7 +140,7 @@ export default function BunkerScene({
         <MainBranchRoom active={activeToday} pending={eventPending} />
         <CellHitbox
           onClick={demo ? undefined : () => onSlotClick(0, true)}
-          onHover={hover(MAIN_BRANCH_BLURB)}
+          onHover={hover(0, MAIN_BRANCH_BLURB)}
         />
       </group>
 
@@ -144,10 +148,10 @@ export default function BunkerScene({
         const room = bySlot.get(slot);
         return (
           <group key={slot} position={[slotX(slot), 0, 0]}>
-            {room ? <BuiltRoom kind={room.kind} /> : <EmptyCell />}
+            {room ? <BuiltRoom kind={room.kind} /> : <EmptyCell highlight={hovered === slot && !demo} />}
             <CellHitbox
               onClick={demo ? undefined : () => onSlotClick(slot, Boolean(room))}
-              onHover={hover(room ? ROOM_CATALOG[room.kind].blurb : EMPTY_SLOT_BLURB)}
+              onHover={hover(slot, room ? ROOM_CATALOG[room.kind].blurb : EMPTY_SLOT_BLURB)}
             />
           </group>
         );

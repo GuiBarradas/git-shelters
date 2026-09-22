@@ -11,7 +11,7 @@ type Props = {
   kind: RoomKind | null;
   activeToday: boolean;
   eventPending: boolean;
-  screen?: ReactNode;
+  panel?: ReactNode;
 };
 
 /** Client boundary for the room interior; the page passes the terminal content as children. */

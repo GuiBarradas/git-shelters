@@ -4,6 +4,13 @@ import { palette } from "@/lib/palette";
 
 import { RoomShell } from "./RoomShell";
 
+/** Clipboard on the back wall; the room page pins the ledger manifest here. */
+export const CLIPBOARD = {
+  position: [-1.0, 1.95, -1.36] as [number, number, number],
+  width: 1.0,
+  height: 0.8,
+};
+
 /** Cache Storage: the kitchen and pantry. Shelves, crates, a water barrel. */
 export function CacheStorageRoom() {
   const crates: Array<[number, number, number, string, number]> = [
@@ -40,6 +47,19 @@ export function CacheStorageRoom() {
       <mesh position={[1.3, 1.02, 0.3]}>
         <cylinderGeometry args={[0.4, 0.4, 0.06, 14]} />
         <meshToonMaterial color={palette.concreteTan} />
+      </mesh>
+      {/* clipboard: board, clip, paper */}
+      <mesh position={[CLIPBOARD.position[0], CLIPBOARD.position[1], CLIPBOARD.position[2] - 0.01]}>
+        <boxGeometry args={[CLIPBOARD.width + 0.1, CLIPBOARD.height + 0.14, 0.03]} />
+        <meshToonMaterial color={palette.oldWoodBrown} />
+      </mesh>
+      <mesh position={[CLIPBOARD.position[0], CLIPBOARD.position[1] + CLIPBOARD.height / 2 + 0.03, CLIPBOARD.position[2] + 0.02]}>
+        <boxGeometry args={[0.3, 0.08, 0.05]} />
+        <meshToonMaterial color={palette.coalBlack} />
+      </mesh>
+      <mesh position={CLIPBOARD.position}>
+        <planeGeometry args={[CLIPBOARD.width, CLIPBOARD.height]} />
+        <meshToonMaterial color={palette.boneWhite} />
       </mesh>
       {/* prep table with a kettle */}
       <mesh position={[0, 0.5, 0.6]}>

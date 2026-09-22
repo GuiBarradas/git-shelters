@@ -8,6 +8,13 @@ import { palette } from "@/lib/palette";
 
 import { RoomShell } from "./RoomShell";
 
+/** Gauge face on the control cabinet; the room page pins the uptime read-out here. */
+export const GAUGE = {
+  position: [-1.32, 1.35, -0.6] as [number, number, number],
+  width: 0.9,
+  height: 0.62,
+};
+
 /** Power Plant: the generator. A humming drum, pipes, a spinning fan, a warning beacon. */
 export function PowerPlantRoom() {
   const beacon = useRef<MeshToonMaterial>(null);
@@ -37,7 +44,7 @@ export function PowerPlantRoom() {
         </mesh>
       ))}
       {/* exhaust pipe up into the ceiling */}
-      <mesh position={[0.7, 2.1, -0.3]}>
+      <mesh position={[0.9, 2.1, -0.3]}>
         <cylinderGeometry args={[0.16, 0.16, 1.9, 10]} />
         <meshToonMaterial color={palette.outageGray} />
       </mesh>
@@ -54,12 +61,16 @@ export function PowerPlantRoom() {
         <torusGeometry args={[0.5, 0.04, 8, 24]} />
         <meshToonMaterial color={palette.coalBlack} />
       </mesh>
-      {/* control box with warning beacon */}
-      <mesh position={[-1.45, 1.2, -0.9]}>
-        <boxGeometry args={[0.5, 0.9, 0.35]} />
+      {/* control cabinet with gauge face and warning beacon */}
+      <mesh position={[-1.32, 1.1, -0.9]}>
+        <boxGeometry args={[1.05, 2.2, 0.55]} />
         <meshToonMaterial color={palette.outageGray} />
       </mesh>
-      <mesh position={[-1.45, 1.85, -0.9]}>
+      <mesh position={GAUGE.position}>
+        <planeGeometry args={[GAUGE.width, GAUGE.height]} />
+        <meshToonMaterial color="#0b0b0b" emissive={palette.glowYellow} emissiveIntensity={0.15} />
+      </mesh>
+      <mesh position={[-1.32, 2.35, -0.9]}>
         <sphereGeometry args={[0.13, 12, 12]} />
         <meshToonMaterial ref={beacon} color={palette.fadedRed} emissive={palette.fadedRed} emissiveIntensity={0.5} />
       </mesh>

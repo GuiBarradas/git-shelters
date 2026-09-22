@@ -1,5 +1,6 @@
 "use client";
 
+import { Sparkles } from "@react-three/drei";
 import type { ReactNode } from "react";
 
 import { palette } from "@/lib/palette";
@@ -33,7 +34,7 @@ export function RoomShell({
   dim = false,
 }: RoomShellProps) {
   const { w, h, d } = CELL;
-  const wall = dim ? "#1a1c20" : tone;
+  const wall = dim ? "#24272c" : tone;
   const t = 0.25; // slab / wall thickness
 
   return (
@@ -41,7 +42,7 @@ export function RoomShell({
       {/* floor */}
       <mesh position={[0, -t / 2, 0]} receiveShadow>
         <boxGeometry args={[w, t, d]} />
-        <meshToonMaterial color={dim ? "#16171a" : palette.steelBlue} />
+        <meshToonMaterial color={dim ? "#1d1f24" : palette.steelBlue} />
       </mesh>
       {/* back wall */}
       <mesh position={[0, h / 2, -d / 2 + t / 2]}>
@@ -51,13 +52,13 @@ export function RoomShell({
       {/* ceiling beam */}
       <mesh position={[0, h + t / 2, 0]}>
         <boxGeometry args={[w + t, t, d]} />
-        <meshToonMaterial color={dim ? "#1a1c20" : palette.concreteTan} />
+        <meshToonMaterial color={dim ? "#2a2d33" : palette.concreteTan} />
       </mesh>
       {/* pillars */}
       {[-1, 1].map((side) => (
         <mesh key={side} position={[(side * (w + t)) / 2, h / 2, 0]}>
           <boxGeometry args={[t, h + t, d]} />
-          <meshToonMaterial color={dim ? "#1a1c20" : palette.concreteTan} />
+          <meshToonMaterial color={dim ? "#2a2d33" : palette.concreteTan} />
         </mesh>
       ))}
       {/* hanging lamp + its light */}
@@ -68,6 +69,17 @@ export function RoomShell({
             <meshToonMaterial color={palette.boneWhite} emissive={light} emissiveIntensity={0.9} />
           </mesh>
           <pointLight position={[0, h - 0.5, 0.6]} color={light} intensity={lightIntensity} distance={7.5} decay={2} />
+          {/* dust drifting through the lamp light: the cheapest "this place is lived in" */}
+          <Sparkles
+            count={14}
+            position={[0, h / 2, 0.3]}
+            scale={[w - 0.6, h - 0.6, d - 0.8]}
+            size={1.6}
+            speed={0.25}
+            opacity={0.35}
+            color={light}
+            noise={0.4}
+          />
         </>
       )}
       {children}

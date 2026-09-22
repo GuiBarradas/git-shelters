@@ -7,7 +7,7 @@ import { useLayoutEffect, type ReactNode } from "react";
 import { palette } from "@/lib/palette";
 import type { RoomKind } from "@/lib/rooms/catalog";
 
-import { BuiltRoom, CELL, MainBranchRoom, SCREEN } from "./rooms";
+import { BuiltRoom, CELL, MainBranchRoom, panelAnchor } from "./rooms";
 
 /** CSS pixels per world unit in drei's transform mode (measured, camera-independent). */
 const CSS3D_PX = 40;
@@ -19,8 +19,8 @@ type RoomSceneProps = {
   kind: RoomKind | null;
   activeToday: boolean;
   eventPending: boolean;
-  /** Rendered on the terminal screen (Main Branch only). */
-  screen?: ReactNode;
+  /** Rendered on the room's read-out surface: terminal, clipboard or gauge. */
+  panel?: ReactNode;
 };
 
 /** Closer, more frontal camera than the overview: one cell fills the view. */
@@ -40,7 +40,8 @@ function Camera() {
   );
 }
 
-export default function RoomScene({ kind, activeToday, eventPending, screen }: RoomSceneProps) {
+export default function RoomScene({ kind, activeToday, eventPending, panel }: RoomSceneProps) {
+  const anchor = panelAnchor(kind);
   return (
     <Canvas
       dpr={[1, 1.5]}
@@ -51,25 +52,19 @@ export default function RoomScene({ kind, activeToday, eventPending, screen }: R
       <ambientLight color={palette.boneWhite} intensity={0.55} />
       <directionalLight position={[6, 10, 8]} color={palette.boneWhite} intensity={0.45} />
 
-      {kind === null ? (
-        <>
-          <MainBranchRoom active={activeToday} pending={eventPending} />
-          {screen && (
-            // CSS3D panel glued to the monitor face, so the card is "on" the PC.
-            <Html
-              transform
-              position={[SCREEN.position[0], SCREEN.position[1], SCREEN.position[2] + 0.012]}
-              // drei's CSS3D layer maps 1 world unit to CSS3D_PX css pixels (measured);
-              // author the panel at PANEL_PX per unit for legible text, then scale down.
-              scale={CSS3D_PX / PANEL_PX}
-              style={{ width: `${SCREEN.width * PANEL_PX}px`, height: `${SCREEN.height * PANEL_PX}px` }}
-            >
-              {screen}
-            </Html>
-          )}
-        </>
-      ) : (
-        <BuiltRoom kind={kind} />
+      {kind === null ? <MainBranchRoom active={activeToday} pending={eventPending} /> : <BuiltRoom kind={kind} />}
+      {panel && (
+        // CSS3D panel glued to the room's read-out surface (monitor, clipboard, gauge).
+        <Html
+          transform
+          position={[anchor.position[0], anchor.position[1], anchor.position[2] + 0.012]}
+          // drei's CSS3D layer maps 1 world unit to CSS3D_PX css pixels (measured);
+          // author the panel at PANEL_PX per unit for legible text, then scale down.
+          scale={CSS3D_PX / PANEL_PX}
+          style={{ width: `${anchor.width * PANEL_PX}px`, height: `${anchor.height * PANEL_PX}px` }}
+        >
+          {panel}
+        </Html>
       )}
     </Canvas>
   );
