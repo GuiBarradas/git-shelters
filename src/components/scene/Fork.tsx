@@ -42,6 +42,8 @@ type Props = {
 /** One voxel, in world units. Head top lands at about 1.45: shoulder height to the desk. */
 const VOXEL = 0.2;
 const WALK_SPEED = 0.55; // units per second
+/** Hip pivot height above the feet: 2.2 voxels, see the leg groups below. */
+const HIP_HEIGHT = 2.2 * VOXEL;
 
 type Phase = "pace" | "approach" | "enter" | "act" | "exit" | "leave";
 
@@ -174,8 +176,10 @@ export function Fork({ fork, layout, onClick, onHover }: Props) {
 
     // Pose.
     const sitting = action === "sit" || action === "type";
-    const hipY = sitting ? (s.station?.seatY ?? 0.3) : 0;
-    g.position.set(s.x, hipY + (moving ? Math.abs(Math.sin(t * 9)) * 0.02 : 0), s.z);
+    // The model's origin is at the feet; the hips are HIP_HEIGHT above it.
+    // Sitting puts the hips on the seat, so the origin drops below it.
+    const originY = sitting ? (s.station?.seatY ?? 0.3) - HIP_HEIGHT : 0;
+    g.position.set(s.x, originY + (moving ? Math.abs(Math.sin(t * 9)) * 0.02 : 0), s.z);
     g.rotation.y = s.facing;
 
     // Legs: thighs swing from the hips while walking; sitting folds the
