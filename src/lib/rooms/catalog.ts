@@ -21,6 +21,12 @@ export const ROOM_CATALOG = {
     color: palette.glowYellow,
     blurb: "Power Plant — generates Uptime. Without it, the lights go out.",
   },
+  dorm: {
+    name: "Dorm",
+    cost: 100,
+    color: palette.steelBlue,
+    blurb: "Dorm — two more beds. Nobody sleeps on the Main Branch floor forever.",
+  },
 } as const satisfies Record<string, { name: string; cost: number; color: PaletteColor; blurb: string }>;
 
 export const MAIN_BRANCH_BLURB = "Main Branch — the heart of the Repo. Always present.";

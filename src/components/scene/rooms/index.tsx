@@ -5,6 +5,7 @@ import type { RoomKind } from "@/lib/rooms/catalog";
 import type { RoomLayout } from "@/components/scene/Fork";
 
 import { CacheStorageRoom, CLIPBOARD, LAYOUT as CACHE_LAYOUT } from "./CacheStorageRoom";
+import { DormRoom, LAYOUT as DORM_LAYOUT, PINBOARD } from "./DormRoom";
 import { GAUGE, LAYOUT as POWER_LAYOUT, PowerPlantRoom } from "./PowerPlantRoom";
 import { LAYOUT as MAIN_LAYOUT, SCREEN } from "./MainBranchRoom";
 
@@ -23,6 +24,8 @@ export function panelAnchor(kind: RoomKind | null): PanelAnchor {
       return CLIPBOARD;
     case "power_plant":
       return GAUGE;
+    case "dorm":
+      return PINBOARD;
   }
 }
 
@@ -35,6 +38,8 @@ export function roomLayout(kind: RoomKind | null): RoomLayout {
       return CACHE_LAYOUT;
     case "power_plant":
       return POWER_LAYOUT;
+    case "dorm":
+      return DORM_LAYOUT;
   }
 }
 
@@ -45,5 +50,7 @@ export function BuiltRoom({ kind, powered = true }: { kind: RoomKind; powered?: 
       return <CacheStorageRoom powered={powered} />;
     case "power_plant":
       return <PowerPlantRoom powered={powered} />;
+    case "dorm":
+      return <DormRoom powered={powered} />;
   }
 }

@@ -119,6 +119,30 @@ export function UptimePanel({
   );
 }
 
+/** Dorm pinboard: beds against bodies, and who is sleeping it off. */
+export function BunkPanel({ beds, crew, sleepers }: { beds: number; crew: number; sleepers: string[] }) {
+  const free = Math.max(0, beds - crew);
+  return (
+    <div className={`${frame} bg-[#3b3325] px-3 py-2 text-[10px] text-[#E6DFC8] [text-shadow:none]`}>
+      <div className="mb-1 flex items-baseline justify-between border-b border-[#E6DFC8]/30 pb-1">
+        <span className="font-bold tracking-widest">BUNK ROSTER</span>
+        <span className={free === 0 ? "text-[#A14545]" : "text-[#7FFF6A]"}>
+          {free === 0 ? "○ FULL" : `● ${free} FREE`}
+        </span>
+      </div>
+      <p>
+        BEDS <span className="text-[#FFD66B]">{crew}</span>/{beds}
+      </p>
+      <p className="text-[#E6DFC8]/70">
+        {sleepers.length === 0 ? "nobody sleeping. The blankets are cold." : `sleeping: ${sleepers.join(", ")}`}
+      </p>
+      <p className="mt-1 text-[#E6DFC8]/60">
+        {free === 0 ? "Full house. Another Dorm means two more beds." : "Room at the door for a new Fork."}
+      </p>
+    </div>
+  );
+}
+
 function minutesAgo(iso: string): number {
   return Math.max(0, Math.floor((Date.now() - Date.parse(iso)) / 60_000));
 }

@@ -1,8 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { FORK_TRAITS, forkLook, generateForkName, isForkTrait, pickTrait } from "@/lib/forks/catalog";
+import { bedCount, FORK_TRAITS, forkLook, generateForkName, isForkTrait, pickTrait } from "@/lib/forks/catalog";
 
 describe("fork catalog", () => {
+  it("counts beds: two on the Main Branch, two per Dorm", () => {
+    expect(bedCount([])).toBe(2);
+    expect(bedCount([{ kind: "cache_storage" }, { kind: "power_plant" }])).toBe(2);
+    expect(bedCount([{ kind: "dorm" }])).toBe(4);
+    expect(bedCount([{ kind: "dorm" }, { kind: "dorm" }, { kind: "cache_storage" }])).toBe(6);
+  });
+
   it("is deterministic: the same seed always yields the same survivor", () => {
     for (const seed of [0, 1, 42, 77, 2_147_483_646]) {
       expect(generateForkName(seed)).toBe(generateForkName(seed));

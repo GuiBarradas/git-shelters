@@ -38,6 +38,18 @@ export type Fork = {
 /** Bytes to recruit one more survivor. Mirrored nowhere: the RPC takes the cost as a parameter. */
 export const RECRUIT_COST = 300;
 
+/**
+ * Beds (design doc §5.2): two on the Main Branch, two more per Dorm.
+ * Mirrors recruit_fork() in the database, which is the authority and
+ * raises `no_beds` when the crew would outgrow them.
+ */
+export const BEDS_BASE = 2;
+export const BEDS_PER_DORM = 2;
+
+export function bedCount(rooms: ReadonlyArray<{ kind: string }>): number {
+  return BEDS_BASE + BEDS_PER_DORM * rooms.filter((r) => r.kind === "dorm").length;
+}
+
 const FIRST = [
   "Linus", "Margie", "Hex", "Ada", "Dmitri", "Priya", "Sol", "Yuki", "Grace", "Bjarne",
   "Nadia", "Tomas", "Ines", "Kofi", "Wren", "Ravi", "Lena", "Ozzie", "Mara", "Vik",

@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { RECRUIT_COST } from "@/lib/forks/catalog";
 import { loadCrew, loadForks } from "@/lib/forks/load";
+import { moodFor } from "@/lib/forks/mood";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 import { createThrowawayUser, type ThrowawayUser } from "./fixture";
@@ -26,7 +27,8 @@ describe("forks", () => {
     const second = await loadForks(admin, admin, user.id);
     expect(first).toHaveLength(1);
     expect(second).toEqual(first);
-    expect(first[0]).toMatchObject({ roomSlot: 0, mood: "content" });
+    // A fresh bunker is "content"; the starter's random trait may shift it one step.
+    expect(first[0]).toMatchObject({ roomSlot: 0, mood: moodFor("content", first[0]!.trait) });
     expect(first[0]!.name).toMatch(/^[A-Z][a-z]+[_-]/);
 
     const { data: user0 } = await admin.from("users").select("bytes").eq("id", user.id).single();
@@ -90,6 +92,25 @@ describe("forks", () => {
       created_at: now.toISOString(),
     });
     expect((await loadCrew(admin, admin, user.id, now)).mood).toBe("happy");
+  });
+
+  it("refuses a third survivor until a Dorm adds beds", async () => {
+    await admin.from("users").update({ bytes: RECRUIT_COST * 4 }).eq("id", user.id);
+    const recruit = (name: string) =>
+      admin.rpc("recruit_fork", { p_user_id: user.id, p_name: name, p_trait: "junior", p_cost: RECRUIT_COST });
+
+    // Starter + Ada_v2 already fill the two Main Branch beds.
+    expect((await recruit("Third_tmp")).error?.message).toContain("no_beds");
+    expect(await loadForks(admin, admin, user.id)).toHaveLength(2);
+
+    const { error: built } = await admin.rpc("build_room", { p_user_id: user.id, p_slot: 3, p_kind: "dorm" });
+    expect(built).toBeNull();
+    expect((await recruit("Third_tmp")).error).toBeNull();
+    expect((await recruit("Fourth_tmp")).error).toBeNull();
+    expect((await recruit("Fifth_tmp")).error?.message).toContain("no_beds");
+    expect(await loadForks(admin, admin, user.id)).toHaveLength(4);
+
+    await admin.from("users").update({ bytes: 0 }).eq("id", user.id);
   });
 
   it("rejects a recruit the player cannot afford, leaving no Fork behind", async () => {

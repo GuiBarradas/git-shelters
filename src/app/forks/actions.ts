@@ -30,7 +30,7 @@ export async function recruitFork() {
     p_cost: RECRUIT_COST,
   });
 
-  if (error && !error.message.includes("insufficient_bytes")) {
+  if (error && !error.message.includes("insufficient_bytes") && !error.message.includes("no_beds")) {
     Sentry.captureException(error, { tags: { user_id: user.id, entrypoint: "recruit_fork" } });
   }
 

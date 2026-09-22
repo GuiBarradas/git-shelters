@@ -7,12 +7,14 @@ import type { Room } from "@/lib/rooms/catalog";
 const DEMO_ROOMS: Room[] = [
   { slot: 1, kind: "cache_storage" },
   { slot: 2, kind: "power_plant" },
+  { slot: 3, kind: "dorm" },
 ];
 
 /** One survivor pacing the demo so the place looks lived in. */
 const DEMO_FORKS: Fork[] = [
   { id: "demo-1", name: "Linus_77", trait: "caffeinated", mood: "content", roomSlot: 0, seed: 77 },
   { id: "demo-2", name: "Margie_NULL", trait: "senior", mood: "content", roomSlot: 1, seed: 1204 },
+  { id: "demo-3", name: "Hex_root", trait: "vibe_coder", mood: "happy", roomSlot: 3, seed: 31337 },
 ];
 
 /** Real profile shown as "what this looks like after a while". */

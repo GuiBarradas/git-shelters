@@ -7,13 +7,13 @@ import { recruitFork } from "@/app/forks/actions";
 import { SessionBeacon } from "@/components/analytics/SessionBeacon";
 import { DailyEventCard } from "@/components/events/DailyEventCard";
 import { CrewPanel } from "@/components/rooms/CrewPanel";
-import { LedgerPanel, UptimePanel } from "@/components/rooms/RoomPanels";
+import { BunkPanel, LedgerPanel, UptimePanel } from "@/components/rooms/RoomPanels";
 import { RoomSceneClient } from "@/components/scene/RoomSceneClient";
 import { daysBetween } from "@/lib/analytics/track";
 import { settleResources } from "@/lib/economy/resources";
 import { cacheCap, type TickResult } from "@/lib/economy/tick";
 import { fetchDailyEvent, todayUtc } from "@/lib/events/daily";
-import { RECRUIT_COST, type Fork } from "@/lib/forks/catalog";
+import { bedCount, RECRUIT_COST, type Fork } from "@/lib/forks/catalog";
 import { loadCrew } from "@/lib/forks/load";
 import { eventEcho, settleMood } from "@/lib/forks/mood";
 import {
@@ -68,6 +68,8 @@ export default async function RoomPage({ params }: Props) {
   const allForks = crew.forks.map((f) => ({ ...f, mood: settleMood(f.mood, moodCtx) }));
   const forks = allForks.filter((f) => (f.roomSlot ?? 0) === slotNumber);
   const bytes = me?.bytes ?? 0;
+  const beds = bedCount(rooms);
+  const noBed = allForks.length >= beds;
 
   const panel = isMain
     ? dailyEvent
@@ -100,14 +102,15 @@ export default async function RoomPage({ params }: Props) {
           <form action={recruitFork} className="pointer-events-auto mt-4">
             <button
               type="submit"
-              disabled={bytes < RECRUIT_COST}
-              title={bytes < RECRUIT_COST ? `Need ${RECRUIT_COST} B` : "Someone at the door"}
+              disabled={noBed || bytes < RECRUIT_COST}
+              title={noBed ? "No free bed. Build a Dorm." : bytes < RECRUIT_COST ? `Need ${RECRUIT_COST} B` : "Someone at the door"}
               className="border border-[#7FFF6A] px-3 py-1 text-[#7FFF6A] transition hover:bg-[#7FFF6A]/10 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Recruit a Fork · {RECRUIT_COST} B
             </button>
             <p className="mt-1 text-xs text-[#E6DFC8]/50">
-              {allForks.length} {allForks.length === 1 ? "survivor" : "survivors"} in the Repo
+              {allForks.length} {allForks.length === 1 ? "survivor" : "survivors"} in the Repo · {beds} beds
+              {noBed && <span className="text-[#A14545]"> · no free bed</span>}
             </p>
           </form>
         )}
@@ -172,6 +175,8 @@ async function roomPanel(
         />
       );
     }
+    case "dorm":
+      return <BunkPanel beds={bedCount(rooms)} crew={allForks.length} sleepers={names} />;
   }
 }
 
