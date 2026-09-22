@@ -42,6 +42,12 @@ export function BunkerSceneClient({
         onHoverBlurb={setBlurb}
         demo={demo}
       />
+      {/* Vignette in CSS: free, and it replaced a postprocessing pass that cost 40 fps on integrated GPUs. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{ background: "radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%)" }}
+      />
       {blurb && selectedSlot === null && (
         <p className="pointer-events-none absolute bottom-6 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border border-[#7FFF6A]/40 bg-[#0F0F0F]/90 px-3 py-1 font-mono text-xs text-[#E6DFC8]">
           {blurb}

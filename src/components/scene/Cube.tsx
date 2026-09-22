@@ -8,6 +8,8 @@ type CubeProps = {
   color?: PaletteColor;
   /** 1 = solid. Anything below switches the material to transparent. */
   opacity?: number;
+  /** Self-lit in its own colour; the cheap stand-in for bloom. */
+  glow?: boolean;
   onClick?: () => void;
   /** Fired with true on pointer enter, false on leave. */
   onHover?: (hovered: boolean) => void;
@@ -18,6 +20,7 @@ export function Cube({
   size = 1,
   color = palette.concreteTan,
   opacity = 1,
+  glow = false,
   onClick,
   onHover,
 }: CubeProps) {
@@ -45,6 +48,8 @@ export function Cube({
       <boxGeometry args={[size, size, size]} />
       <meshToonMaterial
         color={color}
+        emissive={glow ? color : "#000000"}
+        emissiveIntensity={glow ? 0.55 : 0}
         transparent={opacity < 1}
         opacity={opacity}
       />

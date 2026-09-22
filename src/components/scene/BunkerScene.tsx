@@ -2,7 +2,6 @@
 
 import { OrbitControls, OrthographicCamera } from "@react-three/drei";
 import { Canvas, useThree } from "@react-three/fiber";
-import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
 import { useLayoutEffect } from "react";
 
 import { palette } from "@/lib/palette";
@@ -81,6 +80,9 @@ export default function BunkerScene({
   const hover = (blurb: string) => (hovered: boolean) => onHoverBlurb?.(hovered ? blurb : null);
 
   return (
+    // No EffectComposer on purpose: bloom + vignette cost 40 fps on an
+    // Intel Iris Xe (61 → 19 measured). The glow is an emissive term on
+    // the material and the vignette is a CSS gradient over the canvas.
     <Canvas
       dpr={[1, 1.5]}
       gl={{ antialias: true, powerPreference: "high-performance" }}
@@ -107,6 +109,7 @@ export default function BunkerScene({
         position={slotPosition(0)}
         size={SLOT_SIZE}
         color={activeToday ? palette.radioactiveGreen : palette.steelBlue}
+        glow={activeToday}
         onHover={hover(MAIN_BRANCH_BLURB)}
       />
 
@@ -132,11 +135,6 @@ export default function BunkerScene({
           />
         );
       })}
-
-      <EffectComposer>
-        <Bloom intensity={0.4} luminanceThreshold={0.85} luminanceSmoothing={0.4} />
-        <Vignette darkness={0.3} offset={0.3} eskil={false} />
-      </EffectComposer>
     </Canvas>
   );
 }
