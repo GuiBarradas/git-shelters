@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { buildRoom } from "@/app/rooms/actions";
@@ -13,32 +14,44 @@ type BunkerSceneClientProps = {
   /** Current balance; null when anonymous. Anonymous players cannot build. */
   bytes: number | null;
   activeToday: boolean;
-  /** Landing mode: auto-orbit, drag to rotate, tooltips, no building. */
+  /** Today's Daily Event still unresolved: the Main Branch terminal glows. */
+  eventPending?: boolean;
+  /** Landing mode: auto-orbit, drag to rotate, tooltips, no interaction. */
   demo?: boolean;
 };
 
 /**
- * Owns the two pieces of client state the bunker needs: which empty slot
- * the player clicked, and what is under the pointer. The build menu and
- * the tooltip are plain HTML over the canvas; each build option is a form
- * posting to the buildRoom Server Action.
+ * Owns the client state the bunker needs: which empty slot the player
+ * clicked (opens the build menu) and what is under the pointer (tooltip).
+ * Clicking a built room, or the Main Branch, walks into it: /room/<slot>.
  */
 export function BunkerSceneClient({
   rooms,
   bytes,
   activeToday,
+  eventPending = false,
   demo = false,
 }: BunkerSceneClientProps) {
+  const router = useRouter();
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [blurb, setBlurb] = useState<string | null>(null);
   const canBuild = bytes !== null && !demo;
+
+  const onSlotClick = (slot: 0 | Slot, built: boolean) => {
+    if (built) {
+      router.push(`/room/${slot}`);
+    } else if (canBuild && slot !== 0) {
+      setSelectedSlot(slot);
+    }
+  };
 
   return (
     <>
       <BunkerScene
         rooms={rooms}
         activeToday={activeToday}
-        onEmptySlotClick={canBuild ? setSelectedSlot : () => {}}
+        eventPending={eventPending}
+        onSlotClick={onSlotClick}
         onHoverBlurb={setBlurb}
         demo={demo}
       />
@@ -51,28 +64,17 @@ export function BunkerSceneClient({
       {blurb && selectedSlot === null && (
         <p className="pointer-events-none absolute bottom-6 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border border-[#7FFF6A]/40 bg-[#0F0F0F]/90 px-3 py-1 font-mono text-xs text-[#E6DFC8]">
           {blurb}
+          {!demo && <span className="text-[#E6DFC8]/50"> · click to enter</span>}
         </p>
       )}
       {selectedSlot !== null && bytes !== null && (
-        <BuildMenu
-          slot={selectedSlot}
-          bytes={bytes}
-          onClose={() => setSelectedSlot(null)}
-        />
+        <BuildMenu slot={selectedSlot} bytes={bytes} onClose={() => setSelectedSlot(null)} />
       )}
     </>
   );
 }
 
-function BuildMenu({
-  slot,
-  bytes,
-  onClose,
-}: {
-  slot: Slot;
-  bytes: number;
-  onClose: () => void;
-}) {
+function BuildMenu({ slot, bytes, onClose }: { slot: Slot; bytes: number; onClose: () => void }) {
   return (
     <div className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 border border-[#7FFF6A] bg-[#0F0F0F]/90 p-4 font-mono text-sm text-[#7FFF6A]">
       <div className="mb-3 flex items-center justify-between gap-6">

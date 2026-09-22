@@ -14,125 +14,142 @@ import {
   type Slot,
 } from "@/lib/rooms/catalog";
 
-import { Cube } from "./Cube";
-import { BunkerLights } from "./lights";
+import { BuiltRoom, CELL, EmptyCell, MainBranchRoom } from "./rooms";
 
 type BunkerSceneProps = {
   rooms: Room[];
-  /** Tints the Main Branch when the player pushed code today. */
+  /** The bunker pushed code today. */
   activeToday: boolean;
-  onEmptySlotClick: (slot: Slot) => void;
+  /** Today's Daily Event is still waiting on the Main Branch terminal. */
+  eventPending?: boolean;
+  onSlotClick: (slot: 0 | Slot, built: boolean) => void;
   /** In-world blurb of whatever is under the pointer, or null. */
   onHoverBlurb?: (blurb: string | null) => void;
   /** Landing mode: slow auto-orbit and drag to rotate, nothing else. */
   demo?: boolean;
 };
 
-const SLOT_SIZE = 1.4;
-const SLOT_PITCH = 2;
+/** Distance between cell centres (pillars sit in the gap). */
+const PITCH = CELL.w + 0.55;
+const SLOT_COUNT = BUILDABLE_SLOTS.length + 1;
+/** Slot 0 leftmost, so the Main Branch reads as the entrance. */
+const slotX = (slot: number) => (slot - (SLOT_COUNT - 1) / 2) * PITCH;
+const ROW_WIDTH = PITCH * SLOT_COUNT;
 
 /**
- * Slot 0 (Main Branch) leftmost, buildable slots to its right, centred on
- * the origin. The row runs along (1, 0, -1), which is perpendicular to the
- * camera's view direction from [10, 8, 10], so it reads as a horizontal
- * line on screen instead of receding into depth.
+ * Cross-section camera (design doc §5.1): almost frontal, a little above
+ * and to the right so the cells have depth. Zoom follows viewport width
+ * so the whole floor fits a phone and stops growing past a laptop.
  */
-function slotPosition(slot: number): [number, number, number] {
-  const t = ((slot - BUILDABLE_SLOTS.length / 2) * SLOT_PITCH) / Math.SQRT2;
-  return [t, 0, -t];
-}
-
-function CameraRig() {
-  const camera = useThree((state) => state.camera);
-  useLayoutEffect(() => {
-    camera.lookAt(0, 0, 0);
-    camera.updateProjectionMatrix();
-  }, [camera]);
-  return null;
-}
-
-/**
- * Isometric orthographic camera whose zoom follows the viewport width, so
- * the four-slot row fits a phone (~30) and stops growing past a laptop
- * (50). Passing zoom as a prop lets drei refresh the projection matrix.
- */
-function Camera() {
+function Camera({ lookY }: { lookY: number }) {
   const width = useThree((state) => state.size.width);
+  const camera = useThree((state) => state.camera);
+  const zoom = Math.min(58, Math.max(18, (width * 0.92) / ROW_WIDTH));
+  useLayoutEffect(() => {
+    camera.lookAt(0, lookY, 0);
+    camera.updateProjectionMatrix();
+  }, [camera, zoom, lookY]);
   return (
-    <OrthographicCamera
-      makeDefault
-      position={[10, 8, 10]}
-      zoom={Math.min(50, Math.max(24, width / 13))}
-      near={0.1}
-      far={1000}
-    />
+    <OrthographicCamera makeDefault position={[6, 6.5, 24]} zoom={zoom} near={0.1} far={200} />
+  );
+}
+
+/** Invisible pointer target covering one cell, so hover and click ignore the props. */
+function CellHitbox({ onClick, onHover }: { onClick?: () => void; onHover: (h: boolean) => void }) {
+  return (
+    <mesh
+      position={[0, CELL.h / 2, 0]}
+      onClick={
+        onClick
+          ? (e) => {
+              e.stopPropagation();
+              onClick();
+            }
+          : undefined
+      }
+      onPointerOver={(e) => {
+        e.stopPropagation();
+        if (onClick) document.body.style.cursor = "pointer";
+        onHover(true);
+      }}
+      onPointerOut={() => {
+        document.body.style.cursor = "auto";
+        onHover(false);
+      }}
+    >
+      <boxGeometry args={[CELL.w, CELL.h, CELL.d]} />
+      <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+    </mesh>
   );
 }
 
 export default function BunkerScene({
   rooms,
   activeToday,
-  onEmptySlotClick,
+  eventPending = false,
+  onSlotClick,
   onHoverBlurb,
   demo = false,
 }: BunkerSceneProps) {
   const bySlot = new Map(rooms.map((room) => [room.slot, room]));
-  const hover = (blurb: string) => (hovered: boolean) => onHoverBlurb?.(hovered ? blurb : null);
+  const hover = (blurb: string) => (h: boolean) => onHoverBlurb?.(h ? blurb : null);
+  // The landing keeps the hero text above the bunker: look higher, so the
+  // row sits in the lower half of the screen.
+  const lookY = demo ? CELL.h / 2 + 3.2 : CELL.h / 2;
 
   return (
-    // No EffectComposer on purpose: bloom + vignette cost 40 fps on an
-    // Intel Iris Xe (61 → 19 measured). The glow is an emissive term on
-    // the material and the vignette is a CSS gradient over the canvas.
     <Canvas
       dpr={[1, 1.5]}
       gl={{ antialias: true, powerPreference: "high-performance" }}
       style={{ background: palette.coalBlack }}
     >
-      <Camera />
-      {demo ? (
+      <Camera lookY={lookY} />
+      {demo && (
         <OrbitControls
-          target={[0, 1.6, 0]}
+          target={[0, lookY, 0]}
           autoRotate
-          autoRotateSpeed={0.6}
+          autoRotateSpeed={0.35}
           enableZoom={false}
           enablePan={false}
-          minPolarAngle={Math.PI / 4}
-          maxPolarAngle={Math.PI / 2.6}
+          minPolarAngle={Math.PI / 2.6}
+          maxPolarAngle={Math.PI / 2.1}
+          minAzimuthAngle={-0.5}
+          maxAzimuthAngle={0.5}
         />
-      ) : (
-        <CameraRig />
       )}
 
-      <BunkerLights />
+      {/* cold fill from outside; the warm light is each room's own lamp */}
+      <ambientLight color={palette.steelBlue} intensity={0.35} />
+      <directionalLight position={[8, 12, 10]} color={palette.boneWhite} intensity={0.5} />
 
-      <Cube
-        position={slotPosition(0)}
-        size={SLOT_SIZE}
-        color={activeToday ? palette.radioactiveGreen : palette.steelBlue}
-        glow={activeToday}
-        onHover={hover(MAIN_BRANCH_BLURB)}
-      />
+      {/* the earth the bunker is dug into */}
+      <mesh position={[0, -2.2, -1]}>
+        <boxGeometry args={[ROW_WIDTH * 3, 4, CELL.d + 6]} />
+        <meshToonMaterial color="#121315" />
+      </mesh>
+      <mesh position={[0, CELL.h + 2.4, -2]}>
+        <boxGeometry args={[ROW_WIDTH * 3, 4, CELL.d + 4]} />
+        <meshToonMaterial color="#121315" />
+      </mesh>
+
+      <group position={[slotX(0), 0, 0]}>
+        <MainBranchRoom active={activeToday} pending={eventPending} />
+        <CellHitbox
+          onClick={demo ? undefined : () => onSlotClick(0, true)}
+          onHover={hover(MAIN_BRANCH_BLURB)}
+        />
+      </group>
 
       {BUILDABLE_SLOTS.map((slot) => {
         const room = bySlot.get(slot);
-        return room ? (
-          <Cube
-            key={slot}
-            position={slotPosition(slot)}
-            size={SLOT_SIZE}
-            color={ROOM_CATALOG[room.kind].color}
-            onHover={hover(ROOM_CATALOG[room.kind].blurb)}
-          />
-        ) : (
-          <Cube
-            key={slot}
-            position={slotPosition(slot)}
-            size={SLOT_SIZE}
-            color={palette.outageGray}
-            opacity={0.5}
-            onClick={() => onEmptySlotClick(slot)}
-            onHover={hover(EMPTY_SLOT_BLURB)}
-          />
+        return (
+          <group key={slot} position={[slotX(slot), 0, 0]}>
+            {room ? <BuiltRoom kind={room.kind} /> : <EmptyCell />}
+            <CellHitbox
+              onClick={demo ? undefined : () => onSlotClick(slot, Boolean(room))}
+              onHover={hover(room ? ROOM_CATALOG[room.kind].blurb : EMPTY_SLOT_BLURB)}
+            />
+          </group>
         );
       })}
     </Canvas>

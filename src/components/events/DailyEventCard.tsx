@@ -1,22 +1,27 @@
 import { resolveDailyEvent } from "@/app/events/actions";
-import type { DailyEventOption } from "@/lib/events/option";
+import type { DailyEventView } from "@/lib/events/daily";
 
-export type DailyEventView = {
-  title: string;
-  narrative: string;
-  options: { a: DailyEventOption; b: DailyEventOption };
-  /** Today's resolution, if the player already decided. */
-  resolved: { choice: "a" | "b"; outcome: DailyEventOption } | null;
-};
+export type { DailyEventView };
 
 /**
  * Bottom-left panel with today's Daily Event. Two forms post the choice to
  * the resolveDailyEvent Server Action; once resolved, the same panel shows
  * the outcome until the next UTC day.
  */
-export function DailyEventCard({ event }: { event: DailyEventView }) {
+export function DailyEventCard({
+  event,
+  variant = "panel",
+}: {
+  event: DailyEventView;
+  /** "screen" fills the Main Branch terminal; "panel" floats over the page. */
+  variant?: "panel" | "screen";
+}) {
+  const frame =
+    variant === "screen"
+      ? "pointer-events-auto h-full w-full overflow-y-auto bg-[#041a08] px-3 py-2 font-mono text-[11px] leading-snug text-[#9BFF8A] [text-shadow:0_0_6px_rgba(127,255,106,0.6)] [&_h2]:mb-1 [&_p]:mb-2 [&_button]:py-1"
+      : "pointer-events-auto max-w-sm border border-[#7FFF6A] bg-[#0F0F0F]/90 p-4 font-mono text-sm text-[#E6DFC8]";
   return (
-    <aside className="pointer-events-auto max-w-sm border border-[#7FFF6A] bg-[#0F0F0F]/90 p-4 font-mono text-sm text-[#E6DFC8]">
+    <aside className={frame}>
       <h2 className="mb-2 text-[#7FFF6A]">{event.title}</h2>
       <p className="mb-4 leading-relaxed">{event.narrative}</p>
 
