@@ -30,13 +30,13 @@ export function Packets({ notices }: { notices: Notice[] }) {
             onClick={() => setOpen(n)}
             className="pointer-events-auto text-left text-[#E67E22] hover:text-[#E6DFC8]"
           >
-            &gt; packet waiting: {n.title} · <span className="blink">open</span>
+            &gt; packet waiting: {n.title} · open<span className="blink">_</span>
           </button>
         </p>
       ))}
 
       {open && (
-        <div className="pointer-events-auto absolute inset-0 z-30 flex items-center justify-center bg-[#0B0713]/80 px-4">
+        <div className="pointer-events-auto fixed inset-0 z-30 flex items-center justify-center bg-[#0B0713]/80 px-4">
           <section className="crt route-enter w-full max-w-lg px-6 py-5 font-mono text-sm text-[#E6DFC8]">
             <p className="mb-3 text-[10px] uppercase tracking-[0.25em] text-[#BD93F9]/70">main-branch:~$ open packet</p>
             <h2 className="mb-3 uppercase tracking-[0.2em] text-[#BD93F9]">{open.title}</h2>
