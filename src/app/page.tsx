@@ -106,7 +106,7 @@ export default async function Home({ searchParams }: HomeProps) {
       </div>
       {report && <AwaySummary report={report} />}
       <BadgeToast badges={freshBadges} />
-      {me !== null && (me.intro_seen_at === null || replayIntro) && <Intro />}
+      {me !== null && (me.intro_seen_at === null || replayIntro) && <Intro login={githubLogin} />}
       <div className="pointer-events-none absolute top-16 left-6 z-10 space-y-1 font-mono text-xs">
         <p className="text-[#E6DFC8]/70">
           <span className={resources.cache === 0 ? "text-[#A14545]" : ""}>

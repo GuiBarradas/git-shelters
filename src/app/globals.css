@@ -96,6 +96,26 @@ body,
   animation: hud-fade 4s ease-in forwards;
 }
 
+/* Intro: the mascot logging in and out. */
+.pixel {
+  image-rendering: pixelated;
+}
+@keyframes nod {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  30% { transform: translateY(6px) rotate(-4deg); }
+  60% { transform: translateY(-4px) rotate(3deg); }
+}
+.nod {
+  animation: nod 0.9s ease-in-out 2;
+}
+@keyframes logoff {
+  0% { opacity: 1; transform: translateY(0) scale(1); filter: none; }
+  100% { opacity: 0; transform: translateY(40px) scale(0.6); filter: grayscale(1) blur(2px); }
+}
+.logoff {
+  animation: logoff 3s ease-in forwards;
+}
+
 /* Terminal cursor for loading states. */
 @keyframes blink {
   50% {
