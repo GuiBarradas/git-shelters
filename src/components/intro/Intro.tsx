@@ -147,7 +147,7 @@ export function Intro() {
     >
       {phase === "boot" ? (
         <div className="route-enter flex max-w-lg flex-col items-center gap-6 text-center font-mono">
-          <Image src="/brand/lockup.png" alt="Git Shelters" width={1600} height={560} priority className="h-auto w-full max-w-lg" />
+          <Image src="/brand/lockup.png" alt="Git Shelters" width={1600} height={327} priority className="h-auto w-full max-w-lg" />
           <p className="text-xs uppercase tracking-[0.3em] text-[#E6DFC8]/50">a game by guibarradas</p>
           <button
             type="button"
