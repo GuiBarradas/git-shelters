@@ -39,8 +39,9 @@ export default function PrivacyPage() {
 
       <h2>What is public</h2>
       <p>
-        Your public profile page shows your GitHub login, your byte balance, when you joined
-        and the rooms in your bunker. Nothing else is visible to other players.
+        Your public profile page shows your GitHub login, your byte balance, when you joined,
+        the rooms in your bunker and the badges you earned. The world map shows the same facts
+        as a dot in your region. Nothing else is visible to other players.
       </p>
 
       <h2>Cookies</h2>

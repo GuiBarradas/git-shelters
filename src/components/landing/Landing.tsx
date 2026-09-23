@@ -52,6 +52,12 @@ export function Landing() {
           >
             or peek at a real Repo
           </a>
+          <a
+            href="/map"
+            className="pointer-events-auto ml-4 inline-block text-xs text-[#E6DFC8]/50 underline underline-offset-4 hover:text-[#E6DFC8]"
+          >
+            or see the 404 Lands
+          </a>
         </div>
       </div>
 

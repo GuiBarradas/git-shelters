@@ -32,9 +32,14 @@ export default async function ProfilePage({ params }: Props) {
         <p className="text-[#E6DFC8]/70">
           {profile.bytes.toLocaleString("en-US")} B · maintainer since {memberSince}
         </p>
-        <Link href="/" className="pointer-events-auto mt-2 inline-block hover:text-[#E6DFC8]">
-          &larr; your Repo
-        </Link>
+        <p className="pointer-events-auto mt-2 space-x-4">
+          <Link href="/" className="inline-block hover:text-[#E6DFC8]">
+            &larr; your Repo
+          </Link>
+          <Link href="/map" className="inline-block hover:text-[#E6DFC8]">
+            world map
+          </Link>
+        </p>
         {profile.badges.length > 0 && (
           <ul className="pointer-events-auto mt-4 flex max-w-sm flex-wrap gap-2 text-xs">
             {profile.badges.map((b) => (

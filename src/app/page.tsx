@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { after } from "next/server";
 
 import { SessionBeacon } from "@/components/analytics/SessionBeacon";
@@ -119,6 +120,11 @@ export default async function Home() {
           <p className="text-[#BD93F9]/80">&gt; incoming packet on the Main Branch terminal</p>
         )}
         <p className="text-[#E6DFC8]/50">&gt; {describeCrew(crewMood, crew.lastPushAt, new Date(), echo)}</p>
+        <p>
+          <Link href="/map" className="pointer-events-auto text-[#BD93F9]/70 hover:text-[#BD93F9]">
+            &gt; the 404 Lands: world map
+          </Link>
+        </p>
       </div>
     </main>
   );
