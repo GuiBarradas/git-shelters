@@ -92,6 +92,55 @@ export function PowerPlantRoom({ powered = true }: { powered?: boolean }) {
         <boxGeometry args={[2.2, 0.06, 0.08]} />
         <meshToonMaterial color={palette.coalBlack} />
       </mesh>
+      {/* refinement pass: hazard stripes, a steam pipe with a valve, a caged bulb, an oil stain, a cable coil, a sign */}
+      {Array.from({ length: 8 }, (_, i) => (
+        <mesh key={i} position={[-1.05 + i * 0.3, 0.31, 0.41]}>
+          <boxGeometry args={[0.15, 0.03, 0.02]} />
+          <meshToonMaterial color={i % 2 ? palette.amber : palette.coalBlack} />
+        </mesh>
+      ))}
+      <mesh position={[1.3, 2.0, -0.9]}>
+        <cylinderGeometry args={[0.07, 0.07, 2.0, 10]} />
+        <meshToonMaterial color={palette.concrete} />
+      </mesh>
+      <mesh position={[1.3, 2.95, -0.55]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.07, 0.07, 0.8, 10]} />
+        <meshToonMaterial color={palette.concrete} />
+      </mesh>
+      <mesh position={[1.3, 1.5, -0.78]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.14, 0.03, 8, 16]} />
+        <meshToonMaterial color={palette.fadedRed} />
+      </mesh>
+      <group position={[-0.2, 2.55, 0.3]}>
+        <mesh position={[0, 0.25, 0]}>
+          <cylinderGeometry args={[0.02, 0.02, 0.5, 6]} />
+          <meshToonMaterial color={palette.coalBlack} />
+        </mesh>
+        <mesh>
+          <cylinderGeometry args={[0.1, 0.12, 0.2, 8, 1, true]} />
+          <meshToonMaterial color={palette.coalBlack} wireframe />
+        </mesh>
+        <mesh position={[0, -0.02, 0]}>
+          <sphereGeometry args={[0.07, 8, 8]} />
+          <meshToonMaterial color={palette.boneWhite} emissive={palette.amber} emissiveIntensity={powered ? 1.2 : 0} />
+        </mesh>
+      </group>
+      <mesh position={[0.9, 0.006, 0.9]} rotation={[-Math.PI / 2, 0, 0]} scale={[1.4, 1, 1]}>
+        <circleGeometry args={[0.28, 14]} />
+        <meshToonMaterial color="#0c0d10" />
+      </mesh>
+      <mesh position={[-1.6, 0.05, 0.6]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.18, 0.05, 8, 16]} />
+        <meshToonMaterial color="#1c1e22" />
+      </mesh>
+      <mesh position={[0.2, 2.3, -1.22]}>
+        <planeGeometry args={[0.7, 0.4]} />
+        <meshToonMaterial color={palette.amber} />
+      </mesh>
+      <mesh position={[0.2, 2.3, -1.21]}>
+        <planeGeometry args={[0.5, 0.06]} />
+        <meshToonMaterial color={palette.coalBlack} />
+      </mesh>
     </RoomShell>
   );
 }

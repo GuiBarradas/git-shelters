@@ -96,6 +96,50 @@ export function DormRoom({ powered = true }: { powered?: boolean }) {
         <planeGeometry args={[PINBOARD.width, PINBOARD.height]} />
         <meshToonMaterial color={palette.concreteTan} />
       </mesh>
+      {/* refinement pass: a rug, a nightstand with its own lamp, boots, a clothes line, two posters */}
+      <mesh position={[-0.3, 0.005, 0.35]}>
+        <boxGeometry args={[2.2, 0.01, 1.1]} />
+        <meshToonMaterial color="#4a2a3a" />
+      </mesh>
+      <group position={[1.55, 0, -0.9]}>
+        <mesh position={[0, 0.3, 0]}>
+          <boxGeometry args={[0.45, 0.6, 0.45]} />
+          <meshToonMaterial color={palette.oldWoodBrown} />
+        </mesh>
+        <mesh position={[0, 0.75, 0]}>
+          <cylinderGeometry args={[0.05, 0.08, 0.3, 8]} />
+          <meshToonMaterial color={palette.coalBlack} />
+        </mesh>
+        <mesh position={[0, 0.98, 0]}>
+          <coneGeometry args={[0.16, 0.16, 10, 1, true]} />
+          <meshToonMaterial color={palette.boneWhite} emissive={palette.amber} emissiveIntensity={powered ? 0.7 : 0} side={2} />
+        </mesh>
+        <pointLight position={[0, 0.9, 0.2]} color={palette.amber} intensity={powered ? 1.2 : 0} distance={2.2} decay={2} />
+      </group>
+      {[-1.7, -1.5].map((x) => (
+        <mesh key={x} position={[x, 0.09, 0.05]}>
+          <boxGeometry args={[0.14, 0.18, 0.28]} />
+          <meshToonMaterial color={palette.oldWoodBrown} />
+        </mesh>
+      ))}
+      <mesh position={[0.7, 2.45, -0.6]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.01, 0.01, 2.2, 6]} />
+        <meshToonMaterial color={palette.boneWhite} />
+      </mesh>
+      {([[0.1, palette.steelBlue], [0.75, palette.fadedRed], [1.35, palette.boneWhite]] as Array<[number, string]>).map(([x, c], i) => (
+        <mesh key={i} position={[x, 2.15, -0.6]}>
+          <boxGeometry args={[0.36, 0.5, 0.04]} />
+          <meshToonMaterial color={c} />
+        </mesh>
+      ))}
+      <mesh position={[-1.4, 2.35, -1.22]}>
+        <planeGeometry args={[0.5, 0.7]} />
+        <meshToonMaterial color={palette.inactivePlum} />
+      </mesh>
+      <mesh position={[-1.4, 2.35, -1.21]}>
+        <planeGeometry args={[0.3, 0.3]} />
+        <meshToonMaterial color={palette.phosphorViolet} emissive={palette.phosphorViolet} emissiveIntensity={0.4} />
+      </mesh>
     </RoomShell>
   );
 }

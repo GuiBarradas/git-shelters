@@ -177,10 +177,111 @@ export function MainBranchRoom({ pending = false, active = false, powered = true
           <meshToonMaterial color={palette.coalBlack} emissive={i % 3 === 0 ? palette.fadedRed : palette.phosphorViolet} emissiveIntensity={1} />
         </mesh>
       ))}
-      {/* pinned map on the wall */}
-      <mesh position={[-0.2, 2.2, -1.36]}>
+      {/* rack detail: three blade slots and a vent strip, so it reads as hardware, not a box */}
+      {[1.35, 1.0, 0.65].map((y) => (
+        <mesh key={y} position={[-1.4, y, -0.54]}>
+          <boxGeometry args={[0.6, 0.22, 0.02]} />
+          <meshToonMaterial color="#15171b" />
+        </mesh>
+      ))}
+      <mesh position={[-1.4, 0.25, -0.54]}>
+        <boxGeometry args={[0.6, 0.12, 0.02]} />
+        <meshToonMaterial color={palette.coalBlack} emissive={palette.amber} emissiveIntensity={powered ? 0.35 : 0} />
+      </mesh>
+      {/* cable bundle from the rack to the desk, along the wall base */}
+      <mesh position={[-0.4, 0.05, -1.15]}>
+        <boxGeometry args={[1.9, 0.06, 0.08]} />
+        <meshToonMaterial color="#1c1e22" />
+      </mesh>
+      <mesh position={[0.55, 0.3, -0.98]}>
+        <boxGeometry args={[0.05, 0.6, 0.05]} />
+        <meshToonMaterial color="#1c1e22" />
+      </mesh>
+      {/* desk clutter: mug, papers, a notebook */}
+      <mesh position={[1.3, 0.78, -0.3]}>
+        <cylinderGeometry args={[0.07, 0.06, 0.14, 10]} />
+        <meshToonMaterial color={palette.boneWhite} />
+      </mesh>
+      <mesh position={[1.38, 0.79, -0.3]}>
+        <torusGeometry args={[0.035, 0.012, 6, 10]} />
+        <meshToonMaterial color={palette.boneWhite} />
+      </mesh>
+      <mesh position={[1.25, 0.72, -0.8]} rotation={[0, 0.2, 0]}>
+        <boxGeometry args={[0.32, 0.03, 0.42]} />
+        <meshToonMaterial color="#d9d2b8" />
+      </mesh>
+      <mesh position={[-0.25, 0.72, -0.75]} rotation={[0, -0.15, 0]}>
+        <boxGeometry args={[0.28, 0.025, 0.36]} />
+        <meshToonMaterial color={palette.steelBlue} />
+      </mesh>
+      {/* desk lamp: base, arm, head, and its own warm pool of light */}
+      <group position={[1.45, 0.71, -0.85]}>
+        <mesh position={[0, 0.02, 0]}>
+          <cylinderGeometry args={[0.1, 0.11, 0.04, 10]} />
+          <meshToonMaterial color={palette.coalBlack} />
+        </mesh>
+        <mesh position={[-0.08, 0.3, 0]} rotation={[0, 0, 0.35]}>
+          <boxGeometry args={[0.04, 0.6, 0.04]} />
+          <meshToonMaterial color={palette.coalBlack} />
+        </mesh>
+        <mesh position={[-0.24, 0.55, 0]} rotation={[0, 0, -0.9]}>
+          <coneGeometry args={[0.12, 0.2, 10, 1, true]} />
+          <meshToonMaterial color={palette.coalBlack} emissive={palette.amber} emissiveIntensity={powered ? 0.9 : 0} side={2} />
+        </mesh>
+        <pointLight position={[-0.3, 0.45, 0.1]} color={palette.amber} intensity={powered ? 1.6 : 0} distance={2.2} decay={2} />
+      </group>
+      {/* the screen tints the desk violet */}
+      <pointLight position={[0.55, 1.1, -0.1]} color={palette.phosphorViolet} intensity={powered ? 0.9 : 0} distance={1.8} decay={2} />
+      {/* filing cabinet in the corner */}
+      <mesh position={[1.78, 0.55, -0.95]}>
+        <boxGeometry args={[0.38, 1.1, 0.5]} />
+        <meshToonMaterial color={palette.steelBlue} />
+      </mesh>
+      {[0.85, 0.55, 0.25].map((y) => (
+        <mesh key={y} position={[1.78, y, -0.69]}>
+          <boxGeometry args={[0.16, 0.03, 0.03]} />
+          <meshToonMaterial color={palette.boneWhite} />
+        </mesh>
+      ))}
+      {/* rubber mat under the chair */}
+      <mesh position={[-0.32, 0.005, 0.42]}>
+        <boxGeometry args={[1.1, 0.01, 1.0]} />
+        <meshToonMaterial color="#1e2026" />
+      </mesh>
+      {/* pinned map on the wall, with pins; the wall face is at z = -1.25 */}
+      <mesh position={[-0.2, 2.2, -1.22]}>
         <planeGeometry args={[0.9, 0.6]} />
         <meshToonMaterial color={palette.boneWhite} />
+      </mesh>
+      {(
+        [
+          [-0.5, 2.35],
+          [-0.15, 2.1],
+          [0.1, 2.3],
+        ] as Array<[number, number]>
+      ).map(([x, y], i) => (
+        <mesh key={i} position={[x, y, -1.2]}>
+          <boxGeometry args={[0.04, 0.04, 0.03]} />
+          <meshToonMaterial color={i === 1 ? palette.phosphorViolet : palette.fadedRed} />
+        </mesh>
+      ))}
+      {/* wall clock, stopped at the Merge Conflict */}
+      <mesh position={[1.2, 2.3, -1.22]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.2, 0.2, 0.04, 16]} />
+        <meshToonMaterial color={palette.boneWhite} />
+      </mesh>
+      <mesh position={[1.2, 2.36, -1.19]}>
+        <boxGeometry args={[0.02, 0.13, 0.01]} />
+        <meshToonMaterial color={palette.coalBlack} />
+      </mesh>
+      <mesh position={[1.26, 2.3, -1.19]} rotation={[0, 0, -1.1]}>
+        <boxGeometry args={[0.02, 0.15, 0.01]} />
+        <meshToonMaterial color={palette.coalBlack} />
+      </mesh>
+      {/* a pipe along the top of the back wall */}
+      <mesh position={[0, 2.8, -1.1]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.06, 0.06, 3.9, 10]} />
+        <meshToonMaterial color={palette.concrete} />
       </mesh>
     </RoomShell>
   );

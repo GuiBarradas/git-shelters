@@ -86,6 +86,53 @@ export function CacheStorageRoom({ powered = true }: { powered?: boolean }) {
         <cylinderGeometry args={[0.14, 0.17, 0.26, 12]} />
         <meshToonMaterial color={palette.boneWhite} />
       </mesh>
+      {/* refinement pass: a hotplate that glows, a utensil rail, sacks, jars, crate labels, a drain */}
+      <mesh position={[0.25, 0.73, 0.1]}>
+        <boxGeometry args={[0.36, 0.06, 0.3]} />
+        <meshToonMaterial color={palette.coalBlack} />
+      </mesh>
+      <mesh position={[0.25, 0.765, 0.1]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.09, 0.02, 6, 16]} />
+        <meshToonMaterial color={palette.coalBlack} emissive={palette.fadedRed} emissiveIntensity={powered ? 1.4 : 0} />
+      </mesh>
+      <mesh position={[0, 1.55, -0.2]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.02, 0.02, 1.4, 8]} />
+        <meshToonMaterial color={palette.concrete} />
+      </mesh>
+      {[-0.45, -0.15, 0.2, 0.5].map((x, i) => (
+        <group key={x} position={[x, 1.32, -0.2]}>
+          <mesh position={[0, 0.16, 0]}>
+            <boxGeometry args={[0.02, 0.14, 0.02]} />
+            <meshToonMaterial color={palette.concrete} />
+          </mesh>
+          <mesh rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={i % 2 ? [0.1, 0.1, 0.04, 10] : [0.07, 0.07, 0.12, 10]} />
+            <meshToonMaterial color={i % 2 ? palette.steelBlue : palette.concreteTan} />
+          </mesh>
+        </group>
+      ))}
+      {([[-1.55, -0.2], [-1.2, 0.15]] as Array<[number, number]>).map(([x, z], i) => (
+        <mesh key={i} position={[x, 0.2, z]} scale={[1, 0.7, 1]}>
+          <sphereGeometry args={[0.28, 10, 8]} />
+          <meshToonMaterial color={i ? "#7a6a4a" : palette.concreteTan} />
+        </mesh>
+      ))}
+      {[0.1, 0.3, 0.5, 0.7].map((x, i) => (
+        <mesh key={x} position={[x, 2.0, -1.0]}>
+          <cylinderGeometry args={[0.06, 0.06, 0.16, 8]} />
+          <meshToonMaterial color={i % 2 ? palette.boneWhite : palette.steelBlue} />
+        </mesh>
+      ))}
+      {([[-1.35, 0.3, -0.19], [1.2, 1.63, -0.79]] as Array<[number, number, number]>).map(([x, y, z], i) => (
+        <mesh key={i} position={[x, y, z]}>
+          <planeGeometry args={[0.24, 0.1]} />
+          <meshToonMaterial color={palette.boneWhite} />
+        </mesh>
+      ))}
+      <mesh position={[0.6, 0.006, 0.7]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.16, 12]} />
+        <meshToonMaterial color="#15181c" />
+      </mesh>
     </RoomShell>
   );
 }

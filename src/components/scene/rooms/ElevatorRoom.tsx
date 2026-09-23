@@ -90,6 +90,58 @@ export function ElevatorRoom({ powered = true }: { powered?: boolean }) {
       </mesh>
       {/* keep the wall height constant for the shaft frame */}
       <group position={[0, CELL.h, 0]} />
+      {/* refinement pass: a caged shaft light, warning sign, floor stencil, a bench, extinguisher, shaft cables */}
+      <group position={[-0.4, 2.85, -0.9]}>
+        <mesh>
+          <cylinderGeometry args={[0.1, 0.12, 0.18, 8, 1, true]} />
+          <meshToonMaterial color={palette.coalBlack} wireframe />
+        </mesh>
+        <mesh position={[0, -0.02, 0]}>
+          <sphereGeometry args={[0.06, 8, 8]} />
+          <meshToonMaterial color={palette.boneWhite} emissive={palette.amber} emissiveIntensity={powered ? 1.1 : 0} />
+        </mesh>
+        <pointLight position={[0, -0.15, 0.2]} color={palette.amber} intensity={powered ? 1.4 : 0} distance={2.6} decay={2} />
+      </group>
+      <mesh position={[1.15, 2.35, -1.22]}>
+        <planeGeometry args={[0.6, 0.36]} />
+        <meshToonMaterial color={palette.amber} />
+      </mesh>
+      <mesh position={[1.15, 2.35, -1.21]}>
+        <planeGeometry args={[0.42, 0.05]} />
+        <meshToonMaterial color={palette.coalBlack} />
+      </mesh>
+      <mesh position={[-0.4, 0.012, 0.85]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.16, 0.22, 16]} />
+        <meshToonMaterial color={palette.amber} />
+      </mesh>
+      <group position={[1.4, 0, 0.4]}>
+        <mesh position={[0, 0.28, 0]}>
+          <boxGeometry args={[0.7, 0.06, 0.3]} />
+          <meshToonMaterial color={palette.oldWoodBrown} />
+        </mesh>
+        {[-0.28, 0.28].map((x) => (
+          <mesh key={x} position={[x, 0.13, 0]}>
+            <boxGeometry args={[0.06, 0.26, 0.26]} />
+            <meshToonMaterial color={palette.steelBlue} />
+          </mesh>
+        ))}
+      </group>
+      <group position={[1.75, 0.95, -1.12]}>
+        <mesh>
+          <cylinderGeometry args={[0.08, 0.08, 0.46, 10]} />
+          <meshToonMaterial color={palette.fadedRed} />
+        </mesh>
+        <mesh position={[0, 0.28, 0]}>
+          <cylinderGeometry args={[0.035, 0.035, 0.1, 8]} />
+          <meshToonMaterial color={palette.coalBlack} />
+        </mesh>
+      </group>
+      {[-0.85, 0.05].map((x) => (
+        <mesh key={x} position={[x, 1.5, -1.19]}>
+          <boxGeometry args={[0.02, 3.0, 0.02]} />
+          <meshToonMaterial color="#1c1e22" />
+        </mesh>
+      ))}
     </RoomShell>
   );
 }

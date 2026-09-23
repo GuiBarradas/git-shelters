@@ -107,6 +107,52 @@ export function WorkshopRoom({ powered = true }: { powered?: boolean }) {
         <planeGeometry args={[CHALKBOARD.width, CHALKBOARD.height]} />
         <meshToonMaterial color={palette.coalBlack} />
       </mesh>
+      {/* refinement pass: a shaded work light, welding mask, oil can, bolts, extinguisher, floor plates */}
+      <group position={[-0.7, 2.2, -0.3]}>
+        <mesh position={[0, 0.4, 0]}>
+          <cylinderGeometry args={[0.015, 0.015, 0.8, 6]} />
+          <meshToonMaterial color={palette.coalBlack} />
+        </mesh>
+        <mesh>
+          <coneGeometry args={[0.3, 0.22, 12, 1, true]} />
+          <meshToonMaterial color={palette.concrete} emissive={palette.amber} emissiveIntensity={powered ? 0.5 : 0} side={2} />
+        </mesh>
+        <pointLight position={[0, -0.2, 0]} color={palette.amber} intensity={powered ? 2.2 : 0} distance={3} decay={2} />
+      </group>
+      <mesh position={[-1.35, 0.9, -0.5]} rotation={[0.2, 0.6, 0]}>
+        <boxGeometry args={[0.22, 0.26, 0.18]} />
+        <meshToonMaterial color={palette.coalBlack} />
+      </mesh>
+      <mesh position={[-1.3, 0.93, -0.41]} rotation={[0.2, 0.6, 0]}>
+        <boxGeometry args={[0.16, 0.06, 0.02]} />
+        <meshToonMaterial color={palette.phosphorViolet} emissive={palette.phosphorViolet} emissiveIntensity={0.6} />
+      </mesh>
+      <mesh position={[0.05, 0.95, -0.6]}>
+        <cylinderGeometry args={[0.06, 0.07, 0.2, 8]} />
+        <meshToonMaterial color={palette.fadedRed} />
+      </mesh>
+      {([[-0.5, -0.2], [-0.42, -0.1], [-0.55, -0.05]] as Array<[number, number]>).map(([x, z], i) => (
+        <mesh key={i} position={[x, 0.87, z]}>
+          <boxGeometry args={[0.04, 0.04, 0.04]} />
+          <meshToonMaterial color={palette.concrete} />
+        </mesh>
+      ))}
+      <group position={[1.8, 0.9, -1.15]}>
+        <mesh>
+          <cylinderGeometry args={[0.09, 0.09, 0.5, 10]} />
+          <meshToonMaterial color={palette.fadedRed} />
+        </mesh>
+        <mesh position={[0, 0.3, 0]}>
+          <cylinderGeometry args={[0.04, 0.04, 0.1, 8]} />
+          <meshToonMaterial color={palette.coalBlack} />
+        </mesh>
+      </group>
+      {([[-1.2, 0.5], [0.4, 0.9]] as Array<[number, number]>).map(([x, z], i) => (
+        <mesh key={i} position={[x, 0.004, z]}>
+          <boxGeometry args={[1.1, 0.008, 0.9]} />
+          <meshToonMaterial color="#3c3a44" />
+        </mesh>
+      ))}
     </RoomShell>
   );
 }
