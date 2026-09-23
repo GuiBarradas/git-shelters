@@ -17,16 +17,18 @@ import { createClient } from "@/lib/supabase/server";
  * disables unaffordable buttons, and a stale page can double-submit), so
  * they are not reported. Anything else is a bug and goes to Sentry.
  */
-export async function buildRoom(formData: FormData) {
+export type BuildState = { tone: "idle" | "ok" | "warn"; message: string; at: number };
+
+export async function buildRoom(_prev: BuildState, formData: FormData): Promise<BuildState> {
   const slot = Number(formData.get("slot"));
   const kind = formData.get("kind");
-  if (!isSlot(slot) || !isRoomKind(kind)) return;
+  if (!isSlot(slot) || !isRoomKind(kind)) return warn("that is not a room");
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return;
+  if (!user) return warn("not signed in");
 
   const admin = createAdminClient();
   const { error } = await admin.rpc("build_room", {
@@ -37,6 +39,16 @@ export async function buildRoom(formData: FormData) {
 
   if (error && !isExpectedRejection(error.message)) {
     Sentry.captureException(error, { extra: { slot, kind } });
+  }
+  if (error) {
+    revalidatePath("/");
+    return warn(
+      error.message.includes("insufficient_bytes")
+        ? `not enough bytes for a ${ROOM_CATALOG[kind].name}`
+        : error.message.includes("slot_occupied")
+          ? "that slot is already built"
+          : "the build failed. Try again",
+    );
   }
 
   if (!error) {
@@ -55,6 +67,11 @@ export async function buildRoom(formData: FormData) {
   }
 
   revalidatePath("/");
+  return { tone: "ok", message: `${ROOM_CATALOG[kind].name} built · -${ROOM_CATALOG[kind].cost} B`, at: Date.now() };
+}
+
+function warn(message: string): BuildState {
+  return { tone: "warn", message, at: Date.now() };
 }
 
 function isExpectedRejection(message: string): boolean {
