@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Local, gitignored scratch: post drafts and raw soundtrack downloads.
+    "post-draft/**",
+    "songs/**",
   ]),
 ]);
 
