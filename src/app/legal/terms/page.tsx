@@ -17,7 +17,8 @@ export default function TermsPage() {
 
       <h2>Your account</h2>
       <p>
-        One account per GitHub login. Bytes are earned from your own public GitHub activity.
+        One account per GitHub login, and you must be old enough to hold one under
+        GitHub&apos;s terms. Bytes are earned from your own public GitHub activity.
         Fabricating activity to farm bytes (bot pushes, throwaway repositories, rewritten
         history) is against the spirit of the game; the anti-cheese filters may discard it and
         the maintainer may reset a balance that was clearly farmed.
@@ -32,8 +33,9 @@ export default function TermsPage() {
 
       <h2>Content</h2>
       <p>
-        The game&apos;s text, art and code belong to the maintainer, except where the public
-        repository&apos;s license says otherwise. Your GitHub data stays yours; see the{" "}
+        The code is open source under the AGPL-3.0 license, in the public repository. The
+        game&apos;s name, setting, characters, texts and visual identity are not part of that
+        license and stay with the maintainer. Your GitHub data stays yours; see the{" "}
         <a href="/legal/privacy">privacy notice</a> for what we read and how to delete it.
       </p>
 

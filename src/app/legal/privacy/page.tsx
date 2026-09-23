@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Privacy · Git Shelters" };
  */
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Privacy" updated="2026-09-22">
+    <LegalPage title="Privacy" updated="2026-09-23">
       <h2>What we collect</h2>
       <p>
         When you connect GitHub, we receive your GitHub login, numeric user id and the email
@@ -20,9 +20,12 @@ export default function PrivacyPage() {
         anything that needs more than the public feed.
       </p>
       <p>
-        Playing creates game data: a byte ledger, the rooms you build, the Daily Events you
-        resolve and a sync cursor. Errors are reported to Sentry with a technical trace and
-        your user id, never your email.
+        Playing creates game data: a byte ledger, the rooms you build, your Forks, the Daily
+        Events you resolve, the badges you earn, a sync cursor, when you were last seen and
+        whether the intro has played. We also log a short list of product events on our own
+        server (sign-up, session start and end, a room built, an event resolved, a badge
+        earned), tied to your user id, to see whether the game works. Errors are reported to
+        Sentry with a technical trace and your user id, never your email.
       </p>
 
       <h2>Why</h2>
@@ -46,16 +49,18 @@ export default function PrivacyPage() {
 
       <h2>Cookies</h2>
       <p>
-        Only the session cookie that keeps you signed in. There is no analytics cookie and no
-        tracking pixel.
+        Only the session cookie that keeps you signed in. There is no analytics cookie, no
+        tracking pixel and no third-party script. Your browser also keeps one preference for
+        us, whether sound is on, in its local storage; it never leaves your device.
       </p>
 
       <h2>Your rights (LGPD, GDPR)</h2>
       <p>
         From <a href="/settings">Settings</a> you can download everything we hold about you as
-        JSON, or delete your account. Deletion is immediate and permanent: it removes your
-        sign-in, your ledger, your bunker and your event history. We keep a one-line audit
-        entry (an internal id and a timestamp) as proof the deletion happened.
+        JSON, including the product events, or delete your account. Deletion is immediate
+        and permanent: it removes your sign-in, your ledger, your bunker, your badges, your
+        event history and your product events. We keep a one-line audit entry (an internal id
+        and a timestamp) as proof the deletion happened.
       </p>
       <p>
         Revoking Git Shelters in your GitHub settings stops any future reads of your public
