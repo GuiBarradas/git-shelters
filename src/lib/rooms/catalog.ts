@@ -33,15 +33,38 @@ export const ROOM_CATALOG = {
     color: palette.fadedRed,
     blurb: "Workshop — packs Payload. Ammo for a fight that has not come yet.",
   },
+  elevator: {
+    name: "Elevator",
+    cost: 120,
+    color: palette.steelBlue,
+    blurb: "Elevator — a shaft down. Opens the lower floor.",
+  },
 } as const satisfies Record<string, { name: string; cost: number; color: PaletteColor; blurb: string }>;
 
 export const MAIN_BRANCH_BLURB = "Main Branch — the heart of the Repo. Always present.";
 export const EMPTY_SLOT_BLURB = "Empty slot — bytes turn this into a room.";
+export const LOCKED_SLOT_BLURB = "Lower floor — sealed. Build an Elevator upstairs first.";
 
 export type RoomKind = keyof typeof ROOM_CATALOG;
 
-export const BUILDABLE_SLOTS = [1, 2, 3] as const;
+/**
+ * Two floors (design doc §5.1). The ground floor holds the Main Branch
+ * (slot 0) and four rooms; the lower floor holds five more and opens
+ * once an Elevator stands on the ground floor. build_room() enforces the
+ * gate; these lists only shape the scene and the menu.
+ */
+export const GROUND_SLOTS = [1, 2, 3, 4] as const;
+export const LOWER_SLOTS = [5, 6, 7, 8, 9] as const;
+export const BUILDABLE_SLOTS = [...GROUND_SLOTS, ...LOWER_SLOTS] as const;
 export type Slot = (typeof BUILDABLE_SLOTS)[number];
+
+export function isLowerSlot(slot: number): boolean {
+  return slot >= 5;
+}
+
+export function hasElevator(rooms: ReadonlyArray<{ kind: string }>): boolean {
+  return rooms.some((r) => r.kind === "elevator");
+}
 
 export type Room = { slot: Slot; kind: RoomKind };
 

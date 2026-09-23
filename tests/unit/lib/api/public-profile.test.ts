@@ -54,7 +54,7 @@ describe("toPublicProfile", () => {
   it("drops rooms the catalog does not know", () => {
     const profile = toPublicProfile(user, [
       { slot: 1, kind: "cache_storage", level: 2 },
-      { slot: 9, kind: "cache_storage", level: 1 },
+      { slot: 12, kind: "cache_storage", level: 1 },
       { slot: 2, kind: "jacuzzi", level: 1 },
     ]);
     expect(profile?.rooms).toEqual([{ slot: 1, kind: "cache_storage", level: 2 }]);

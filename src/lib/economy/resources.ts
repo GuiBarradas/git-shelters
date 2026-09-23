@@ -76,12 +76,12 @@ export async function settleResources(
 }
 
 export function workforce(forks: Fork[], rooms: Room[]): Workforce {
-  const kindOf = new Map(rooms.map((r) => [r.slot, r.kind]));
+  const kindOf = new Map<number, Room["kind"]>(rooms.map((r) => [r.slot, r.kind]));
   let cooks = 0;
   let engineers = 0;
   let tinkerers = 0;
   for (const f of forks) {
-    const kind = f.roomSlot === null ? undefined : kindOf.get(f.roomSlot as 1 | 2 | 3);
+    const kind = f.roomSlot === null ? undefined : kindOf.get(f.roomSlot);
     if (kind === "cache_storage") cooks++;
     if (kind === "power_plant") engineers++;
     if (kind === "workshop") tinkerers++;

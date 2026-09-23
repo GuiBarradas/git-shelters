@@ -47,7 +47,11 @@ export async function buildRoom(_prev: BuildState, formData: FormData): Promise<
         ? `not enough bytes for a ${ROOM_CATALOG[kind].name}`
         : error.message.includes("slot_occupied")
           ? "that slot is already built"
-          : "the build failed. Try again",
+          : error.message.includes("no_elevator")
+            ? "the lower floor is sealed. Build an Elevator upstairs first"
+            : error.message.includes("elevator_ground_only")
+              ? "an Elevator goes on the ground floor"
+              : "the build failed. Try again",
     );
   }
 
@@ -76,6 +80,9 @@ function warn(message: string): BuildState {
 
 function isExpectedRejection(message: string): boolean {
   return (
-    message.includes("insufficient_bytes") || message.includes("slot_occupied")
+    message.includes("insufficient_bytes") ||
+    message.includes("slot_occupied") ||
+    message.includes("no_elevator") ||
+    message.includes("elevator_ground_only")
   );
 }

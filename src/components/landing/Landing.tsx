@@ -8,6 +8,7 @@ const DEMO_ROOMS: Room[] = [
   { slot: 1, kind: "cache_storage" },
   { slot: 2, kind: "power_plant" },
   { slot: 3, kind: "dorm" },
+  { slot: 4, kind: "elevator" },
 ];
 
 /** One survivor pacing the demo so the place looks lived in. */

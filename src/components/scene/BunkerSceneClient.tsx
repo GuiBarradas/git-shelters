@@ -7,7 +7,7 @@ import { useActionState, useEffect, useState } from "react";
 import { buildRoom, type BuildState } from "@/app/rooms/actions";
 import { FORK_TRAITS, type Fork as ForkData } from "@/lib/forks/catalog";
 import { type EventEcho, pickLine } from "@/lib/forks/mood";
-import { ROOM_CATALOG, type Room, type RoomKind, type Slot } from "@/lib/rooms/catalog";
+import { isLowerSlot, ROOM_CATALOG, type Room, type RoomKind, type Slot } from "@/lib/rooms/catalog";
 
 const BunkerScene = dynamic(() => import("./BunkerScene"), {
   ssr: false,
@@ -78,10 +78,10 @@ export function BunkerSceneClient({
     return () => clearTimeout(id);
   }, [speech]);
 
-  const onSlotClick = (slot: 0 | Slot, built: boolean) => {
+  const onSlotClick = (slot: 0 | Slot, built: boolean, locked = false) => {
     if (built) {
       router.push(`/room/${slot}`);
-    } else if (canBuild && slot !== 0) {
+    } else if (canBuild && slot !== 0 && !locked) {
       setSelectedSlot(slot);
       setOpenedAt(Date.now());
     }
@@ -167,13 +167,17 @@ function BuildMenu({
   return (
     <div className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 border border-[#BD93F9] bg-[#0B0713]/90 p-4 font-mono text-sm text-[#BD93F9]">
       <div className="mb-3 flex items-center justify-between gap-6">
-        <span>SLOT {slot} — BUILD</span>
+        <span>
+          SLOT {slot} — BUILD{isLowerSlot(slot) ? " · LOWER FLOOR" : ""}
+        </span>
         <button type="button" onClick={onClose} className="hover:text-[#E6DFC8]">
           [x]
         </button>
       </div>
       <div className="flex gap-2">
         {(Object.keys(ROOM_CATALOG) as RoomKind[]).map((kind) => {
+          // An Elevator only goes on the ground floor.
+          if (kind === "elevator" && isLowerSlot(slot)) return null;
           const { name, cost } = ROOM_CATALOG[kind];
           const affordable = bytes >= cost;
           return (

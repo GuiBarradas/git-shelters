@@ -176,6 +176,22 @@ export function BenchPanel({
   );
 }
 
+/** Elevator call panel: which floors answer. */
+export function LiftPanel({ lowerRooms, operators }: { lowerRooms: number; operators: string[] }) {
+  return (
+    <div className={`${frame} bg-[#1a1d22] px-3 py-2 text-[10px] text-[#E6DFC8] [text-shadow:none]`}>
+      <div className="mb-1 flex items-baseline justify-between border-b border-[#E6DFC8]/30 pb-1">
+        <span className="font-bold tracking-widest">LIFT</span>
+        <span className="text-[#BD93F9]">● G · -1</span>
+      </div>
+      <p>
+        LOWER FLOOR <span className="text-[#E67E22]">{lowerRooms}</span>/5 built
+      </p>
+      <p className="text-[#E6DFC8]/70">{operators.length === 0 ? "runs on its own." : `operator: ${operators.join(", ")}`}</p>
+    </div>
+  );
+}
+
 function minutesAgo(iso: string): number {
   return Math.max(0, Math.floor((Date.now() - Date.parse(iso)) / 60_000));
 }

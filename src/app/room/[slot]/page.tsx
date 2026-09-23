@@ -7,7 +7,7 @@ import { recruitFork } from "@/app/forks/actions";
 import { SessionBeacon } from "@/components/analytics/SessionBeacon";
 import { DailyEventCard } from "@/components/events/DailyEventCard";
 import { CrewPanel } from "@/components/rooms/CrewPanel";
-import { BenchPanel, BunkPanel, LedgerPanel, UptimePanel } from "@/components/rooms/RoomPanels";
+import { BenchPanel, BunkPanel, LedgerPanel, LiftPanel, UptimePanel } from "@/components/rooms/RoomPanels";
 import { RoomSceneClient } from "@/components/scene/RoomSceneClient";
 import { daysBetween } from "@/lib/analytics/track";
 import { settleResources } from "@/lib/economy/resources";
@@ -177,6 +177,8 @@ async function roomPanel(
     }
     case "dorm":
       return <BunkPanel beds={bedCount(rooms)} crew={allForks.length} sleepers={names} />;
+    case "elevator":
+      return <LiftPanel lowerRooms={rooms.filter((r) => r.slot >= 5).length} operators={names} />;
     case "workshop":
       return (
         <BenchPanel

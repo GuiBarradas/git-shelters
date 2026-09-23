@@ -6,6 +6,7 @@ import type { RoomLayout } from "@/components/scene/Fork";
 
 import { CacheStorageRoom, CLIPBOARD, LAYOUT as CACHE_LAYOUT } from "./CacheStorageRoom";
 import { DormRoom, LAYOUT as DORM_LAYOUT, PINBOARD } from "./DormRoom";
+import { CALL_PANEL, ElevatorRoom, LAYOUT as ELEVATOR_LAYOUT } from "./ElevatorRoom";
 import { GAUGE, LAYOUT as POWER_LAYOUT, PowerPlantRoom } from "./PowerPlantRoom";
 import { LAYOUT as MAIN_LAYOUT, SCREEN } from "./MainBranchRoom";
 import { CHALKBOARD, LAYOUT as WORKSHOP_LAYOUT, WorkshopRoom } from "./WorkshopRoom";
@@ -29,6 +30,8 @@ export function panelAnchor(kind: RoomKind | null): PanelAnchor {
       return PINBOARD;
     case "workshop":
       return CHALKBOARD;
+    case "elevator":
+      return CALL_PANEL;
   }
 }
 
@@ -45,6 +48,8 @@ export function roomLayout(kind: RoomKind | null): RoomLayout {
       return DORM_LAYOUT;
     case "workshop":
       return WORKSHOP_LAYOUT;
+    case "elevator":
+      return ELEVATOR_LAYOUT;
   }
 }
 
@@ -59,5 +64,7 @@ export function BuiltRoom({ kind, powered = true }: { kind: RoomKind; powered?: 
       return <DormRoom powered={powered} />;
     case "workshop":
       return <WorkshopRoom powered={powered} />;
+    case "elevator":
+      return <ElevatorRoom powered={powered} />;
   }
 }

@@ -120,6 +120,18 @@ describe("build_room", () => {
     expect(user?.bytes).toBe(50);
   });
 
+  it("seals the lower floor until an Elevator stands on the ground floor", async () => {
+    await admin.from("users").update({ bytes: 300 }).eq("id", userId);
+    const build = (slot: number, kind: string) => admin.rpc("build_room", { p_user_id: userId, p_slot: slot, p_kind: kind });
+
+    expect((await build(5, "cache_storage")).error?.message).toContain("no_elevator");
+    expect((await build(5, "elevator")).error?.message).toContain("elevator_ground_only");
+    expect((await build(4, "elevator")).error).toBeNull();
+    expect((await build(5, "cache_storage")).error).toBeNull();
+    expect((await build(9, "dorm")).data).toBe(300 - 120 - 50 - 100);
+    expect((await build(10, "dorm")).error).toBeTruthy(); // outside the bunker
+  });
+
   it("rejects an unknown kind and an out-of-range slot", async () => {
     const badKind = await admin.rpc("build_room", {
       p_user_id: userId,

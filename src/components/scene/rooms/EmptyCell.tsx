@@ -12,8 +12,28 @@ const RUBBLE: Array<[number, number, number, number]> = [
   [1.3, 0.1, -0.7, 0.24],
 ];
 
-/** An unbuilt cell: dark, rubble on the floor, a faint frame hinting "build here". */
-export function EmptyCell({ highlight = false }: { highlight?: boolean }) {
+/**
+ * An unbuilt cell: dark, rubble on the floor, a faint frame hinting
+ * "build here". Locked (lower floor, no Elevator yet): no frame, no work
+ * light, a sealed slab across the front.
+ */
+export function EmptyCell({ highlight = false, locked = false }: { highlight?: boolean; locked?: boolean }) {
+  if (locked) {
+    return (
+      <RoomShell dim>
+        <mesh position={[0, 1.5, 0.9]}>
+          <boxGeometry args={[3.6, 2.7, 0.16]} />
+          <meshToonMaterial color="#1a171f" />
+        </mesh>
+        {[-0.9, 0.9].map((x) => (
+          <mesh key={x} position={[x, 1.5, 1.0]} rotation={[0, 0, x > 0 ? 0.6 : -0.6]}>
+            <boxGeometry args={[0.12, 1.6, 0.04]} />
+            <meshToonMaterial color={palette.violetDim} emissive={palette.violetDim} emissiveIntensity={highlight ? 0.5 : 0.15} />
+          </mesh>
+        ))}
+      </RoomShell>
+    );
+  }
   return (
     <RoomShell dim>
       {/* cold work light so the rubble reads even before anyone builds */}
