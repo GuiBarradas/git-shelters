@@ -215,20 +215,20 @@ export function MainBranchRoom({ pending = false, active = false, powered = true
         <meshToonMaterial color={palette.steelBlue} />
       </mesh>
       {/* desk lamp: base, arm, head, and its own warm pool of light */}
-      <group position={[1.45, 0.71, -0.85]}>
+      <group position={[1.35, 0.71, -0.85]}>
         <mesh position={[0, 0.02, 0]}>
           <cylinderGeometry args={[0.1, 0.11, 0.04, 10]} />
           <meshToonMaterial color={palette.coalBlack} />
         </mesh>
-        <mesh position={[-0.08, 0.3, 0]} rotation={[0, 0, 0.35]}>
+        <mesh position={[0.08, 0.3, 0]} rotation={[0, 0, -0.35]}>
           <boxGeometry args={[0.04, 0.6, 0.04]} />
           <meshToonMaterial color={palette.coalBlack} />
         </mesh>
-        <mesh position={[-0.24, 0.55, 0]} rotation={[0, 0, -0.9]}>
+        <mesh position={[0.24, 0.55, 0]} rotation={[0, 0, 0.9]}>
           <coneGeometry args={[0.12, 0.2, 10, 1, true]} />
           <meshToonMaterial color={palette.coalBlack} emissive={palette.amber} emissiveIntensity={powered ? 0.9 : 0} side={2} />
         </mesh>
-        <pointLight position={[-0.3, 0.45, 0.1]} color={palette.amber} intensity={powered ? 1.6 : 0} distance={2.2} decay={2} />
+        <pointLight position={[0.3, 0.45, 0.1]} color={palette.amber} intensity={powered ? 1.6 : 0} distance={2.2} decay={2} />
       </group>
       {/* the screen tints the desk violet */}
       <pointLight position={[0.55, 1.1, -0.1]} color={palette.phosphorViolet} intensity={powered ? 0.9 : 0} distance={1.8} decay={2} />

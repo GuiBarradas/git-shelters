@@ -13,9 +13,10 @@ import { RoomShell } from "./RoomShell";
 export const GAUGE = {
   // High on the cabinet: the DOM read-out paints over the canvas, so it
   // must clear a Fork's head (top near y 1.45) standing at the gauge.
-  position: [-1.32, 1.78, -0.6] as [number, number, number],
-  width: 0.9,
-  height: 0.62,
+  // Left of the drum's end (x = -1.0) so the DOM read-out never paints over it.
+  position: [-1.5, 1.78, -0.6] as [number, number, number],
+  width: 0.8,
+  height: 0.6,
 };
 
 /** Pace in front of the drum; read the gauge; watch the fan. */
@@ -75,22 +76,17 @@ export function PowerPlantRoom({ powered = true }: { powered?: boolean }) {
         <meshToonMaterial color={palette.coalBlack} />
       </mesh>
       {/* control cabinet with gauge face and warning beacon */}
-      <mesh position={[-1.32, 1.1, -0.9]}>
-        <boxGeometry args={[1.05, 2.2, 0.55]} />
+      <mesh position={[-1.5, 1.1, -0.9]}>
+        <boxGeometry args={[0.9, 2.2, 0.55]} />
         <meshToonMaterial color={palette.outageGray} />
       </mesh>
       <mesh position={GAUGE.position}>
         <planeGeometry args={[GAUGE.width, GAUGE.height]} />
         <meshToonMaterial color="#0b0b0b" emissive={palette.glowYellow} emissiveIntensity={0.15} />
       </mesh>
-      <mesh position={[-1.32, 2.35, -0.9]}>
+      <mesh position={[-1.5, 2.35, -0.9]}>
         <sphereGeometry args={[0.13, 12, 12]} />
         <meshToonMaterial ref={beacon} color={palette.fadedRed} emissive={palette.fadedRed} emissiveIntensity={0.5} />
-      </mesh>
-      {/* cable run along the floor */}
-      <mesh position={[-0.6, 0.04, 0.75]} rotation={[0, 0.3, 0]}>
-        <boxGeometry args={[2.2, 0.06, 0.08]} />
-        <meshToonMaterial color={palette.coalBlack} />
       </mesh>
       {/* refinement pass: hazard stripes, a steam pipe with a valve, a caged bulb, an oil stain, a cable coil, a sign */}
       {Array.from({ length: 8 }, (_, i) => (
@@ -125,14 +121,6 @@ export function PowerPlantRoom({ powered = true }: { powered?: boolean }) {
           <meshToonMaterial color={palette.boneWhite} emissive={palette.amber} emissiveIntensity={powered ? 1.2 : 0} />
         </mesh>
       </group>
-      <mesh position={[0.9, 0.006, 0.9]} rotation={[-Math.PI / 2, 0, 0]} scale={[1.4, 1, 1]}>
-        <circleGeometry args={[0.28, 14]} />
-        <meshToonMaterial color="#0c0d10" />
-      </mesh>
-      <mesh position={[-1.6, 0.05, 0.6]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[0.18, 0.05, 8, 16]} />
-        <meshToonMaterial color="#1c1e22" />
-      </mesh>
       <mesh position={[0.2, 2.3, -1.22]}>
         <planeGeometry args={[0.7, 0.4]} />
         <meshToonMaterial color={palette.amber} />
