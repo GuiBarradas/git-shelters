@@ -11,16 +11,19 @@ import { RoomShell } from "./RoomShell";
 
 /** Gauge face on the control cabinet; the room page pins the uptime read-out here. */
 export const GAUGE = {
-  position: [-1.32, 1.35, -0.6] as [number, number, number],
+  // High on the cabinet: the DOM read-out paints over the canvas, so it
+  // must clear a Fork's head (top near y 1.45) standing at the gauge.
+  position: [-1.32, 1.78, -0.6] as [number, number, number],
   width: 0.9,
   height: 0.62,
 };
 
 /** Pace in front of the drum; read the gauge; watch the fan. */
 export const LAYOUT: RoomLayout = {
-  walk: { z: 1.15, xMin: -0.6, xMax: 1.4 },
+  walk: { z: 1.15, xMin: -1.5, xMax: 1.4 },
   stations: [
-    { position: [-1.0, 0, 0.0], facing: -Math.PI / 2, action: "inspect", hold: 5 },
+    // Read the gauge from beside the plinth, not on it.
+    { position: [-1.5, 0, -0.2], facing: Math.PI, action: "inspect", hold: 5 },
     { position: [0.9, 0, 1.05], facing: Math.PI, action: "inspect", hold: 3 },
   ],
 };

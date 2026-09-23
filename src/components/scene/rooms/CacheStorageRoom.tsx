@@ -17,7 +17,7 @@ export const LAYOUT: RoomLayout = {
   walk: { z: 1.15, xMin: -1.2, xMax: 0.7 },
   stations: [
     { position: [0, 0, 0.55], facing: Math.PI, action: "work", hold: 6 },
-    { position: [0.9, 0, -0.5], facing: Math.PI, action: "inspect", hold: 4 },
+    { position: [1.0, 0, -0.35], facing: Math.PI, action: "inspect", hold: 4 },
   ],
 };
 
@@ -50,11 +50,11 @@ export function CacheStorageRoom({ powered = true }: { powered?: boolean }) {
         </mesh>
       ))}
       {/* water barrel */}
-      <mesh position={[1.3, 0.5, 0.3]}>
+      <mesh position={[1.5, 0.5, 0.3]}>
         <cylinderGeometry args={[0.38, 0.38, 1.0, 14]} />
         <meshToonMaterial color={palette.steelBlue} />
       </mesh>
-      <mesh position={[1.3, 1.02, 0.3]}>
+      <mesh position={[1.5, 1.02, 0.3]}>
         <cylinderGeometry args={[0.4, 0.4, 0.06, 14]} />
         <meshToonMaterial color={palette.concreteTan} />
       </mesh>

@@ -28,7 +28,7 @@ export const LAYOUT: RoomLayout = {
       hold: 7,
       seatY: BUNK.lower + 0.08,
     },
-    { position: [0.7, 0, -0.15], facing: Math.PI, action: "inspect", hold: 4 },
+    { position: [0.7, 0, 0.0], facing: Math.PI, action: "inspect", hold: 4 },
   ],
 };
 

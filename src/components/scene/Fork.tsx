@@ -126,8 +126,12 @@ export function Fork({ fork, layout, onClick, onHover }: Props) {
         if (t > s.until && stations.length > 0) {
           const station = stations[Math.floor(rand() * stations.length)]!;
           s.station = station;
-          s.target = station.approach ?? station.position;
-          s.phase = station.approach ? "approach" : "enter";
+          // Always enter a station along z from the walk lane: walk the lane
+          // to the station's column, then straight in. The lane is furniture
+          // free by contract, so the only way to clip is a station whose
+          // column is blocked, which is a layout bug, not a pathing one.
+          s.target = station.approach ?? [station.position[0], 0, walk.z];
+          s.phase = "approach";
         }
         break;
       }
@@ -149,13 +153,9 @@ export function Fork({ fork, layout, onClick, onHover }: Props) {
       case "act": {
         action = s.station?.action ?? null;
         if (t > s.until && s.station) {
-          if (s.station.approach) {
-            s.target = s.station.approach;
-            s.phase = "exit";
-          } else {
-            s.target = [Math.min(walk.xMax, Math.max(walk.xMin, s.x)), 0, walk.z];
-            s.phase = "leave";
-          }
+          // Back out the way it came in.
+          s.target = s.station.approach ?? [s.station.position[0], 0, walk.z];
+          s.phase = "exit";
         }
         break;
       }
