@@ -69,3 +69,6 @@ devlog/README.md
 
 # local social-post drafts, never committed
 /post-draft/
+
+# raw soundtrack downloads; the encoded copies live in public/audio
+/songs/

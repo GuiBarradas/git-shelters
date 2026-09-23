@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Terms · Git Shelters" };
 /** Short, honest terms for a free public alpha. Draft for legal review. */
 export default function TermsPage() {
   return (
-    <LegalPage title="Terms" updated="2026-09-22">
+    <LegalPage title="Terms" updated="2026-09-23">
       <h2>The deal</h2>
       <p>
         Git Shelters is a free game in public alpha, run by one maintainer. You may play it,
@@ -35,6 +35,14 @@ export default function TermsPage() {
         The game&apos;s text, art and code belong to the maintainer, except where the public
         repository&apos;s license says otherwise. Your GitHub data stays yours; see the{" "}
         <a href="/legal/privacy">privacy notice</a> for what we read and how to delete it.
+      </p>
+
+      <h2>Music</h2>
+      <p>
+        The theme is &ldquo;Uncontained&rdquo; by Alana Jordan. The ambience tracks are &ldquo;The
+        Shining Ambience&rdquo; by Mezhdunami and &ldquo;The Foyer Mirror&rdquo; by turning_pages. All
+        three are used under the Pixabay Content License. Sound is off until you turn it on, and the
+        choice stays in your browser.
       </p>
 
       <h2>Changes</h2>

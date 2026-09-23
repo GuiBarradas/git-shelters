@@ -3,6 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 
+import { AudioProvider } from "@/components/audio/AudioProvider";
+import { AudioToggle } from "@/components/audio/AudioToggle";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -30,14 +33,18 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[#0B0713] text-[#E6DFC8]">
-        {children}
-        <footer className="pointer-events-auto fixed bottom-2 right-4 z-10 font-mono text-[10px] uppercase tracking-widest text-[#E6DFC8]/40">
-          <Link href="/legal/privacy" className="hover:text-[#E6DFC8]">Privacy</Link>
-          {" · "}
-          <Link href="/legal/terms" className="hover:text-[#E6DFC8]">Terms</Link>
-          {" · "}
-          <Link href="/settings" className="hover:text-[#E6DFC8]">Settings</Link>
-        </footer>
+        <AudioProvider>
+          {children}
+          <footer className="pointer-events-auto fixed bottom-2 right-4 z-10 font-mono text-[10px] uppercase tracking-widest text-[#E6DFC8]/40">
+            <Link href="/legal/privacy" className="hover:text-[#E6DFC8]">Privacy</Link>
+            {" · "}
+            <Link href="/legal/terms" className="hover:text-[#E6DFC8]">Terms</Link>
+            {" · "}
+            <Link href="/settings" className="hover:text-[#E6DFC8]">Settings</Link>
+            {" · "}
+            <AudioToggle />
+          </footer>
+        </AudioProvider>
       </body>
     </html>
   );
