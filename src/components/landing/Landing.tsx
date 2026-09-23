@@ -34,7 +34,7 @@ export function Landing() {
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center px-4 pt-10 sm:pt-16">
         <div className="max-w-xl space-y-4 text-center font-mono">
-          <Image src="/brand/lockup.png" alt="Git Shelters" width={1600} height={327} priority className="mx-auto h-auto w-full max-w-sm" />
+          <Image src="/brand/lockup.png" alt="Git Shelters" width={1600} height={327} priority unoptimized className="mx-auto h-auto w-full max-w-sm" />
           <h1 className="text-xl leading-snug text-[#E6DFC8] sm:text-2xl">
             Your commits build the bunker. Your idle still earns. Your absence is canon.
           </h1>
