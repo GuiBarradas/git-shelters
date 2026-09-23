@@ -358,6 +358,7 @@ export type Database = {
           github_id: number
           github_login: string
           id: string
+          intro_seen_at: string | null
           last_seen_at: string
           last_tick_at: string
           payload: number
@@ -372,6 +373,7 @@ export type Database = {
           github_id: number
           github_login: string
           id: string
+          intro_seen_at?: string | null
           last_seen_at?: string
           last_tick_at?: string
           payload?: number
@@ -386,6 +388,7 @@ export type Database = {
           github_id?: number
           github_login?: string
           id?: string
+          intro_seen_at?: string | null
           last_seen_at?: string
           last_tick_at?: string
           payload?: number

@@ -5,6 +5,7 @@ import { SessionBeacon } from "@/components/analytics/SessionBeacon";
 import { AuthBar } from "@/components/auth/AuthBar";
 import { AwaySummary } from "@/components/hud/AwaySummary";
 import { BadgeToast } from "@/components/hud/BadgeToast";
+import { Intro } from "@/components/intro/Intro";
 import { Landing } from "@/components/landing/Landing";
 import { BunkerSceneClient } from "@/components/scene/BunkerSceneClient";
 import { trackSessionStart } from "@/lib/analytics/track";
@@ -59,7 +60,8 @@ export default async function Home() {
     region: "the_outage",
     now: new Date(),
   });
-  const bytes = await fetchBytes(supabase, user.id);
+  const me = await fetchMe(supabase, user.id);
+  const bytes = me?.bytes ?? null;
 
   // Catch-up: what the crew produced and ate since the last visit.
   const resources = await settleResources(supabase, admin, user.id, crew.forks, rooms);
@@ -100,6 +102,7 @@ export default async function Home() {
       </div>
       {report && <AwaySummary report={report} />}
       <BadgeToast badges={freshBadges} />
+      {me !== null && me.intro_seen_at === null && <Intro />}
       <div className="pointer-events-none absolute top-16 left-6 z-10 space-y-1 font-mono text-xs">
         <p className="text-[#E6DFC8]/70">
           <span className={resources.cache === 0 ? "text-[#A14545]" : ""}>
@@ -169,16 +172,17 @@ async function fetchRooms(
 }
 
 /**
- * Materialised balance from `users.bytes` (kept in sync by credit_bytes_tx).
- * RLS `users_select_own` scopes this to the caller. Returns null if the
- * row is somehow missing so the HUD can degrade instead of showing "0".
+ * Materialised balance from `users.bytes` (kept in sync by credit_bytes_tx)
+ * and whether the intro has played. RLS `users_select_own` scopes this to
+ * the caller. Returns null if the row is somehow missing so the HUD can
+ * degrade instead of showing "0".
  */
-async function fetchBytes(
+async function fetchMe(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
-): Promise<number | null> {
-  const { data } = await supabase.from("users").select("bytes").eq("id", userId).maybeSingle();
-  return data?.bytes ?? null;
+): Promise<{ bytes: number; intro_seen_at: string | null } | null> {
+  const { data } = await supabase.from("users").select("bytes, intro_seen_at").eq("id", userId).maybeSingle();
+  return data ?? null;
 }
 
 /**
