@@ -107,6 +107,9 @@ export function Intro({ login }: { login: string | null }) {
     started.current = performance.now();
     audio.boot();
     setPhase("playing");
+    // Booting counts as seen: closing the tab mid-intro must not replay it
+    // next visit. /?intro=1 is always there for a second viewing.
+    finish();
   };
 
   /** Skip: bunker now, music handed over now. */
