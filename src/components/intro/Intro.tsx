@@ -157,6 +157,11 @@ export function Intro() {
             boot the Repo
           </button>
           <p className="text-[10px] uppercase tracking-[0.25em] text-[#E6DFC8]/30">sound on · headphones welcome</p>
+          <p className="max-w-sm text-[10px] leading-relaxed text-[#E6DFC8]/30">
+            music: &ldquo;Uncontained&rdquo; by Alana Jordan · ambience by Mezhdunami and turning_pages · Pixabay Content License
+            <br />
+            art, code and words by guibarradas · code AGPL-3.0
+          </p>
         </div>
       ) : (
         <section className="crt route-enter w-full max-w-xl px-6 py-5 font-mono text-sm text-[#E6DFC8]">

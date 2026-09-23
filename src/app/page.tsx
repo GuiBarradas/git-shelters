@@ -20,12 +20,16 @@ import { isRoomKind, isSlot, type Room } from "@/lib/rooms/catalog";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function Home() {
+type HomeProps = { searchParams: Promise<{ intro?: string }> };
+
+/** `/?intro=1` replays the intro and credits for anyone signed in. */
+export default async function Home({ searchParams }: HomeProps) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return <Landing />;
+  const replayIntro = (await searchParams).intro === "1";
 
   const admin = createAdminClient();
 
@@ -102,7 +106,7 @@ export default async function Home() {
       </div>
       {report && <AwaySummary report={report} />}
       <BadgeToast badges={freshBadges} />
-      {me !== null && me.intro_seen_at === null && <Intro />}
+      {me !== null && (me.intro_seen_at === null || replayIntro) && <Intro />}
       <div className="pointer-events-none absolute top-16 left-6 z-10 space-y-1 font-mono text-xs">
         <p className="text-[#E6DFC8]/70">
           <span className={resources.cache === 0 ? "text-[#A14545]" : ""}>
@@ -126,6 +130,10 @@ export default async function Home() {
         <p>
           <Link href="/map" className="pointer-events-auto text-[#BD93F9]/70 hover:text-[#BD93F9]">
             &gt; the 404 Lands: world map
+          </Link>
+          <span className="text-[#E6DFC8]/30"> · </span>
+          <Link href="/?intro=1" className="pointer-events-auto text-[#BD93F9]/70 hover:text-[#BD93F9]">
+            intro / credits
           </Link>
         </p>
       </div>

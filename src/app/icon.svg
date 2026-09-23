@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="52 12 408 408" width="512" height="512"><defs><filter id="hh-rim" x="-10%" y="-10%" width="120%" height="120%">
+    <feMorphology in="SourceAlpha" operator="dilate" radius="9" result="d"/>
+    <feFlood flood-color="#8D46A3"/><feComposite in2="d" operator="in" result="r"/>
+    <feMerge><feMergeNode in="r"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  <g filter="url(#hh-rim)">
+  <defs>
+    <clipPath id="hh-body"><path d="M 256 146 C 382 146 424 248 422 340 C 420 432 352 482 256 482 C 160 482 92 432 90 340 C 88 248 130 146 256 146 Z"/></clipPath>
+    <clipPath id="hh-helm"><path d="M 116 222 C 116 124 182 80 256 80 C 330 80 396 124 396 222 Z"/></clipPath>
+    <clipPath id="hh-brim"><rect x="100" y="198" width="312" height="34" rx="12"/></clipPath>
+    <clipPath id="hh-visor"><rect x="148" y="232" width="216" height="80" rx="36"/></clipPath>
+    <filter id="hh-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <pattern id="hh-haz" width="28" height="28" patternUnits="userSpaceOnUse" patternTransform="rotate(40)">
+      <rect width="28" height="28" fill="#E67E22"/><rect width="13" height="28" fill="#0B0713"/>
+    </pattern>
+  </defs>
+  <!-- legs behind body -->
+  <g transform="rotate(-12 118 292)">
+    <path d="M 50 278 l -16 -1.8999999999999995" stroke="#0B0713" stroke-width="9" stroke-linecap="round"/><path d="M 50 292 l -16 3" stroke="#0B0713" stroke-width="9" stroke-linecap="round"/><path d="M 50 306 l -16 7.8999999999999995" stroke="#0B0713" stroke-width="9" stroke-linecap="round"/>
+    <rect x="44" y="264" width="74" height="56" rx="28" fill="#E6DFC8" stroke="#0B0713" stroke-width="11"/>
+    <path d="M 88 272 q 6 20 0 40" stroke="#C9BF9F" stroke-width="6" fill="none" stroke-linecap="round"/>
+  </g>
+  <g transform="rotate(12 394 292)">
+    <path d="M 462 278 l 16 -1.8999999999999995" stroke="#0B0713" stroke-width="9" stroke-linecap="round"/><path d="M 462 292 l 16 3" stroke="#0B0713" stroke-width="9" stroke-linecap="round"/><path d="M 462 306 l 16 7.8999999999999995" stroke="#0B0713" stroke-width="9" stroke-linecap="round"/>
+    <rect x="394" y="264" width="74" height="56" rx="28" fill="#E6DFC8" stroke="#0B0713" stroke-width="11"/>
+    <path d="M 424 272 q -6 20 0 40" stroke="#C9BF9F" stroke-width="6" fill="none" stroke-linecap="round"/>
+  </g>
+  <g transform="rotate(6 112 382)">
+    <path d="M 44 368 l -16 -1.8999999999999995" stroke="#0B0713" stroke-width="9" stroke-linecap="round"/><path d="M 44 382 l -16 3" stroke="#0B0713" stroke-width="9" stroke-linecap="round"/><path d="M 44 396 l -16 7.8999999999999995" stroke="#0B0713" stroke-width="9" stroke-linecap="round"/>
+    <rect x="38" y="354" width="74" height="56" rx="28" fill="#E6DFC8" stroke="#0B0713" stroke-width="11"/>
+    <path d="M 82 362 q 6 20 0 40" stroke="#C9BF9F" stroke-width="6" fill="none" stroke-linecap="round"/>
+  </g>
+  <g transform="rotate(-6 400 382)">
+    <path d="M 468 368 l 16 -1.8999999999999995" stroke="#0B0713" stroke-width="9" stroke-linecap="round"/><path d="M 468 382 l 16 3" stroke="#0B0713" stroke-width="9" stroke-linecap="round"/><path d="M 468 396 l 16 7.8999999999999995" stroke="#0B0713" stroke-width="9" stroke-linecap="round"/>
+    <rect x="400" y="354" width="74" height="56" rx="28" fill="#E6DFC8" stroke="#0B0713" stroke-width="11"/>
+    <path d="M 430 362 q -6 20 0 40" stroke="#C9BF9F" stroke-width="6" fill="none" stroke-linecap="round"/>
+  </g>
+  <g transform="rotate(-62 186 452)"><g transform="rotate(0 186 452)">
+    <path d="M 118 438 l -16 -1.8999999999999995" stroke="#0B0713" stroke-width="9" stroke-linecap="round"/><path d="M 118 452 l -16 3" stroke="#0B0713" stroke-width="9" stroke-linecap="round"/><path d="M 118 466 l -16 7.8999999999999995" stroke="#0B0713" stroke-width="9" stroke-linecap="round"/>
+    <rect x="112" y="424" width="74" height="56" rx="28" fill="#E6DFC8" stroke="#0B0713" stroke-width="11"/>
+    <path d="M 156 432 q 6 20 0 40" stroke="#C9BF9F" stroke-width="6" fill="none" stroke-linecap="round"/>
+  </g></g>
+  <g transform="rotate(62 326 452)"><g transform="rotate(0 326 452)">
+    <path d="M 394 438 l 16 -1.8999999999999995" stroke="#0B0713" stroke-width="9" stroke-linecap="round"/><path d="M 394 452 l 16 3" stroke="#0B0713" stroke-width="9" stroke-linecap="round"/><path d="M 394 466 l 16 7.8999999999999995" stroke="#0B0713" stroke-width="9" stroke-linecap="round"/>
+    <rect x="326" y="424" width="74" height="56" rx="28" fill="#E6DFC8" stroke="#0B0713" stroke-width="11"/>
+    <path d="M 356 432 q -6 20 0 40" stroke="#C9BF9F" stroke-width="6" fill="none" stroke-linecap="round"/>
+  </g></g>
+
+  <!-- body -->
+  <path d="M 256 146 C 382 146 424 248 422 340 C 420 432 352 482 256 482 C 160 482 92 432 90 340 C 88 248 130 146 256 146 Z" fill="#E6DFC8"/>
+  <g clip-path="url(#hh-body)">
+    <ellipse cx="330" cy="360" rx="120" ry="150" fill="#C9BF9F" opacity=".55"/>
+    <path d="M 120 440 Q 256 470 392 440" stroke="#C9BF9F" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <!-- harness belt -->
+    <path d="M 60 392 Q 256 438 452 392 L 452 428 Q 256 474 60 428 Z" fill="#3A4A5A" stroke="#0B0713" stroke-width="8"/>
+    <path d="M 60 398 Q 256 444 452 398" stroke="#56687A" stroke-width="4" fill="none"/>
+  </g>
+  <!-- belt buckle / power cell -->
+  <rect x="226" y="402" width="60" height="44" rx="9" fill="#2A2D34" stroke="#0B0713" stroke-width="8"/>
+  <rect x="236" y="413" width="11" height="22" rx="3" fill="#BD93F9" filter="url(#hh-glow)"/>
+  <rect x="251" y="413" width="11" height="22" rx="3" fill="#BD93F9"/>
+  <rect x="266" y="413" width="11" height="22" rx="3" fill="#8D46A3"/>
+  <path d="M 256 146 C 382 146 424 248 422 340 C 420 432 352 482 256 482 C 160 482 92 432 90 340 C 88 248 130 146 256 146 Z" fill="none" stroke="#0B0713" stroke-width="11"/>
+
+  <!-- helmet dome -->
+  <path d="M 116 222 C 116 124 182 80 256 80 C 330 80 396 124 396 222 Z" fill="#3A4A5A"/>
+  <g clip-path="url(#hh-helm)">
+    <ellipse cx="200" cy="130" rx="70" ry="40" fill="#56687A" opacity=".7"/>
+    <ellipse cx="350" cy="200" rx="90" ry="70" fill="#0B0713" opacity=".18"/>
+    <path d="M 256 80 L 256 200" stroke="#0B0713" stroke-width="5" opacity=".35"/>
+  </g>
+  <path d="M 116 222 C 116 124 182 80 256 80 C 330 80 396 124 396 222 Z" fill="none" stroke="#0B0713" stroke-width="11" stroke-linejoin="round"/>
+  <!-- rivets -->
+  <circle cx="150" cy="176" r="7" fill="#56687A" stroke="#0B0713" stroke-width="4"/><circle cx="176" cy="128" r="7" fill="#56687A" stroke="#0B0713" stroke-width="4"/><circle cx="336" cy="128" r="7" fill="#56687A" stroke="#0B0713" stroke-width="4"/><circle cx="362" cy="176" r="7" fill="#56687A" stroke="#0B0713" stroke-width="4"/>
+  <!-- emblem: branch glyph -->
+  <circle cx="256" cy="148" r="36" fill="#130A24" stroke="#0B0713" stroke-width="8"/>
+  <g stroke="#BD93F9" stroke-width="6" fill="none" stroke-linecap="round" filter="url(#hh-glow)">
+    <path d="M 244 128 L 244 168"/><path d="M 268 132 C 268 150 244 146 244 160"/>
+  </g>
+  <g fill="#BD93F9"><circle cx="244" cy="128" r="6"/><circle cx="244" cy="170" r="6"/><circle cx="268" cy="130" r="6"/></g>
+  <!-- antenna -->
+  <path d="M 344 108 L 372 52" stroke="#0B0713" stroke-width="14" stroke-linecap="round"/>
+  <path d="M 344 108 L 372 52" stroke="#45414F" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="374" cy="46" r="15" fill="#FFD66B" stroke="#0B0713" stroke-width="8" filter="url(#hh-glow)"/>
+  <circle cx="370" cy="42" r="4" fill="#fff" opacity=".8"/>
+  <!-- hazard brim -->
+  <rect x="100" y="198" width="312" height="34" rx="12" fill="url(#hh-haz)"/>
+  <rect x="100" y="198" width="312" height="34" rx="12" fill="none" stroke="#0B0713" stroke-width="11"/>
+
+  <!-- visor -->
+  <rect x="148" y="232" width="216" height="80" rx="36" fill="#130A24"/>
+  <g clip-path="url(#hh-visor)">
+    <rect x="148" y="234" width="216" height="2" fill="#BD93F9" opacity=".07"/><rect x="148" y="240" width="216" height="2" fill="#BD93F9" opacity=".07"/><rect x="148" y="246" width="216" height="2" fill="#BD93F9" opacity=".07"/><rect x="148" y="252" width="216" height="2" fill="#BD93F9" opacity=".07"/><rect x="148" y="258" width="216" height="2" fill="#BD93F9" opacity=".07"/><rect x="148" y="264" width="216" height="2" fill="#BD93F9" opacity=".07"/><rect x="148" y="270" width="216" height="2" fill="#BD93F9" opacity=".07"/><rect x="148" y="276" width="216" height="2" fill="#BD93F9" opacity=".07"/><rect x="148" y="282" width="216" height="2" fill="#BD93F9" opacity=".07"/><rect x="148" y="288" width="216" height="2" fill="#BD93F9" opacity=".07"/><rect x="148" y="294" width="216" height="2" fill="#BD93F9" opacity=".07"/><rect x="148" y="300" width="216" height="2" fill="#BD93F9" opacity=".07"/><rect x="148" y="306" width="216" height="2" fill="#BD93F9" opacity=".07"/><rect x="148" y="312" width="216" height="2" fill="#BD93F9" opacity=".07"/>
+    <g filter="url(#hh-glow)" fill="#BD93F9">
+      <rect x="190" y="250" width="40" height="44" rx="16"/>
+      <rect x="282" y="250" width="40" height="44" rx="16"/>
+    </g>
+    <rect x="198" y="256" width="10" height="12" rx="4" fill="#fff" opacity=".85"/>
+    <rect x="290" y="256" width="10" height="12" rx="4" fill="#fff" opacity=".85"/>
+    <path d="M 300 232 L 340 232 L 290 312 L 250 312 Z" fill="#fff" opacity=".07"/>
+  </g>
+  <rect x="148" y="232" width="216" height="80" rx="36" fill="none" stroke="#0B0713" stroke-width="11"/>
+
+  <!-- respirator: tardigrade tube-mouth as a gas mask -->
+  <circle cx="190" cy="358" r="25" fill="#E67E22" stroke="#0B0713" stroke-width="9"/>
+  <circle cx="322" cy="358" r="25" fill="#E67E22" stroke="#0B0713" stroke-width="9"/>
+  <g stroke="#0B0713" stroke-width="4" opacity=".55">
+    <path d="M 176 350 L 204 350 M 174 360 L 206 360 M 178 370 L 202 370"/>
+    <path d="M 308 350 L 336 350 M 306 360 L 338 360 M 310 370 L 334 370"/>
+  </g>
+  <path d="M 206 318 L 306 318 L 296 382 Q 256 396 216 382 Z" fill="#2A2D34" stroke="#0B0713" stroke-width="9" stroke-linejoin="round"/>
+  <circle cx="256" cy="352" r="24" fill="#45414F" stroke="#0B0713" stroke-width="8"/>
+  <circle cx="256" cy="352" r="11" fill="#0B0713"/>
+  <circle cx="256" cy="352" r="11" fill="none" stroke="#8D46A3" stroke-width="3"/>
+  </g></svg>
