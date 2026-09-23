@@ -73,21 +73,33 @@ export const EVENT_LINES: Record<EventEcho, readonly string[]> = {
     "That packet on the terminal is still blinking. Somebody decide.",
     "Are you going to open it, or do I have to?",
     "The Main Branch is waiting on you. So are we.",
+    "Unread packet. Unread packets are how the last Maintainer went.",
+    "I'd open it myself, but the terminal only listens to you.",
+    "It's been blinking since dawn. The blink is getting personal.",
   ],
   good: [
     "Good call today. The whole Repo felt it.",
     "Told them you'd pick right. Nobody bet against me.",
     "Bytes came out of that one. Keep making those calls.",
+    "The packet paid. Drinks are on the ledger.",
+    "See? Reading the whole thing works sometimes.",
+    "We pinned today's outcome to the pantry door. Morale item.",
   ],
   bad: [
     "We don't talk about the packet.",
     "Next time, maybe ask the crew first?",
     "That cost us. I'm not saying it was you. I'm not not saying it.",
+    "The ledger went red. The ledger is never wrong. Unfortunately.",
+    "You chose fast. The 404 charges for fast.",
+    "I've filed today under 'lessons'. The folder is getting thick.",
   ],
   flat: [
     "So that happened. Nothing changed. Somehow that's worse.",
     "The terminal printed OK. Just OK.",
     "One decision, zero bytes. Story of this shift.",
+    "A packet with nothing in it. The 404 has a sense of humour.",
+    "No gain, no loss. The Sandbox would call that a win.",
+    "We opened it, we read it, we shrugged in unison.",
   ],
 };
 
@@ -96,21 +108,81 @@ export const MOOD_LINES: Record<Mood, readonly string[]> = {
     "Saw the push land. Lights are steady tonight.",
     "You committed. We noticed. Thank you.",
     "Best day in the Repo since the Merge Conflict.",
+    "The feed said your name today. Twice.",
+    "I told the others you'd be back. They owe me bytes.",
+    "Green build. Warm bunk. I could get used to this.",
+    "Whatever you shipped, the lights liked it.",
+    "Somebody hummed in the corridor. I think it was me.",
   ],
   content: [
     "Quiet shift. Nothing's on fire.",
     "The terminal hummed. That's enough for me.",
     "Cache is stocked. Uptime holds.",
+    "Ordinary day in the Repo. I'll take ordinary.",
+    "The generator coughed once. Then it thought better of it.",
+    "No packets, no Crawlers, no drama. Log it.",
+    "I reorganised the pantry. Nobody noticed. That's the point.",
+    "Steady. Like a good main branch.",
   ],
   stressed: [
     "When was the last push? Asking for the generator.",
-    "The green terminal keeps printing MERGE PENDING.",
+    "The terminal keeps printing MERGE PENDING.",
     "We're fine. We're fine. Are we fine?",
+    "I counted the meals. Then I counted them again.",
+    "Three days of silence from the feed. Cables don't gossip for nothing.",
+    "If you're busy out there, just push something. Anything.",
+    "The lamp flickered and everyone looked at me.",
+    "I keep refreshing a terminal that doesn't refresh.",
   ],
   bitter: [
     "A week. A whole week. The 404 doesn't wait.",
     "I've started talking to the server rack.",
     "Is the Maintainer even out there anymore?",
+    "We named the rat. It has a better attendance record than you.",
+    "The last packet was addressed to nobody. Fitting.",
+    "I'd leave, but the door only opens from the feed side.",
+    "Don't say 'soon'. The Merge Conflict started with 'soon'.",
+    "The Wikipedia clone has an article on 'abandonment'. I read it twice.",
+  ],
+};
+
+/** What a survivor says about where it works, when poked there. Null slot = off shift on the Main Branch. */
+export const JOB_LINES: Record<"cache_storage" | "power_plant" | "dorm" | "workshop" | "elevator" | "off_shift", readonly string[]> = {
+  cache_storage: [
+    "Freeze-dried again. The kettle has opinions.",
+    "Six meals an hour if the lights hold. Don't ask what's in them.",
+    "I label the crates. Nobody reads the labels.",
+    "The pantry is my kingdom. A small, damp kingdom.",
+  ],
+  power_plant: [
+    "Hear that hum? That's me, technically.",
+    "The crank turns. The drum spins. Don't touch the red one.",
+    "Twenty-five percent an hour. I'm a battery with a face.",
+    "If the fan stops, close your eyes. It's easier.",
+  ],
+  dorm: [
+    "Bottom bunk. Earned it.",
+    "The blanket smells like someone else's shift.",
+    "Sleep is a job too. A quiet, underrated job.",
+    "I dream in merge conflicts now.",
+  ],
+  workshop: [
+    "Packing rounds for a fight nobody's scheduled.",
+    "No blueprints. Just a vice and confidence.",
+    "Thirty per rack. The rack is the rule.",
+    "The spark's mine. The fire, if it comes, is on you.",
+  ],
+  elevator: [
+    "Going down. Eventually.",
+    "The indicator says -1. There is no -1 yet. It's optimistic.",
+    "Someone has to push the button. Someone is me.",
+    "The shaft whistles at night. I've decided that's normal.",
+  ],
+  off_shift: [
+    "Off shift. Watching the terminal blink is still watching.",
+    "Assign me somewhere. The corridor has no coffee.",
+    "I could cook. I could crank. I could nap. Your call, Maintainer.",
+    "Standing around is a job if you frown enough.",
   ],
 };
 
@@ -143,26 +215,25 @@ export function describeCrew(
 }
 
 /**
- * The line a Fork says when poked: half the time its mood, half its trait
- * (the caller supplies the trait line); when a Daily Event is in the air,
- * a third of the pokes are about it instead. Seeded by the Fork plus a
- * salt so repeated clicks vary without React state.
+ * The line a Fork says when poked. When a Daily Event is in the air, a
+ * third of the pokes are about it; otherwise the pool is its mood, its
+ * trait and its job in roughly equal parts. Seeded by the Fork plus a
+ * salt so repeated clicks vary without React state, and a survivor
+ * never says the same line twice in a row for the same salt.
  */
 export function pickLine(
   seed: number,
   salt: number,
   mood: Mood,
-  traitLine: string,
+  traitLines: readonly string[],
   echo: EventEcho | null = null,
+  jobLines: readonly string[] = [],
 ): string {
   const rand = mulberry32((seed ^ (salt * 0x9e3779b1)) >>> 0);
-  if (echo && rand() < 1 / 3) {
-    const lines = EVENT_LINES[echo];
-    return lines[Math.floor(rand() * lines.length)]!;
-  }
-  if (rand() < 0.5) return traitLine;
-  const lines = MOOD_LINES[mood];
-  return lines[Math.floor(rand() * lines.length)]!;
+  const pick = (lines: readonly string[]) => lines[Math.floor(rand() * lines.length)]!;
+  if (echo && rand() < 1 / 3) return pick(EVENT_LINES[echo]);
+  const pools = [MOOD_LINES[mood], traitLines, jobLines].filter((p) => p.length > 0);
+  return pick(pools[Math.floor(rand() * pools.length)]!);
 }
 
 /** Locomotion and posture tweaks per mood, read by the Fork animation. */

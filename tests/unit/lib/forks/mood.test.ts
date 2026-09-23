@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { describeCrew, EVENT_LINES, eventEcho, eventShift, MOOD_LINES, moodFor, moodFromActivity, MOODS, pickLine, settleMood } from "@/lib/forks/mood";
+import { describeCrew, EVENT_LINES, eventEcho, eventShift, JOB_LINES, MOOD_LINES, moodFor, moodFromActivity, MOODS, pickLine, settleMood } from "@/lib/forks/mood";
 
 const NOW = new Date("2026-09-22T12:00:00Z");
 const daysAgo = (d: number) => new Date(NOW.getTime() - d * 86_400_000).toISOString();
@@ -26,8 +26,9 @@ describe("fork mood", () => {
 
   it("every mood has lines and a crew description", () => {
     for (const mood of MOODS) {
-      expect(MOOD_LINES[mood].length).toBeGreaterThan(0);
+      expect(MOOD_LINES[mood].length).toBeGreaterThanOrEqual(8);
     }
+    for (const lines of Object.values(JOB_LINES)) expect(lines.length).toBeGreaterThanOrEqual(4);
     expect(describeCrew("happy", daysAgo(0), NOW)).toContain("pushed today");
     expect(describeCrew("bitter", daysAgo(9), NOW)).toContain("9 days since last push");
     expect(describeCrew("content", null, NOW)).toContain("no pushes");
@@ -51,16 +52,17 @@ describe("fork mood", () => {
   });
 
   it("pickLine talks about the packet when there is one", () => {
-    const seen = new Set(Array.from({ length: 60 }, (_, i) => pickLine(42, i, "content", "TRAIT", "pending")));
+    const seen = new Set(Array.from({ length: 60 }, (_, i) => pickLine(42, i, "content", ["TRAIT"], "pending")));
     expect([...seen].some((l) => EVENT_LINES.pending.includes(l))).toBe(true);
     expect(seen.has("TRAIT")).toBe(true);
   });
 
   it("pickLine is deterministic per seed and salt, and mixes trait and mood lines", () => {
-    const a = pickLine(42, 1, "stressed", "TRAIT");
-    expect(pickLine(42, 1, "stressed", "TRAIT")).toBe(a);
-    const seen = new Set(Array.from({ length: 40 }, (_, i) => pickLine(42, i, "stressed", "TRAIT")));
+    const a = pickLine(42, 1, "stressed", ["TRAIT"]);
+    expect(pickLine(42, 1, "stressed", ["TRAIT"])).toBe(a);
+    const seen = new Set(Array.from({ length: 60 }, (_, i) => pickLine(42, i, "stressed", ["TRAIT"], null, ["JOB"])));
     expect(seen.has("TRAIT")).toBe(true);
+    expect(seen.has("JOB")).toBe(true);
     expect([...seen].some((l) => MOOD_LINES.stressed.includes(l))).toBe(true);
   });
 });

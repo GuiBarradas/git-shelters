@@ -8,15 +8,16 @@ import { palette } from "@/lib/palette";
  * derived from a seed so the same Fork always wears the same shirt.
  */
 
+/** Traits: a name and what a survivor of that kind says when poked. */
 export const FORK_TRAITS = {
-  caffeinated: { name: "Caffeinated", line: "Coffee? Coffee. Coffee." },
-  imposter: { name: "Imposter Syndrome", line: "No idea what I'm doing here, but I'll try." },
-  senior: { name: "Senior", line: "Saw this in 2008." },
-  junior: { name: "Junior", line: "WAIT. WHAT DO YOU MEAN THE INTERNET IS GONE?" },
-  vibe_coder: { name: "Vibe Coder", line: "Trust me, it'll work." },
-  tenx: { name: "10x Engineer", line: "Nobody here gets me." },
-  oss_maximalist: { name: "Open Source Maximalist", line: "Everything should be AGPL." },
-  minimalist: { name: "Minimalist", line: "..." },
+  caffeinated: { name: "Caffeinated", lines: ["Coffee? Coffee. Coffee.", "I have not slept since the Merge Conflict. It's fine. I'm fine.", "If the generator dies I can power it. Just plug me in."] },
+  imposter: { name: "Imposter Syndrome", lines: ["No idea what I'm doing here, but I'll try.", "Everyone else seems to know where the wrench goes.", "One day they'll notice I don't belong. Not today, apparently."] },
+  senior: { name: "Senior", lines: ["Saw this in 2008.", "We had this exact outage before. Twice. Nobody listened.", "Back in my day the apocalypse shipped on a Friday."] },
+  junior: { name: "Junior", lines: ["WAIT. WHAT DO YOU MEAN THE INTERNET IS GONE?", "Is Stack Overflow down for everyone or just me?", "I was going to ask a question. I'll just... figure it out."] },
+  vibe_coder: { name: "Vibe Coder", lines: ["Trust me, it'll work.", "I don't read the diff, I feel the diff.", "Accept All. What could go wrong. Again."] },
+  tenx: { name: "10x Engineer", lines: ["Nobody here gets me.", "I could rewrite this bunker in a weekend. Alone.", "Meetings are why the world ended."] },
+  oss_maximalist: { name: "Open Source Maximalist", lines: ["Everything should be AGPL.", "If the Crawlers open-sourced their code we could just read it.", "Forks are people too. Literally, now."] },
+  minimalist: { name: "Minimalist", lines: ["...", "Less.", "The bunker has too many rooms."] },
 } as const;
 
 export type ForkTrait = keyof typeof FORK_TRAITS;

@@ -34,7 +34,7 @@ describe("fork catalog", () => {
 
   it("every trait has a line to say", () => {
     for (const trait of Object.values(FORK_TRAITS)) {
-      expect(trait.line.length).toBeGreaterThan(0);
+      expect(trait.lines.length).toBeGreaterThanOrEqual(3);
       expect(trait.name.length).toBeGreaterThan(0);
     }
   });

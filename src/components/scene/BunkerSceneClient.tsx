@@ -6,7 +6,7 @@ import { useActionState, useEffect, useState } from "react";
 
 import { buildRoom, type BuildState } from "@/app/rooms/actions";
 import { FORK_TRAITS, type Fork as ForkData } from "@/lib/forks/catalog";
-import { type EventEcho, pickLine } from "@/lib/forks/mood";
+import { type EventEcho, JOB_LINES, pickLine } from "@/lib/forks/mood";
 import { isLowerSlot, ROOM_CATALOG, type Room, type RoomKind, type Slot } from "@/lib/rooms/catalog";
 
 const BunkerScene = dynamic(() => import("./BunkerScene"), {
@@ -69,7 +69,11 @@ export function BunkerSceneClient({
 
   const poke = (f: ForkData) => {
     setPokes((n) => n + 1);
-    setSpeech({ name: f.name, line: pickLine(f.seed, pokes, f.mood, FORK_TRAITS[f.trait].line, echo) });
+    const kind = rooms.find((r) => r.slot === f.roomSlot)?.kind;
+    setSpeech({
+      name: f.name,
+      line: pickLine(f.seed, pokes, f.mood, FORK_TRAITS[f.trait].lines, echo, JOB_LINES[kind ?? "off_shift"]),
+    });
   };
 
   useEffect(() => {
