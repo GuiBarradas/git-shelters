@@ -177,7 +177,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         a.volume = 0;
         void a.play().catch(() => undefined);
         void ramp(a, AMBIENCE_VOLUME, fadeMs);
-        if (t && wasTheme) void ramp(t, 0, fadeMs * 0.7).then(() => t.pause());
+        if (t && wasTheme) void ramp(t, 0, fadeMs).then(() => t.pause());
       },
       themeTime: () => (mode.current === "theme" && theme.current ? theme.current.currentTime : null),
     }),

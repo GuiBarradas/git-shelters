@@ -66,8 +66,11 @@ const T = {
   screensStart: 4,
   screenLength: 27,
   typeLength: 17,
+  /** The overlay starts fading; the theme keeps playing through its peak. */
   reveal: 140,
-  ambience: 170,
+  /** The peak ends: theme crossfades into the ambience. */
+  ambience: 168,
+  crossfade: 8,
   revealFade: 10,
 };
 
@@ -93,14 +96,18 @@ export function Intro() {
     void markIntroSeen();
   }, []);
 
-  const reveal = useCallback(
-    (fadeMs: number) => {
-      setPhase((p) => (p === "reveal" || p === "gone" ? p : "reveal"));
-      audio.toAmbience(fadeMs);
-      finish();
-    },
-    [audio, finish],
-  );
+  /** Visual reveal only: the music keeps going. */
+  const reveal = useCallback(() => {
+    setPhase((p) => (p === "reveal" || p === "gone" ? p : "reveal"));
+    finish();
+  }, [finish]);
+
+  /** Skip: reveal now and crossfade now, no waiting for the peak. */
+  const skip = () => {
+    reveal();
+    audio.toAmbience(4000);
+    setPhase("gone");
+  };
 
   const boot = () => {
     started.current = performance.now();
@@ -108,23 +115,22 @@ export function Intro() {
     setPhase("screens");
   };
 
-  // One ticker for typing, screen changes and the reveal; 10 Hz is plenty.
+  // One ticker for typing, screen changes, the reveal and the crossfade;
+  // 10 Hz is plenty. The component stays mounted (invisible) through the
+  // reveal so it can still hand the music over at the end of the peak.
   useEffect(() => {
     if (phase !== "screens" && phase !== "reveal") return;
     const id = setInterval(() => {
       const t = now();
       setClock(t);
-      if (phase === "screens" && t >= T.reveal) reveal(T.ambience - T.reveal);
+      if (phase === "screens" && t >= T.reveal) reveal();
+      if (phase === "reveal" && t >= T.ambience) {
+        audio.toAmbience(T.crossfade * 1000);
+        setPhase("gone");
+      }
     }, 100);
     return () => clearInterval(id);
-  }, [phase, now, reveal]);
-
-  // The reveal fades the overlay out; then it is gone. Ambience crossfades at 2:50 on its own timer.
-  useEffect(() => {
-    if (phase !== "reveal") return;
-    const id = setTimeout(() => setPhase("gone"), T.revealFade * 1000);
-    return () => clearTimeout(id);
-  }, [phase]);
+  }, [phase, now, reveal, audio]);
 
   if (phase === "gone") return null;
 
@@ -177,7 +183,7 @@ export function Intro() {
             <span className="text-[#E6DFC8]/30">
               {Math.floor(clock / 60)}:{String(Math.floor(clock % 60)).padStart(2, "0")}
             </span>
-            <button type="button" onClick={() => reveal(4000)} className="text-[#E6DFC8]/50 hover:text-[#E6DFC8]">
+            <button type="button" onClick={skip} className="text-[#E6DFC8]/50 hover:text-[#E6DFC8]">
               skip to the Repo
             </button>
           </div>
