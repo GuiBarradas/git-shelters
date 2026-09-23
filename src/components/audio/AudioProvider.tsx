@@ -28,8 +28,13 @@ type AudioApi = {
   toggle: () => void;
   /** The intro's boot click: sound on, theme from the top. */
   boot: () => void;
-  /** Fade the theme out and the ambience in. Safe to call twice. */
-  toAmbience: (fadeMs?: number) => void;
+  /**
+   * Hand over from the theme to the ambience: the theme fades to silence
+   * on its own over `fadeMs`, and the ambience starts after `gapMs` and
+   * rises over `fadeMs`. With a gap near the theme's fade, the two never
+   * play loud together. Safe to call twice.
+   */
+  toAmbience: (fadeMs?: number, gapMs?: number) => void;
   /** Seconds into the theme, or null when it is not the thing playing. */
   themeTime: () => number | null;
 };
@@ -167,17 +172,20 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         t.volume = THEME_VOLUME;
         void t.play().catch(() => undefined);
       },
-      toAmbience: (fadeMs = 6000) => {
+      toAmbience: (fadeMs = 6000, gapMs = 0) => {
         const t = theme.current;
         const a = ambience.current;
         if (!a || mode.current === "ambience") return;
         const wasTheme = mode.current === "theme";
         mode.current = "ambience";
         if (!enabled && !wasTheme) return; // sound is off: remember the mode, play nothing
-        a.volume = 0;
-        void a.play().catch(() => undefined);
-        void ramp(a, AMBIENCE_VOLUME, fadeMs);
         if (t && wasTheme) void ramp(t, 0, fadeMs).then(() => t.pause());
+        setTimeout(() => {
+          if (mode.current !== "ambience") return; // sound was turned off meanwhile
+          a.volume = 0;
+          void a.play().catch(() => undefined);
+          void ramp(a, AMBIENCE_VOLUME, fadeMs);
+        }, gapMs);
       },
       themeTime: () => (mode.current === "theme" && theme.current ? theme.current.currentTime : null),
     }),

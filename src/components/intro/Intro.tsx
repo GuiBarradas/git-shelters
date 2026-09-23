@@ -15,7 +15,8 @@ import { useAudio } from "@/components/audio/AudioProvider";
  *   0:10  the lore, five screens typing themselves, 27 s each
  *   2:25  logout: clearance off, the mascot logs out
  *   2:35  the CRT fades and the bunker shows through, lit, by 2:50
- *   2:50  the theme fades over 20 s while the ambience comes up
+ *   2:50  the theme fades to silence over 12 s, alone; the ambience
+ *         enters at 3:00 and rises over 12 s. They never overlap loud.
  *
  * Skip jumps to the reveal and crossfades at once. Plays once per
  * account; /?intro=1 replays it.
@@ -75,7 +76,9 @@ const T = {
   logoff: 149,
   fadeStart: 155,
   fadeEnd: 170,
-  crossfade: 20,
+  /** Theme fade-out length, and how long after it starts the ambience enters. */
+  crossfade: 12,
+  ambienceGap: 10,
 };
 
 type Phase = "boot" | "playing" | "gone";
@@ -109,7 +112,7 @@ export function Intro({ login }: { login: string | null }) {
   /** Skip: bunker now, music handed over now. */
   const skip = () => {
     finish();
-    audio.toAmbience(4000);
+    audio.toAmbience(4000, 2500);
     setPhase("gone");
   };
 
@@ -121,7 +124,7 @@ export function Intro({ login }: { login: string | null }) {
       setClock(t);
       if (t >= T.fadeStart) finish();
       if (t >= T.fadeEnd) {
-        audio.toAmbience(T.crossfade * 1000);
+        audio.toAmbience(T.crossfade * 1000, T.ambienceGap * 1000);
         setPhase("gone");
       }
     }, 100);
