@@ -290,6 +290,47 @@ export type Database = {
           },
         ]
       }
+      notices: {
+        Row: {
+          body: string
+          bytes: number
+          created_at: string
+          id: string
+          opened_at: string | null
+          ref: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          bytes?: number
+          created_at?: string
+          id?: string
+          opened_at?: string | null
+          ref: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          bytes?: number
+          created_at?: string
+          id?: string
+          opened_at?: string | null
+          ref?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notices_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rooms: {
         Row: {
           built_at: string
@@ -436,6 +477,10 @@ export type Database = {
       ensure_starter_fork: {
         Args: { p_name: string; p_trait: string; p_user_id: string }
         Returns: string
+      }
+      open_notice: {
+        Args: { p_notice_id: string; p_user_id: string }
+        Returns: number
       }
       pick_daily_event: { Args: { p_user_id: string }; Returns: string }
       recruit_fork: {

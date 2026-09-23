@@ -17,6 +17,7 @@ import { after } from "next/server";
 
 import { ONCE, track } from "@/lib/analytics/track";
 import { syncUser } from "@/lib/github/sync";
+import { ensureWelcome } from "@/lib/notices";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -56,6 +57,7 @@ export async function GET(request: NextRequest) {
           await track(admin, user.id, "signup_completed", { time_to_complete_ms: null }, ONCE);
           await track(admin, user.id, "region_chosen", { region_id: "outage", was_default: true }, ONCE);
         }
+        await ensureWelcome(admin, user.id);
         await syncUser(admin, { id: user.id, github_login: githubLogin });
       } catch (err) {
         Sentry.captureException(err, { tags: { user_id: user.id, entrypoint: "login" } });

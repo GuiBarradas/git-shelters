@@ -5,6 +5,7 @@ import { SessionBeacon } from "@/components/analytics/SessionBeacon";
 import { AuthBar } from "@/components/auth/AuthBar";
 import { AwaySummary } from "@/components/hud/AwaySummary";
 import { BadgeToast } from "@/components/hud/BadgeToast";
+import { Packets } from "@/components/hud/Packets";
 import { Intro } from "@/components/intro/Intro";
 import { Landing } from "@/components/landing/Landing";
 import { BunkerSceneClient } from "@/components/scene/BunkerSceneClient";
@@ -16,6 +17,7 @@ import { cacheCap, payloadCap } from "@/lib/economy/tick";
 import { fetchDailyEvent } from "@/lib/events/daily";
 import { loadCrew } from "@/lib/forks/load";
 import { describeCrew, eventEcho, settleMood } from "@/lib/forks/mood";
+import { loadUnread } from "@/lib/notices";
 import { isRoomKind, isSlot, type Room } from "@/lib/rooms/catalog";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -45,12 +47,13 @@ export default async function Home({ searchParams }: HomeProps) {
   // Anyone who pushed today will have at least one byte_transactions row
   // tagged source = 'github_sync' with created_at on today's UTC date.
   const todayUtc = new Date().toISOString().slice(0, 10);
-  const [activeToday, rooms, dailyEvent, crew, commitsCounted] = await Promise.all([
+  const [activeToday, rooms, dailyEvent, crew, commitsCounted, packets] = await Promise.all([
     checkActivityToday(supabase, user.id, todayUtc),
     fetchRooms(supabase, user.id),
     fetchDailyEvent(supabase, user.id, todayUtc),
     loadCrew(supabase, admin, user.id),
     countCommits(supabase, user.id),
+    loadUnread(supabase, user.id),
   ]);
 
   // Badges are derived from the state above; a bonus lands in the ledger
@@ -127,6 +130,7 @@ export default async function Home({ searchParams }: HomeProps) {
           <p className="text-[#BD93F9]/80">&gt; incoming packet on the Main Branch terminal</p>
         )}
         <p className="text-[#E6DFC8]/50">&gt; {describeCrew(crewMood, crew.lastPushAt, new Date(), echo)}</p>
+        <Packets notices={packets} />
         <p>
           <Link href="/map" className="pointer-events-auto text-[#BD93F9]/70 hover:text-[#BD93F9]">
             &gt; the 404 Lands: world map

@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { RECRUIT_COST } from "@/lib/forks/catalog";
 import { loadCrew, loadForks } from "@/lib/forks/load";
 import { moodFor } from "@/lib/forks/mood";
+import { ensureWelcome, loadUnread, WELCOME } from "@/lib/notices";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 import { createThrowawayUser, type ThrowawayUser } from "./fixture";
@@ -110,6 +111,26 @@ describe("forks", () => {
     expect((await recruit("Fifth_tmp")).error?.message).toContain("no_beds");
     expect(await loadForks(admin, admin, user.id)).toHaveLength(4);
 
+    await admin.from("users").update({ bytes: 0 }).eq("id", user.id);
+  });
+
+  it("the welcome packet pays 100 B once, however many times it is opened", async () => {
+    await admin.from("users").update({ bytes: 0 }).eq("id", user.id);
+    await ensureWelcome(admin, user.id);
+    await ensureWelcome(admin, user.id); // idempotent
+    const unread = await loadUnread(admin, user.id);
+    expect(unread).toHaveLength(1);
+    expect(unread[0]).toMatchObject({ title: WELCOME.title, bytes: 100 });
+
+    const first = await admin.rpc("open_notice", { p_user_id: user.id, p_notice_id: unread[0]!.id });
+    expect(first.error).toBeNull();
+    expect(first.data).toBe(100);
+    const again = await admin.rpc("open_notice", { p_user_id: user.id, p_notice_id: unread[0]!.id });
+    expect(again.error).toBeNull();
+
+    const { data: me } = await admin.from("users").select("bytes").eq("id", user.id).single();
+    expect(me?.bytes).toBe(100);
+    expect(await loadUnread(admin, user.id)).toHaveLength(0);
     await admin.from("users").update({ bytes: 0 }).eq("id", user.id);
   });
 

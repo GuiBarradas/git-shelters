@@ -21,6 +21,7 @@ export type AccountExport = {
     bytes: number;
   };
   badges: Array<{ badge_id: string; earned_at: string }>;
+  notices: Array<{ ref: string; title: string; bytes: number; created_at: string; opened_at: string | null }>;
   byte_transactions: Array<{
     delta: number;
     source: string;
@@ -49,7 +50,7 @@ export type AccountExport = {
  * not the person, and mean nothing outside this database.
  */
 export async function exportAccount(admin: Admin, userId: string): Promise<AccountExport | null> {
-  const [user, transactions, rooms, outcomes, sync, analytics, badges] = await Promise.all([
+  const [user, transactions, rooms, outcomes, sync, analytics, badges, notices] = await Promise.all([
     admin
       .from("users")
       .select("github_login, github_id, email, created_at, last_seen_at, bytes")
@@ -77,9 +78,10 @@ export async function exportAccount(admin: Admin, userId: string): Promise<Accou
       .eq("user_id", userId)
       .order("occurred_at"),
     admin.from("user_badges").select("badge_id, earned_at").eq("user_id", userId).order("earned_at"),
+    admin.from("notices").select("ref, title, bytes, created_at, opened_at").eq("user_id", userId).order("created_at"),
   ]);
 
-  const firstError = [user, transactions, rooms, outcomes, sync, analytics, badges].find((r) => r.error)?.error;
+  const firstError = [user, transactions, rooms, outcomes, sync, analytics, badges, notices].find((r) => r.error)?.error;
   if (firstError) throw firstError;
   if (!user.data) return null;
 
@@ -94,6 +96,7 @@ export async function exportAccount(admin: Admin, userId: string): Promise<Accou
     github_sync_state: sync.data,
     analytics_events: analytics.data ?? [],
     badges: badges.data ?? [],
+    notices: notices.data ?? [],
   };
 }
 
