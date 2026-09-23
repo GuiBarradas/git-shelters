@@ -24,6 +24,7 @@ This directory captures architecture and design decisions with long-term consequ
 - [0006 — Anti-cheese filter scope for the Public Alpha](./0006-anti-cheese-filters-scope.md) — *Accepted* — bot rejection (pure) + daily 100-byte cap on `github_sync`; four other filters explicitly deferred with criteria for when they land.
 - [0007 — LGPD: account export and deletion](./0007-lgpd-account-export-and-deletion.md) — *Accepted* — hard delete via auth cascade, JSON export, audit trail.
 - [0008 — Analytics: server-side events only](./0008-analytics-server-side-events.md) — *Accepted* — typed `track()` into `analytics_events`, no third-party analytics, session end via beacon.
+- [0009 — License: AGPL-3.0 code, reserved content](./0009-license-agpl-code-reserved-content.md) — *Accepted* — code under AGPL-3.0-only; name, setting, texts and visual identity stay with the author.
 
 ## Template
 

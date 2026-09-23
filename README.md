@@ -83,6 +83,8 @@ Available scripts:
 
 ## License
 
-This repo is source-available for portfolio review. Contact me before reusing any part of it commercially.
+Code: [AGPL-3.0-only](./LICENSE). Run it, fork it, improve it; if you host a modified copy as a service, publish your source under the same terms.
+
+Content: the name Git Shelters, the setting, the names of places, survivors, traits and rooms, the Daily Event texts and the visual identity are not covered by the AGPL and remain with the author. Ask before reusing them. See [ADR 0009](./docs/adr/0009-license-agpl-code-reserved-content.md).
 
 — [Guilherme Martins Barradas](https://github.com/GuiBarradas)

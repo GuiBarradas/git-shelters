@@ -2,6 +2,7 @@
   "name": "git-shelters",
   "version": "0.1.0",
   "private": true,
+  "license": "AGPL-3.0-only",
   "description": "Idle/base-builder where your real GitHub activity feeds a post-apocalyptic bunker.",
   "packageManager": "pnpm@10.33.2",
   "scripts": {
