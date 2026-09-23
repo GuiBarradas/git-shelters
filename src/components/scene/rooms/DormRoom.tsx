@@ -42,7 +42,7 @@ export function DormRoom({ powered = true }: { powered?: boolean }) {
   ];
 
   return (
-    <RoomShell light={palette.boneWhite} lightIntensity={3.5} powered={powered}>
+    <RoomShell light={palette.lampWarm} lightIntensity={4.5} powered={powered}>
       {/* bunk posts */}
       {posts.map(([x, z], i) => (
         <mesh key={i} position={[x, BUNK.posts / 2, z]}>
@@ -81,7 +81,7 @@ export function DormRoom({ powered = true }: { powered?: boolean }) {
       {/* footlocker */}
       <mesh position={[0.7, 0.24, -0.85]}>
         <boxGeometry args={[0.8, 0.48, 0.5]} />
-        <meshToonMaterial color={palette.mustardWarning} />
+        <meshToonMaterial color={palette.steelBlue} />
       </mesh>
       <mesh position={[0.7, 0.5, -0.85]}>
         <boxGeometry args={[0.84, 0.05, 0.54]} />

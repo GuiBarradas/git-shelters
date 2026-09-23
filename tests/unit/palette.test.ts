@@ -5,8 +5,8 @@ import { palette } from "@/lib/palette";
 const HEX = /^#[0-9A-Fa-f]{6}$/;
 
 describe("palette", () => {
-  it("exposes exactly 14 colors", () => {
-    expect(Object.keys(palette)).toHaveLength(14);
+  it("exposes exactly 16 colors", () => {
+    expect(Object.keys(palette)).toHaveLength(16);
   });
 
   it("declares every named color of the bunker palette", () => {
@@ -16,10 +16,12 @@ describe("palette", () => {
         "boneWhite",
         "bunkerBlack",
         "coalBlack",
+        "concrete",
         "concreteTan",
         "fadedRed",
         "glowYellow",
         "inactivePlum",
+        "lampWarm",
         "mustardWarning",
         "oldWoodBrown",
         "outageGray",

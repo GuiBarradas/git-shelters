@@ -26,16 +26,16 @@ export function CacheStorageRoom({ powered = true }: { powered?: boolean }) {
   const crates: Array<[number, number, number, string, number]> = [
     // x, y, z, colour, size
     [-1.35, 0.3, -0.5, palette.oldWoodBrown, 0.6],
-    [-0.7, 0.28, -0.6, palette.mustardWarning, 0.56],
+    [-0.7, 0.28, -0.6, palette.steelBlue, 0.56],
     [-1.05, 0.88, -0.55, palette.oldWoodBrown, 0.5],
     [1.2, 1.63, -1.0, palette.concreteTan, 0.4],
-    [0.5, 1.63, -1.0, palette.mustardWarning, 0.4],
+    [0.5, 1.63, -1.0, palette.oldWoodBrown, 0.4],
     [1.5, 2.13, -1.0, palette.oldWoodBrown, 0.36],
     [0.75, 2.13, -1.0, palette.boneWhite, 0.3],
   ];
 
   return (
-    <RoomShell light={palette.mustardWarning} lightIntensity={3.5} powered={powered}>
+    <RoomShell light={palette.lampWarm} lightIntensity={4.5} powered={powered}>
       {/* two wall shelves */}
       {[1.4, 1.9].map((y) => (
         <mesh key={y} position={[0.9, y, -1.05]}>

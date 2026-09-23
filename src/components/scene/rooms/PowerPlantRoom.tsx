@@ -37,7 +37,7 @@ export function PowerPlantRoom({ powered = true }: { powered?: boolean }) {
   });
 
   return (
-    <RoomShell light={palette.mustardWarning} lightIntensity={3} powered={powered}>
+    <RoomShell light={palette.lampWarm} lightIntensity={4} powered={powered}>
       {/* generator drum on a plinth */}
       <mesh position={[0, 0.15, -0.3]}>
         <boxGeometry args={[2.4, 0.3, 1.4]} />

@@ -137,8 +137,8 @@ export default function BunkerScene({
       )}
 
       {/* cold fill from outside; the warm light is each room's own lamp */}
-      <ambientLight color={palette.steelBlue} intensity={0.35} />
-      <directionalLight position={[8, 12, 10]} color={palette.boneWhite} intensity={0.5} />
+      <ambientLight color={palette.boneWhite} intensity={0.75} />
+      <directionalLight position={[8, 12, 10]} color={palette.boneWhite} intensity={0.7} />
 
       {/* the earth the bunker is dug into */}
       <mesh position={[0, -2.2, -1]}>

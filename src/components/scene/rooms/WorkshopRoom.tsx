@@ -46,7 +46,7 @@ export function WorkshopRoom({ powered = true }: { powered?: boolean }) {
   ];
 
   return (
-    <RoomShell light={palette.glowYellow} lightIntensity={3.2} powered={powered}>
+    <RoomShell light={palette.lampWarm} lightIntensity={4.2} powered={powered}>
       {/* pegboard */}
       <mesh position={[-1.05, 2.05, -1.22]}>
         <boxGeometry args={[1.5, 0.9, 0.04]} />

@@ -31,8 +31,8 @@ type RoomShellProps = {
 export function RoomShell({
   children,
   light = palette.glowYellow,
-  lightIntensity = 5,
-  tone = palette.outageGray,
+  lightIntensity = 6,
+  tone = "#34303C",
   dim = false,
   powered = true,
 }: RoomShellProps) {
@@ -57,13 +57,13 @@ export function RoomShell({
       {/* ceiling beam */}
       <mesh position={[0, h + t / 2, 0]}>
         <boxGeometry args={[w + t, t, d]} />
-        <meshToonMaterial color={dim ? "#2a2d33" : palette.concreteTan} />
+        <meshToonMaterial color={dim ? "#2a2d33" : palette.concrete} />
       </mesh>
       {/* pillars */}
       {[-1, 1].map((side) => (
         <mesh key={side} position={[(side * (w + t)) / 2, h / 2, 0]}>
           <boxGeometry args={[t, h + t, d]} />
-          <meshToonMaterial color={dim ? "#2a2d33" : palette.concreteTan} />
+          <meshToonMaterial color={dim ? "#2a2d33" : palette.concrete} />
         </mesh>
       ))}
       {/* hanging lamp + its light */}

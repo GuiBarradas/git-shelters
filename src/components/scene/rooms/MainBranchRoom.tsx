@@ -81,7 +81,7 @@ export function MainBranchRoom({ pending = false, active = false, powered = true
   const screenColor = pending ? palette.phosphorViolet : active ? palette.phosphorViolet : palette.glowYellow;
 
   return (
-    <RoomShell light={active ? palette.amber : palette.glowYellow} lightIntensity={active ? 5 : 3.5} powered={powered}>
+    <RoomShell light={active ? palette.amber : palette.lampWarm} lightIntensity={active ? 5.5 : 4.5} powered={powered}>
       {/* desk: waist height for a 1.45-tall survivor */}
       <mesh position={[0.55, 0.66, -0.55]}>
         <boxGeometry args={[2.1, 0.1, 0.9]} />
