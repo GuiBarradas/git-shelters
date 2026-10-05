@@ -31,6 +31,13 @@ Cheapest, but the gates need data from day one; retrofitting loses the first coh
 
 Not shipped, with the reason: `landing_visited` and `profile_page_visited` are pageviews with no server user and would need the client layer; `sync_now_clicked` and `bytes_credited` are not read by any gate; `ftue_completed` is derivable from the four milestones.
 
+## Alpha instrumentation update — 5 October 2026
+
+- `intro_started` records boot; `intro_finished` records `completed` or `skipped`. Each is recorded once per account, so a replay does not overwrite an existing result. These are account milestones, not per-view completion rates. Existing `intro_seen_at` remains a replay preference, never evidence of completion.
+- New `session_end` rows carry `measurement: "visible_segment"`. They measure one visible stretch of a page, flushed on hide, page exit or navigation and resumed on return. Hidden time is excluded. Sum these durations for active page time; do not treat their count or median as whole sessions. Rows without the marker retain the old meaning and must be analyzed separately.
+- Browser delivery remains best effort: abrupt process termination or a rejected beacon can lose a segment. No offline queue or cross-tab session correlation was added.
+- No schema migration is needed: event names are constrained by the application type, and props use the existing JSON column.
+
 ## Privacy
 
 - `user_id` is our uuid, never the GitHub id. No prop type admits an email, token or IP.

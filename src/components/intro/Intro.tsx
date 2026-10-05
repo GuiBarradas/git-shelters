@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { markIntroSeen } from "@/app/intro/actions";
+import { finishIntro, markIntroSeen } from "@/app/intro/actions";
 import { useAudio } from "@/components/audio/AudioProvider";
 
 /**
@@ -97,10 +97,10 @@ export function Intro({ login }: { login: string | null }) {
     return started.current === null ? 0 : (performance.now() - started.current) / 1000;
   }, [audio]);
 
-  const finish = useCallback(() => {
+  const finish = useCallback((outcome: "completed" | "skipped") => {
     if (finished.current) return;
     finished.current = true;
-    void markIntroSeen();
+    void finishIntro(outcome).catch(() => {});
   }, []);
 
   const boot = () => {
@@ -109,12 +109,12 @@ export function Intro({ login }: { login: string | null }) {
     setPhase("playing");
     // Booting counts as seen: closing the tab mid-intro must not replay it
     // next visit. /?intro=1 is always there for a second viewing.
-    finish();
+    void markIntroSeen().catch(() => {});
   };
 
   /** Skip: bunker now, music handed over now. */
   const skip = () => {
-    finish();
+    finish("skipped");
     audio.toAmbience(4000, 2500);
     setPhase("gone");
   };
@@ -125,8 +125,8 @@ export function Intro({ login }: { login: string | null }) {
     const id = setInterval(() => {
       const t = now();
       setClock(t);
-      if (t >= T.fadeStart) finish();
       if (t >= T.fadeEnd) {
+        finish("completed");
         audio.toAmbience(T.crossfade * 1000, T.ambienceGap * 1000);
         setPhase("gone");
       }

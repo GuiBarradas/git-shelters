@@ -26,9 +26,15 @@ export type AnalyticsEvent = {
   first_event_resolved: { event_id: string; choice: "a" | "b"; time_since_signup_ms: number };
   daily_event_resolved: { event_id: string; choice: "a" | "b"; outcome_delta_bytes: number };
   session_start: { days_since_signup: number; days_since_last_session: number | null };
-  session_end: { duration_ms: number };
+  /** `measurement` absent = legacy whole-tab duration; present = one visible segment. */
+  session_end: { duration_ms: number; measurement?: "visible_segment" };
   badge_earned: { badge_id: string };
+  intro_started: Record<string, never>;
+  intro_finished: { outcome: IntroOutcome };
 };
+
+export const INTRO_OUTCOMES = ["completed", "skipped"] as const;
+export type IntroOutcome = (typeof INTRO_OUTCOMES)[number];
 
 export type EventName = keyof AnalyticsEvent;
 
@@ -48,21 +54,23 @@ export async function track<E extends EventName>(
   props: AnalyticsEvent[E],
   dedupeKey: string | null = null,
 ): Promise<boolean> {
-  const { data, error } = await admin
-    .from("analytics_events")
-    .upsert(
-      { user_id: userId, event_name: event, props_json: props, dedupe_key: dedupeKey },
-      { onConflict: "user_id,event_name,dedupe_key", ignoreDuplicates: true },
-    )
-    .select("id");
-  if (error) {
+  try {
+    const { data, error } = await admin
+      .from("analytics_events")
+      .upsert(
+        { user_id: userId, event_name: event, props_json: props, dedupe_key: dedupeKey },
+        { onConflict: "user_id,event_name,dedupe_key", ignoreDuplicates: true },
+      )
+      .select("id");
+    if (error) throw new Error(error.message);
+    return (data?.length ?? 0) > 0;
+  } catch (e) {
     Sentry.captureMessage(`analytics insert failed: ${event}`, {
       level: "warning",
-      extra: { error: error.message },
+      extra: { error: e instanceof Error ? e.message : String(e) },
     });
     return false;
   }
-  return (data?.length ?? 0) > 0;
 }
 
 /** Sessions are counted at most once per user per this bucket. */
