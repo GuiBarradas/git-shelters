@@ -1,8 +1,11 @@
 "use client";
 
+import { memo } from "react";
+
 import { palette } from "@/lib/palette";
 
 import { RoomShell } from "./RoomShell";
+import { SoftBoxGeometry } from "./Details";
 
 /** x, y, z, size */
 const RUBBLE: Array<[number, number, number, number]> = [
@@ -17,12 +20,13 @@ const RUBBLE: Array<[number, number, number, number]> = [
  * "build here". Locked (lower floor, no Elevator yet): no frame, no work
  * light, a sealed slab across the front.
  */
-export function EmptyCell({ highlight = false, locked = false }: { highlight?: boolean; locked?: boolean }) {
+// Memoised: its static batch rebuilds on every render.
+export const EmptyCell = memo(function EmptyCell({ highlight = false, locked = false }: { highlight?: boolean; locked?: boolean }) {
   if (locked) {
     return (
       <RoomShell dim>
         <mesh position={[0, 1.5, 0.9]}>
-          <boxGeometry args={[3.6, 2.7, 0.16]} />
+          <SoftBoxGeometry args={[3.6, 2.7, 0.16]} />
           <meshToonMaterial color="#1a171f" />
         </mesh>
         {[-0.9, 0.9].map((x) => (
@@ -37,7 +41,6 @@ export function EmptyCell({ highlight = false, locked = false }: { highlight?: b
   return (
     <RoomShell dim>
       {/* cold work light so the rubble reads even before anyone builds */}
-      <pointLight position={[0, 2.4, 0.8]} color={palette.steelBlue} intensity={highlight ? 3 : 1.4} distance={6} decay={2} />
       {RUBBLE.map(([x, y, z, s], i) => (
         <mesh key={i} position={[x, y, z]} rotation={[0.2 * i, 0.5 * i, 0]}>
           <boxGeometry args={[s, s, s]} />
@@ -45,16 +48,10 @@ export function EmptyCell({ highlight = false, locked = false }: { highlight?: b
         </mesh>
       ))}
       {/* build frame */}
-      <mesh position={[0, 1.5, 0.3]}>
-        <boxGeometry args={[2.6, 2.2, 1.6]} />
-        <meshToonMaterial
-          color={palette.phosphorViolet}
-          transparent
-          opacity={highlight ? 0.26 : 0.12}
-          emissive={palette.phosphorViolet}
-          emissiveIntensity={highlight ? 0.6 : 0.18}
-        />
+      <mesh position={[0, 0.012, 0.35]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.42, 0.45, 24]} />
+        <meshBasicMaterial color={highlight ? palette.phosphorViolet : palette.violetDim} transparent opacity={highlight ? 0.85 : 0.32} />
       </mesh>
     </RoomShell>
   );
-}
+});

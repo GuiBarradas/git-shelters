@@ -7,7 +7,7 @@ The contract for anything visual in the game: the world, the rooms, the Forks, t
 ## 1. Pillars
 
 1. **A dollhouse cut open.** The bunker is a cross-section: rooms side by side, open at the front, seen from slightly above and to the right by an orthographic camera. Depth exists but the reading is frontal. Nothing important hides behind anything.
-2. **Primitives and toon.** Every mesh is a three.js primitive (box, cylinder, cone, sphere, torus, plane) with `meshToonMaterial`. No imported models, no textures. Detail comes from more, smaller primitives, not from surface.
+2. **Soft low-poly and toon.** Use three.js primitives, shared low-segment rounded boxes and a rounded extruded room rim with `meshToonMaterial`. Curves belong to silhouettes: hulls, cushions, containers and furniture edges. No imported models or textures. Basic materials are reserved for indicators and inexpensive vertex-colour light pools.
 3. **Warm inside, violet where it glows.** Rooms are lit by warm lamps. Violet belongs to screens, LEDs, indicators and the interface. A violet lamp is a mistake.
 4. **Lived in, not pretty.** Clutter tells the story: a mug, a cable bundle, boots by the bunk, a stopped clock. Everything looks scavenged, repaired, labelled by hand.
 5. **Dry humour, no gore.** The apocalypse is a merge conflict. Danger is a blinking beacon and a hazard stripe, never blood.
@@ -38,8 +38,8 @@ Rules: no green anywhere. Amber is the only warm accent in the interface. Text o
 
 ## 3. Light
 
-- The room shell gives every cell one hanging lamp, `lampWarm`, intensity around 4 to 6, plus a faint neutral ambient from the corridor. That is the base; do not fight it.
-- A room may add one or two small point lights of its own where a prop emits light: a desk lamp, a caged bulb, a nightstand. Amber, distance 2 to 3, decay 2.
+- The overview uses one hemisphere light, one warm directional light and vertex-colour pools on floors and walls. Room lamps use actual point lights only in close-up, through `RoomLight`; never multiply local lights across the whole bunker.
+- In close-up, the shell lamp has intensity around 4 to 6. A room may add one or two small prop lights: a desk lamp, a caged bulb, a nightstand. Amber, distance 2 to 3, decay 2.
 - Screens, LEDs and indicators glow through `emissive`, not through lights, except the Main Branch screen which also tints the desk with a small violet point light.
 - A dark bunker is a feature. When `powered` is false, lamps drop to about 12% and emissives go to zero. Every room takes a `powered` prop and must read as dead without it.
 - The green terminal is gone. Screens are violet phosphor on `#150a26`.
@@ -61,6 +61,10 @@ Every interior exports three things and registers them in `src/components/scene/
 - **The interior component**: `<RoomShell light lightIntensity powered>` and children. Read `MainBranchRoom.tsx` first; it is the reference for density.
 
 Density target: one hero object (the terminal, the drum, the bunk, the bench, the shaft), two or three secondary objects, and five to ten pieces of clutter. Group related primitives so they move together.
+
+Performance target: 60 fps on integrated graphics. Share bevel buffers and batch static geometry by compatible material, baking colours into vertices. Mark animated materials and moving pivots with `LIVE`; preserve originals for raycasting. The overview starts at DPR 1.25 and steps down to a minimum of 0.75 using Drei's performance monitor. It uses browser resampling instead of costly hardware multisampling; close-ups keep hardware antialiasing and HTML stays native resolution. No realtime shadows or postprocessing. Measure a full bunker as well as the landing page with `node scripts/inspect-scene.mjs <url>`; record the actual GPU, canvas resolution, median/p95 frame time and stalls. Use the full Chromium channel: neither a software renderer nor headless-shell frame pacing validates the GPU target.
+
+Local production check, 2026-10-05: Intel Iris Xe / D3D11, ten rooms and twelve Forks, 1920×1080 viewport with stable 1440×810 internal resolution. Over 600 frames after warm-up: mean 16.67 ms (~60 fps), p95 16.9 ms, max 17.8 ms, 180 draw calls per frame, no browser errors. This is a short measurement on one integrated GPU, not a guarantee for every notebook.
 
 <p align="center">
   <img src="./art/cache-storage.jpg" alt="Cache Storage" width="352" />

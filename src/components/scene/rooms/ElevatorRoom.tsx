@@ -6,6 +6,7 @@ import type { MeshToonMaterial } from "three";
 
 import type { RoomLayout } from "@/components/scene/Fork";
 import { palette } from "@/lib/palette";
+import { LIVE, SoftBoxGeometry, RoomLight } from "./Details";
 
 import { CELL, RoomShell } from "./RoomShell";
 
@@ -42,41 +43,44 @@ export function ElevatorRoom({ powered = true }: { powered?: boolean }) {
     <RoomShell light={palette.lampWarm} lightIntensity={4} powered={powered}>
       {/* shaft opening: a dark recess in the back wall, framed in steel */}
       <mesh position={[-0.4, 1.25, -1.2]}>
-        <boxGeometry args={[1.5, 2.5, 0.12]} />
+        <SoftBoxGeometry args={[1.5, 2.5, 0.12]} />
         <meshToonMaterial color={palette.coalBlack} />
       </mesh>
       <mesh position={[-0.4, 2.55, -1.15]}>
-        <boxGeometry args={[1.7, 0.12, 0.2]} />
+        <SoftBoxGeometry args={[1.7, 0.12, 0.2]} />
         <meshToonMaterial color={palette.steelBlue} />
       </mesh>
       {[-1.2, 0.4].map((x) => (
         <mesh key={x} position={[x, 1.25, -1.15]}>
-          <boxGeometry args={[0.12, 2.6, 0.2]} />
+          <SoftBoxGeometry args={[0.12, 2.6, 0.2]} />
           <meshToonMaterial color={palette.steelBlue} />
         </mesh>
       ))}
       {/* two doors, ajar */}
       {[-1, 1].map((side) => (
         <mesh key={side} position={[-0.4 + side * (doorW / 2 + 0.06), 1.2, -1.1]}>
-          <boxGeometry args={[doorW, 2.4, 0.06]} />
+          <SoftBoxGeometry args={[doorW, 2.4, 0.06]} />
           <meshToonMaterial color={palette.concrete} />
         </mesh>
       ))}
       {/* cage going down through the floor slab */}
+      {[-1, 1].map(side => <mesh key={side} position={[-0.4 + side * 0.18, 1.3, -1.045]}>
+        <SoftBoxGeometry args={[0.045, 0.85, 0.035]} /><meshToonMaterial color={palette.concreteTan} emissive={palette.phosphorViolet} emissiveIntensity={powered ? 0.3 : 0} />
+      </mesh>)}
       {[-1.05, 0.25].map((x) => (
         <mesh key={x} position={[x, -0.6, -1.15]}>
-          <boxGeometry args={[0.08, 1.2, 0.08]} />
+          <SoftBoxGeometry args={[0.08, 1.2, 0.08]} />
           <meshToonMaterial color={palette.steelBlue} />
         </mesh>
       ))}
       {/* floor indicator over the doors */}
-      <mesh position={[-0.4, 2.75, -1.1]}>
-        <boxGeometry args={[0.5, 0.16, 0.06]} />
+      <mesh position={[-0.4, 2.75, -1.1]} userData={LIVE}>
+        <SoftBoxGeometry args={[0.5, 0.16, 0.06]} />
         <meshToonMaterial ref={indicator} color={palette.coalBlack} emissive={palette.amber} emissiveIntensity={0.6} />
       </mesh>
       {/* call panel: plate and the button */}
       <mesh position={[CALL_PANEL.position[0], CALL_PANEL.position[1], CALL_PANEL.position[2] - 0.01]}>
-        <boxGeometry args={[CALL_PANEL.width + 0.1, CALL_PANEL.height + 0.1, 0.04]} />
+        <SoftBoxGeometry args={[CALL_PANEL.width + 0.1, CALL_PANEL.height + 0.1, 0.04]} />
         <meshToonMaterial color={palette.steelBlue} />
       </mesh>
       <mesh position={[CALL_PANEL.position[0], CALL_PANEL.position[1] - CALL_PANEL.height / 2 - 0.16, -1.2]}>
@@ -85,7 +89,7 @@ export function ElevatorRoom({ powered = true }: { powered?: boolean }) {
       </mesh>
       {/* a floor grate in front of the doors */}
       <mesh position={[-0.4, 0.01, 0.2]}>
-        <boxGeometry args={[1.6, 0.02, 1.0]} />
+        <SoftBoxGeometry args={[1.6, 0.02, 1.0]} />
         <meshToonMaterial color={palette.steelBlue} />
       </mesh>
       {/* keep the wall height constant for the shaft frame */}
@@ -100,7 +104,7 @@ export function ElevatorRoom({ powered = true }: { powered?: boolean }) {
           <sphereGeometry args={[0.06, 8, 8]} />
           <meshToonMaterial color={palette.boneWhite} emissive={palette.amber} emissiveIntensity={powered ? 1.1 : 0} />
         </mesh>
-        <pointLight position={[0, -0.15, 0.2]} color={palette.amber} intensity={powered ? 1.4 : 0} distance={2.6} decay={2} />
+        <RoomLight position={[0, -0.15, 0.2]} color={palette.amber} intensity={powered ? 1.4 : 0} distance={2.6} decay={2} />
       </group>
       <mesh position={[1.15, 2.35, -1.22]}>
         <planeGeometry args={[0.6, 0.36]} />
@@ -116,12 +120,12 @@ export function ElevatorRoom({ powered = true }: { powered?: boolean }) {
       </mesh>
       <group position={[1.4, 0, 0.4]}>
         <mesh position={[0, 0.28, 0]}>
-          <boxGeometry args={[0.7, 0.06, 0.3]} />
+          <SoftBoxGeometry args={[0.7, 0.06, 0.3]} />
           <meshToonMaterial color={palette.oldWoodBrown} />
         </mesh>
         {[-0.28, 0.28].map((x) => (
           <mesh key={x} position={[x, 0.13, 0]}>
-            <boxGeometry args={[0.06, 0.26, 0.26]} />
+            <SoftBoxGeometry args={[0.06, 0.26, 0.26]} />
             <meshToonMaterial color={palette.steelBlue} />
           </mesh>
         ))}
@@ -138,7 +142,7 @@ export function ElevatorRoom({ powered = true }: { powered?: boolean }) {
       </group>
       {[-0.85, 0.05].map((x) => (
         <mesh key={x} position={[x, 1.5, -1.19]}>
-          <boxGeometry args={[0.02, 3.0, 0.02]} />
+          <SoftBoxGeometry args={[0.02, 3.0, 0.02]} />
           <meshToonMaterial color="#1c1e22" />
         </mesh>
       ))}

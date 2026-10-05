@@ -7,6 +7,7 @@ import type { Group } from "three";
 import { forkLook, mulberry32, type Fork as ForkData } from "@/lib/forks/catalog";
 import { MOOD_MOTION } from "@/lib/forks/mood";
 import { palette } from "@/lib/palette";
+import { LIVE, SoftBoxGeometry, StaticBatch } from "./rooms/Details";
 
 /** Something a Fork can do somewhere in a room. */
 export type Station = {
@@ -241,20 +242,22 @@ export function Fork({ fork, layout, onClick, onHover }: Props) {
         onHover?.(null);
       }}
     >
+      {/* each pivot draws its parts as one mesh; only the look changes their colours */}
+      <StaticBatch deps={[look]}>
       {/* legs: thigh pivots at the hip (y = 2.2 voxels), shin pivots at the knee */}
       {[-0.55, 0.55].map((side, i) => (
-        <group key={side} ref={i === 0 ? thighL : thighR} position={[side * v, v * 2.2, 0]}>
+        <group key={side} ref={i === 0 ? thighL : thighR} position={[side * v, v * 2.2, 0]} userData={LIVE}>
           <mesh position={[0, -v * 0.55, 0]}>
-            <boxGeometry args={[v, v * 1.1, v]} />
+            <SoftBoxGeometry args={[v, v * 1.1, v]} />
             <meshToonMaterial color={look.pants} />
           </mesh>
-          <group ref={i === 0 ? kneeL : kneeR} position={[0, -v * 1.1, 0]}>
+          <group ref={i === 0 ? kneeL : kneeR} position={[0, -v * 1.1, 0]} userData={LIVE}>
             <mesh position={[0, -v * 0.55, 0]}>
-              <boxGeometry args={[v, v * 1.1, v]} />
+              <SoftBoxGeometry args={[v, v * 1.1, v]} />
               <meshToonMaterial color={look.pants} />
             </mesh>
             <mesh position={[0, -v * 1.05, v * 0.15]}>
-              <boxGeometry args={[v, v * 0.3, v * 1.3]} />
+              <SoftBoxGeometry args={[v, v * 0.3, v * 1.3]} />
               <meshToonMaterial color={palette.coalBlack} />
             </mesh>
           </group>
@@ -262,41 +265,42 @@ export function Fork({ fork, layout, onClick, onHover }: Props) {
       ))}
       {/* torso */}
       <mesh position={[0, v * 3.5, 0]}>
-        <boxGeometry args={[v * 2.2, v * 2.6, v * 1.2]} />
+        <SoftBoxGeometry args={[v * 2.2, v * 2.6, v * 1.2]} />
         <meshToonMaterial color={look.shirt} />
       </mesh>
       {/* arms hang from the shoulders at y = 4.6 voxels */}
       {[-1.6, 1.6].map((side, i) => (
-        <group key={side} ref={i === 0 ? armL : armR} position={[side * v, v * 4.6, 0]}>
+        <group key={side} ref={i === 0 ? armL : armR} position={[side * v, v * 4.6, 0]} userData={LIVE}>
           <mesh position={[0, -v * 1.1, 0]}>
-            <boxGeometry args={[v * 0.8, v * 2.3, v * 0.8]} />
+            <SoftBoxGeometry args={[v * 0.8, v * 2.3, v * 0.8]} />
             <meshToonMaterial color={look.shirt} />
           </mesh>
           <mesh position={[0, -v * 2.4, 0]}>
-            <boxGeometry args={[v * 0.7, v * 0.4, v * 0.7]} />
+            <SoftBoxGeometry args={[v * 0.7, v * 0.4, v * 0.7]} />
             <meshToonMaterial color={look.skin} />
           </mesh>
         </group>
       ))}
       {/* head pivots at the neck */}
-      <group ref={head} position={[0, v * 5.0, 0]}>
+      <group ref={head} position={[0, v * 5.0, 0]} userData={LIVE}>
         <mesh position={[0, v * 0.9, 0]}>
-          <boxGeometry args={[v * 1.8, v * 1.8, v * 1.8]} />
+          <SoftBoxGeometry args={[v * 1.8, v * 1.8, v * 1.8]} />
           <meshToonMaterial color={look.skin} />
         </mesh>
         {[-0.45, 0.45].map((ex) => (
           <mesh key={ex} position={[ex * v, v * 1.05, v * 0.92]}>
-            <boxGeometry args={[v * 0.3, v * 0.3, v * 0.1]} />
+            <SoftBoxGeometry args={[v * 0.3, v * 0.3, v * 0.1]} />
             <meshToonMaterial color={palette.coalBlack} />
           </mesh>
         ))}
         {look.helmet && (
           <mesh position={[0, v * 1.9, 0]}>
-            <boxGeometry args={[v * 2.0, v * 0.6, v * 2.0]} />
+            <SoftBoxGeometry args={[v * 2.0, v * 0.6, v * 2.0]} />
             <meshToonMaterial color={look.helmet} />
           </mesh>
         )}
       </group>
+      </StaticBatch>
     </group>
   );
 }

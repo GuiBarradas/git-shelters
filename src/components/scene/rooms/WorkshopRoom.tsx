@@ -8,6 +8,7 @@ import type { RoomLayout } from "@/components/scene/Fork";
 import { palette } from "@/lib/palette";
 
 import { RoomShell } from "./RoomShell";
+import { LIVE, SoftBoxGeometry, RoomLight } from "./Details";
 
 /** Chalkboard over the bench; the room page pins the stock count here. */
 export const CHALKBOARD = {
@@ -49,37 +50,39 @@ export function WorkshopRoom({ powered = true }: { powered?: boolean }) {
     <RoomShell light={palette.lampWarm} lightIntensity={4.2} powered={powered}>
       {/* pegboard */}
       <mesh position={[-1.05, 2.05, -1.22]}>
-        <boxGeometry args={[1.5, 0.9, 0.04]} />
+        <SoftBoxGeometry args={[1.5, 0.9, 0.04]} />
         <meshToonMaterial color={palette.concreteTan} />
       </mesh>
       {tools.map(([x, y, w, h], i) => (
         <mesh key={i} position={[x, y, -1.19]}>
-          <boxGeometry args={[w, h, 0.04]} />
+          <SoftBoxGeometry args={[w, h, 0.04]} />
           <meshToonMaterial color={i % 2 ? palette.steelBlue : palette.coalBlack} />
         </mesh>
       ))}
       {/* workbench: top, legs, a vice, a spark */}
       <mesh position={[-0.7, 0.8, -0.35]}>
-        <boxGeometry args={[1.8, 0.1, 0.8]} />
+        <SoftBoxGeometry args={[1.8, 0.1, 0.8]} />
         <meshToonMaterial color={palette.oldWoodBrown} />
       </mesh>
       {[-1.5, 0.1].map((x) =>
         [-0.7, 0.0].map((z) => (
           <mesh key={`${x}${z}`} position={[x, 0.38, z]}>
-            <boxGeometry args={[0.1, 0.76, 0.1]} />
+            <SoftBoxGeometry args={[0.1, 0.76, 0.1]} />
             <meshToonMaterial color={palette.coalBlack} />
           </mesh>
         )),
       )}
       <mesh position={[-0.2, 0.98, -0.45]}>
-        <boxGeometry args={[0.3, 0.26, 0.22]} />
+        <SoftBoxGeometry args={[0.3, 0.26, 0.22]} />
         <meshToonMaterial color={palette.steelBlue} />
       </mesh>
-      <mesh position={[-0.9, 0.93, -0.3]}>
-        <boxGeometry args={[0.16, 0.16, 0.16]} />
+      <mesh position={[-0.9, 0.93, -0.3]} userData={LIVE}>
+        <SoftBoxGeometry args={[0.16, 0.16, 0.16]} />
         <meshToonMaterial ref={spark} color={palette.coalBlack} emissive={palette.glowYellow} emissiveIntensity={0} />
       </mesh>
       {/* crates of Payload, stencilled red */}
+      <mesh position={[-0.7, 0.86, -0.4]}><SoftBoxGeometry args={[1.15, 0.02, 0.6]} /><meshToonMaterial color={palette.steelBlue} /></mesh>
+      <mesh position={[-0.7, 0.88, -0.08]}><boxGeometry args={[1.05, 0.025, 0.02]} /><meshToonMaterial color={palette.phosphorViolet} emissive={palette.phosphorViolet} emissiveIntensity={powered ? 0.35 : 0} /></mesh>
       {(
         [
           [1.0, 0.25, -0.8, 0.5],
@@ -89,7 +92,7 @@ export function WorkshopRoom({ powered = true }: { powered?: boolean }) {
       ).map(([x, y, z, s], i) => (
         <group key={i} position={[x, y, z]}>
           <mesh>
-            <boxGeometry args={[s, s, s]} />
+            <SoftBoxGeometry args={[s, s, s]} />
             <meshToonMaterial color={palette.oldWoodBrown} />
           </mesh>
           <mesh position={[0, 0, s / 2 + 0.005]}>
@@ -100,7 +103,7 @@ export function WorkshopRoom({ powered = true }: { powered?: boolean }) {
       ))}
       {/* chalkboard: slate and frame */}
       <mesh position={[CHALKBOARD.position[0], CHALKBOARD.position[1], CHALKBOARD.position[2] - 0.01]}>
-        <boxGeometry args={[CHALKBOARD.width + 0.12, CHALKBOARD.height + 0.12, 0.04]} />
+        <SoftBoxGeometry args={[CHALKBOARD.width + 0.12, CHALKBOARD.height + 0.12, 0.04]} />
         <meshToonMaterial color={palette.oldWoodBrown} />
       </mesh>
       <mesh position={CHALKBOARD.position}>
@@ -117,14 +120,14 @@ export function WorkshopRoom({ powered = true }: { powered?: boolean }) {
           <coneGeometry args={[0.3, 0.22, 12, 1, true]} />
           <meshToonMaterial color={palette.concrete} emissive={palette.amber} emissiveIntensity={powered ? 0.5 : 0} side={2} />
         </mesh>
-        <pointLight position={[0, -0.2, 0]} color={palette.amber} intensity={powered ? 2.2 : 0} distance={3} decay={2} />
+        <RoomLight position={[0, -0.2, 0]} color={palette.amber} intensity={powered ? 2.2 : 0} distance={3} decay={2} />
       </group>
       <mesh position={[-1.35, 0.9, -0.5]} rotation={[0.2, 0.6, 0]}>
-        <boxGeometry args={[0.22, 0.26, 0.18]} />
+        <SoftBoxGeometry args={[0.22, 0.26, 0.18]} />
         <meshToonMaterial color={palette.coalBlack} />
       </mesh>
       <mesh position={[-1.3, 0.93, -0.41]} rotation={[0.2, 0.6, 0]}>
-        <boxGeometry args={[0.16, 0.06, 0.02]} />
+        <SoftBoxGeometry args={[0.16, 0.06, 0.02]} />
         <meshToonMaterial color={palette.phosphorViolet} emissive={palette.phosphorViolet} emissiveIntensity={0.6} />
       </mesh>
       <mesh position={[0.05, 0.95, -0.6]}>
@@ -133,7 +136,7 @@ export function WorkshopRoom({ powered = true }: { powered?: boolean }) {
       </mesh>
       {([[-0.5, -0.2], [-0.42, -0.1], [-0.55, -0.05]] as Array<[number, number]>).map(([x, z], i) => (
         <mesh key={i} position={[x, 0.87, z]}>
-          <boxGeometry args={[0.04, 0.04, 0.04]} />
+          <SoftBoxGeometry args={[0.04, 0.04, 0.04]} />
           <meshToonMaterial color={palette.concrete} />
         </mesh>
       ))}
@@ -149,7 +152,7 @@ export function WorkshopRoom({ powered = true }: { powered?: boolean }) {
       </group>
       {([[-1.2, 0.5], [0.4, 0.9]] as Array<[number, number]>).map(([x, z], i) => (
         <mesh key={i} position={[x, 0.004, z]}>
-          <boxGeometry args={[1.1, 0.008, 0.9]} />
+          <SoftBoxGeometry args={[1.1, 0.008, 0.9]} />
           <meshToonMaterial color="#3c3a44" />
         </mesh>
       ))}

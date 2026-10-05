@@ -1,5 +1,7 @@
 "use client";
 
+import { memo } from "react";
+
 import type { RoomKind } from "@/lib/rooms/catalog";
 
 import type { RoomLayout } from "@/components/scene/Fork";
@@ -53,8 +55,8 @@ export function roomLayout(kind: RoomKind | null): RoomLayout {
   }
 }
 
-/** One interior per buildable kind. Main Branch is not a kind: it is slot 0. */
-export function BuiltRoom({ kind, powered = true }: { kind: RoomKind; powered?: boolean }) {
+/** One interior per buildable kind. Main Branch is not a kind: it is slot 0. Memoised: its static batch rebuilds on every render. */
+export const BuiltRoom = memo(function BuiltRoom({ kind, powered = true }: { kind: RoomKind; powered?: boolean }) {
   switch (kind) {
     case "cache_storage":
       return <CacheStorageRoom powered={powered} />;
@@ -67,4 +69,4 @@ export function BuiltRoom({ kind, powered = true }: { kind: RoomKind; powered?: 
     case "elevator":
       return <ElevatorRoom powered={powered} />;
   }
-}
+});

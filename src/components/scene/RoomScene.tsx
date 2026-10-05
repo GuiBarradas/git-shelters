@@ -9,6 +9,7 @@ import { palette } from "@/lib/palette";
 import type { RoomKind } from "@/lib/rooms/catalog";
 
 import { Fork } from "./Fork";
+import { CloseUpLighting } from "./rooms/Details";
 import { BuiltRoom, CELL, MainBranchRoom, panelAnchor, roomLayout } from "./rooms";
 
 /** CSS pixels per world unit in drei's transform mode (measured, camera-independent). */
@@ -67,11 +68,13 @@ export default function RoomScene({
       <ambientLight color={palette.boneWhite} intensity={0.55} />
       <directionalLight position={[6, 10, 8]} color={palette.boneWhite} intensity={0.45} />
 
-      {kind === null ? (
-        <MainBranchRoom active={activeToday} pending={eventPending} powered={powered} />
-      ) : (
-        <BuiltRoom kind={kind} powered={powered} />
-      )}
+      <CloseUpLighting.Provider value={true}>
+        {kind === null ? (
+          <MainBranchRoom active={activeToday} pending={eventPending} powered={powered} />
+        ) : (
+          <BuiltRoom kind={kind} powered={powered} />
+        )}
+      </CloseUpLighting.Provider>
       {forks.map((f) => (
         <Fork key={f.id} fork={f} layout={roomLayout(kind)} onClick={onForkClick} onHover={onForkHover} />
       ))}

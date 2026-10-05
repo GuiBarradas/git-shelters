@@ -4,10 +4,11 @@ import type { RoomLayout } from "@/components/scene/Fork";
 import { palette } from "@/lib/palette";
 
 import { RoomShell } from "./RoomShell";
+import { SoftBoxGeometry, Planter } from "./Details";
 
 /** Clipboard on the back wall; the room page pins the ledger manifest here. */
 export const CLIPBOARD = {
-  position: [-1.0, 1.95, -1.36] as [number, number, number],
+  position: [-1.0, 1.95, -1.20] as [number, number, number],
   width: 1.0,
   height: 0.8,
 };
@@ -21,9 +22,9 @@ export const LAYOUT: RoomLayout = {
   ],
 };
 
-/** Cache Storage: the kitchen and pantry. Shelves, crates, a water barrel. */
+/** Cache Storage: the kitchen and pantry. Shelves, canisters, a water barrel. */
 export function CacheStorageRoom({ powered = true }: { powered?: boolean }) {
-  const crates: Array<[number, number, number, string, number]> = [
+  const canisters: Array<[number, number, number, string, number]> = [
     // x, y, z, colour, size
     [-1.35, 0.3, -0.5, palette.oldWoodBrown, 0.6],
     [-0.7, 0.28, -0.6, palette.steelBlue, 0.56],
@@ -39,13 +40,13 @@ export function CacheStorageRoom({ powered = true }: { powered?: boolean }) {
       {/* two wall shelves */}
       {[1.4, 1.9].map((y) => (
         <mesh key={y} position={[0.9, y, -1.05]}>
-          <boxGeometry args={[2.0, 0.06, 0.6]} />
+          <SoftBoxGeometry args={[2.0, 0.06, 0.6]} />
           <meshToonMaterial color={palette.oldWoodBrown} />
         </mesh>
       ))}
-      {crates.map(([x, y, z, color, size], i) => (
+      {canisters.map(([x, y, z, color, size], i) => (
         <mesh key={i} position={[x, y, z]} rotation={[0, (i % 3) * 0.15, 0]}>
-          <boxGeometry args={[size, size, size]} />
+          <cylinderGeometry args={[size * 0.42, size * 0.46, size, 10]} />
           <meshToonMaterial color={color} />
         </mesh>
       ))}
@@ -59,12 +60,12 @@ export function CacheStorageRoom({ powered = true }: { powered?: boolean }) {
         <meshToonMaterial color={palette.concreteTan} />
       </mesh>
       {/* clipboard: board, clip, paper */}
-      <mesh position={[CLIPBOARD.position[0], CLIPBOARD.position[1], CLIPBOARD.position[2] - 0.01]}>
-        <boxGeometry args={[CLIPBOARD.width + 0.1, CLIPBOARD.height + 0.14, 0.03]} />
+      <mesh position={[CLIPBOARD.position[0], CLIPBOARD.position[1], CLIPBOARD.position[2] - 0.03]}>
+        <SoftBoxGeometry args={[CLIPBOARD.width + 0.1, CLIPBOARD.height + 0.14, 0.03]} />
         <meshToonMaterial color={palette.oldWoodBrown} />
       </mesh>
       <mesh position={[CLIPBOARD.position[0], CLIPBOARD.position[1] + CLIPBOARD.height / 2 + 0.03, CLIPBOARD.position[2] + 0.02]}>
-        <boxGeometry args={[0.3, 0.08, 0.05]} />
+        <SoftBoxGeometry args={[0.3, 0.08, 0.05]} />
         <meshToonMaterial color={palette.coalBlack} />
       </mesh>
       <mesh position={CLIPBOARD.position}>
@@ -73,12 +74,12 @@ export function CacheStorageRoom({ powered = true }: { powered?: boolean }) {
       </mesh>
       {/* prep table with a kettle */}
       <mesh position={[0, 0.66, 0.1]}>
-        <boxGeometry args={[1.3, 0.08, 0.6]} />
+        <SoftBoxGeometry args={[1.3, 0.08, 0.6]} />
         <meshToonMaterial color={palette.concreteTan} />
       </mesh>
       {[-0.55, 0.55].map((x) => (
         <mesh key={x} position={[x, 0.31, 0.1]}>
-          <boxGeometry args={[0.08, 0.62, 0.5]} />
+          <SoftBoxGeometry args={[0.08, 0.62, 0.5]} />
           <meshToonMaterial color={palette.concreteTan} />
         </mesh>
       ))}
@@ -87,8 +88,13 @@ export function CacheStorageRoom({ powered = true }: { powered?: boolean }) {
         <meshToonMaterial color={palette.boneWhite} />
       </mesh>
       {/* refinement pass: a hotplate that glows, a utensil rail, sacks, jars, crate labels, a drain */}
+      <mesh position={[-0.45, 0.91, 0.1]} rotation={[0, Math.PI / 2, 0]}>
+        <torusGeometry args={[0.12, 0.025, 6, 12, Math.PI]} /><meshToonMaterial color={palette.oldWoodBrown} />
+      </mesh>
+      <mesh position={[-0.3, 1.0, 0.1]}><sphereGeometry args={[0.055, 8, 6]} /><meshToonMaterial color={palette.oldWoodBrown} /></mesh>
+      <Planter position={[1.25, 1.95, -0.95]} />
       <mesh position={[0.25, 0.73, 0.1]}>
-        <boxGeometry args={[0.36, 0.06, 0.3]} />
+        <SoftBoxGeometry args={[0.36, 0.06, 0.3]} />
         <meshToonMaterial color={palette.coalBlack} />
       </mesh>
       <mesh position={[0.25, 0.765, 0.1]} rotation={[Math.PI / 2, 0, 0]}>
@@ -102,7 +108,7 @@ export function CacheStorageRoom({ powered = true }: { powered?: boolean }) {
       {[-0.45, -0.15, 0.2, 0.5].map((x, i) => (
         <group key={x} position={[x, 1.32, -0.2]}>
           <mesh position={[0, 0.16, 0]}>
-            <boxGeometry args={[0.02, 0.14, 0.02]} />
+            <SoftBoxGeometry args={[0.02, 0.14, 0.02]} />
             <meshToonMaterial color={palette.concrete} />
           </mesh>
           <mesh rotation={[Math.PI / 2, 0, 0]}>

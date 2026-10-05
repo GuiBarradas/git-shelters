@@ -1,93 +1,50 @@
 "use client";
 
-import { Sparkles } from "@react-three/drei";
 import type { ReactNode } from "react";
-
+import { ExtrudeGeometry, Path, Shape } from "three";
 import { palette } from "@/lib/palette";
+import { LightPool, RoomLight, SoftBoxGeometry, StaticBatch } from "./Details";
 
-/** Interior footprint every room is built inside: 4 wide, 3 tall, 3 deep. */
 export const CELL = { w: 4, h: 3, d: 3 } as const;
 
-type RoomShellProps = {
-  children?: ReactNode;
-  /** Warm interior light colour; omit for a dead (unpowered) cell. */
-  light?: string;
-  lightIntensity?: number;
-  /** Concrete tint for the walls. */
-  tone?: string;
-  dim?: boolean;
-  /** False in a blackout: the lamp is a dying ember. */
-  powered?: boolean;
-};
+function rounded(path: Shape | Path, x: number, y: number, w: number, h: number, r: number) {
+  path.moveTo(x + r, y);
+  path.lineTo(x + w - r, y); path.quadraticCurveTo(x + w, y, x + w, y + r);
+  path.lineTo(x + w, y + h - r); path.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  path.lineTo(x + r, y + h); path.quadraticCurveTo(x, y + h, x, y + h - r);
+  path.lineTo(x, y + r); path.quadraticCurveTo(x, y, x + r, y);
+  path.closePath();
+}
+const rim = new Shape();
+rounded(rim, -2.17, -0.22, 4.34, 3.45, 0.48);
+const opening = new Path();
+rounded(opening, -1.97, 0.01, 3.94, 2.98, 0.42);
+rim.holes.push(opening);
+const rimGeometry = new ExtrudeGeometry(rim, { depth: 0.16, bevelEnabled: false, curveSegments: 4, steps: 1 });
 
-/**
- * A bunker cell seen in cross-section, like a dollhouse cut open: floor slab,
- * back wall, ceiling beam and two pillars, open at the front so the
- * camera looks straight into the room. Everything is primitive geometry
- * in the fixed palette, per the design rule of zero external models.
- *
- * Origin is the centre of the floor; props are placed with y = 0 on it.
- */
-export function RoomShell({
-  children,
-  light = palette.glowYellow,
-  lightIntensity = 6,
-  tone = "#34303C",
-  dim = false,
-  powered = true,
-}: RoomShellProps) {
-  const lamp = powered ? lightIntensity : lightIntensity * 0.12;
-  const lampGlow = powered ? 0.9 : 0.15;
-  const { w, h, d } = CELL;
-  const wall = dim ? "#24272c" : tone;
-  const t = 0.25; // slab / wall thickness
-
-  return (
-    <group>
-      {/* floor */}
-      <mesh position={[0, -t / 2, 0]} receiveShadow>
-        <boxGeometry args={[w, t, d]} />
-        <meshToonMaterial color={dim ? "#1d1f24" : palette.steelBlue} />
-      </mesh>
-      {/* back wall */}
-      <mesh position={[0, h / 2, -d / 2 + t / 2]}>
-        <boxGeometry args={[w, h, t]} />
-        <meshToonMaterial color={wall} />
-      </mesh>
-      {/* ceiling beam */}
-      <mesh position={[0, h + t / 2, 0]}>
-        <boxGeometry args={[w + t, t, d]} />
-        <meshToonMaterial color={dim ? "#2a2d33" : palette.concrete} />
-      </mesh>
-      {/* pillars */}
-      {[-1, 1].map((side) => (
-        <mesh key={side} position={[(side * (w + t)) / 2, h / 2, 0]}>
-          <boxGeometry args={[t, h + t, d]} />
-          <meshToonMaterial color={dim ? "#2a2d33" : palette.concrete} />
-        </mesh>
-      ))}
-      {/* hanging lamp + its light */}
-      {!dim && (
-        <>
-          <mesh position={[0, h - 0.15, 0.2]}>
-            <cylinderGeometry args={[0.28, 0.16, 0.14, 12]} />
-            <meshToonMaterial color={palette.boneWhite} emissive={light} emissiveIntensity={lampGlow} />
-          </mesh>
-          <pointLight position={[0, h - 0.5, 0.6]} color={light} intensity={lamp} distance={7.5} decay={2} />
-          {/* dust drifting through the lamp light: the cheapest "this place is lived in" */}
-          <Sparkles
-            count={14}
-            position={[0, h / 2, 0.3]}
-            scale={[w - 0.6, h - 0.6, d - 0.8]}
-            size={1.6}
-            speed={0.25}
-            opacity={0.35}
-            color={light}
-            noise={0.4}
-          />
-        </>
-      )}
-      {children}
-    </group>
-  );
+/** Rounded pressure hull; front lane and panel anchors retain their footprint. */
+export function RoomShell({ children, light = palette.lampWarm, lightIntensity = 6, tone = "#514551", dim = false, powered = true }: {
+  children?: ReactNode; light?: string; lightIntensity?: number; tone?: string; dim?: boolean; powered?: boolean;
+}) {
+  const strength = powered ? 1 : 0.12;
+  return <StaticBatch>
+    <mesh position={[0, -0.13, 0]}><SoftBoxGeometry args={[4.12, 0.26, 3.04]} /><meshToonMaterial color={dim ? "#24212d" : "#535361"} /></mesh>
+    <mesh position={[0, 1.5, -1.375]}><boxGeometry args={[4, 3, 0.25]} /><meshToonMaterial color={dim ? "#282433" : tone} /></mesh>
+    {!dim && <>
+      <mesh position={[0, 0.42, -1.22]}><SoftBoxGeometry args={[3.94, 0.8, 0.1]} /><meshToonMaterial color="#383744" /></mesh>
+      <mesh position={[0, 0.86, -1.14]}><boxGeometry args={[3.94, 0.045, 0.045]} /><meshToonMaterial color={palette.concreteTan} /></mesh>
+    </>}
+    <mesh position={[0, 3.1, 0]}><SoftBoxGeometry args={[4.25, 0.22, 3]} /><meshToonMaterial color={dim ? "#2c2934" : "#5b5260"} /></mesh>
+    {[-1, 1].map(side => <mesh key={side} position={[side * 2.07, 1.5, 0]}><boxGeometry args={[0.16, 3, 3]} /><meshToonMaterial color={dim ? "#292631" : "#4c4354"} /></mesh>)}
+    <mesh geometry={rimGeometry} dispose={null} position={[0, 0, 1.38]}><meshToonMaterial color={dim ? "#39313f" : "#82717c"} /></mesh>
+    {!dim && <>
+      <mesh position={[0, 2.88, -0.35]}><SoftBoxGeometry args={[1.45, 0.13, 0.5]} /><meshToonMaterial color={palette.oldWoodBrown} /></mesh>
+      <mesh position={[0, 2.79, -0.35]}><SoftBoxGeometry args={[1.25, 0.045, 0.36]} /><meshBasicMaterial color={powered ? palette.lampWarm : palette.oldWoodBrown} /></mesh>
+      <RoomLight position={[0, 2.4, 0.6]} color={light} intensity={lightIntensity * strength} distance={5} decay={2} />
+      <LightPool position={[0, 1.8, -1.24]} scale={[1.94, 1.3, 1]} wall color={light} strength={0.3 * strength} />
+      <LightPool position={[0, 0.012, 0.1]} scale={[1.95, 1.35, 1]} color={light} strength={0.19 * strength} />
+      <mesh position={[1.98, 2.05, 1.48]}><boxGeometry args={[0.035, 0.45, 0.03]} /><meshBasicMaterial color={powered ? palette.phosphorViolet : palette.violetDim} /></mesh>
+    </>}
+    {children}
+  </StaticBatch>;
 }

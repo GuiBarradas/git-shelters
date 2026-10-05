@@ -1,6 +1,6 @@
 "use client";
 
-import { OrbitControls, OrthographicCamera } from "@react-three/drei";
+import { OrbitControls, OrthographicCamera, PerformanceMonitor } from "@react-three/drei";
 import { Canvas, useThree } from "@react-three/fiber";
 import { useLayoutEffect, useState } from "react";
 
@@ -71,8 +71,10 @@ function Camera({ lookY }: { lookY: number }) {
 /** Invisible pointer target covering one cell, so hover and click ignore the props. */
 function CellHitbox({ onClick, onHover }: { onClick?: () => void; onHover: (h: boolean) => void }) {
   return (
+    // Invisible meshes still raycast, and skip the draw call an opacity-0 one costs.
     <mesh
       position={[0, CELL.h / 2, 0]}
+      visible={false}
       onClick={
         onClick
           ? (e) => {
@@ -92,7 +94,6 @@ function CellHitbox({ onClick, onHover }: { onClick?: () => void; onHover: (h: b
       }}
     >
       <boxGeometry args={[CELL.w, CELL.h, CELL.d]} />
-      <meshBasicMaterial transparent opacity={0} depthWrite={false} />
     </mesh>
   );
 }
@@ -110,6 +111,8 @@ export default function BunkerScene({
 }: BunkerSceneProps) {
   const bySlot = new Map(rooms.map((room) => [room.slot, room]));
   const [hovered, setHovered] = useState<number | null>(null);
+  // ponytail: quality only steps down this visit; add recovery if long sessions need it.
+  const [dpr, setDpr] = useState(1.25);
   // A Fork with no room wanders the Main Branch.
   const forksIn = (slot: number) => forks.filter((f) => (f.roomSlot ?? 0) === slot);
   const forkHover = (f: ForkData | null) =>
@@ -121,15 +124,22 @@ export default function BunkerScene({
   // The landing keeps the hero text above the bunker: look higher, so the
   // row sits in the lower half of the screen.
   // Two floors: aim between them, a little high so the ground floor leads.
-  const lookY = demo ? CELL.h / 2 + 3.2 : CELL.h / 2 + LOWER_Y / 2 + 0.4;
+  const lookY = demo ? CELL.h / 2 + 1.8 : CELL.h / 2 + LOWER_Y / 2 + 0.4;
   const elevator = hasElevator(rooms);
 
   return (
     <Canvas
-      dpr={[1, 1.5]}
-      gl={{ antialias: true, powerPreference: "high-performance" }}
+      dpr={dpr}
+      gl={{ antialias: false, powerPreference: "high-performance" }}
       style={{ background: palette.coalBlack }}
     >
+      <PerformanceMonitor
+        ms={500}
+        iterations={4}
+        threshold={0.5}
+        bounds={() => [60, 65]}
+        onDecline={() => setDpr(value => Math.max(0.75, value - 0.1))}
+      />
       <Camera lookY={lookY} />
       {demo && (
         <OrbitControls
@@ -146,8 +156,8 @@ export default function BunkerScene({
       )}
 
       {/* cold fill from outside; the warm light is each room's own lamp */}
-      <ambientLight color={palette.boneWhite} intensity={0.75} />
-      <directionalLight position={[8, 12, 10]} color={palette.boneWhite} intensity={0.7} />
+      <hemisphereLight args={["#E8DCEF", "#5C3A35", powered ? 1.5 : 0.45]} />
+      <directionalLight position={[-3, 8, 10]} color={palette.lampWarm} intensity={powered ? 2.2 : 0.25} />
 
       {/* the earth the bunker is dug into */}
       <mesh position={[0, LOWER_Y - 2.2, -1]}>

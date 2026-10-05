@@ -8,6 +8,7 @@ import type { RoomLayout } from "@/components/scene/Fork";
 import { palette } from "@/lib/palette";
 
 import { RoomShell } from "./RoomShell";
+import { LIVE, SoftBoxGeometry } from "./Details";
 
 /** Gauge face on the control cabinet; the room page pins the uptime read-out here. */
 export const GAUGE = {
@@ -36,15 +37,15 @@ export function PowerPlantRoom({ powered = true }: { powered?: boolean }) {
 
   useFrame(({ clock }, delta) => {
     const t = clock.elapsedTime;
-    if (beacon.current) beacon.current.emissiveIntensity = 0.3 + (Math.sin(t * 5) > 0.6 ? 1.6 : 0);
-    if (fan.current) fan.current.rotation.z += delta * 6;
+    if (beacon.current) beacon.current.emissiveIntensity = powered ? 0.3 + (Math.sin(t * 5) > 0.6 ? 1.6 : 0) : 0;
+    if (fan.current && powered) fan.current.rotation.z += delta * 3;
   });
 
   return (
     <RoomShell light={palette.lampWarm} lightIntensity={4} powered={powered}>
       {/* generator drum on a plinth */}
       <mesh position={[0, 0.15, -0.3]}>
-        <boxGeometry args={[2.4, 0.3, 1.4]} />
+        <SoftBoxGeometry args={[2.4, 0.3, 1.4]} />
         <meshToonMaterial color={palette.concreteTan} />
       </mesh>
       <mesh position={[0, 0.95, -0.3]} rotation={[0, 0, Math.PI / 2]}>
@@ -58,15 +59,18 @@ export function PowerPlantRoom({ powered = true }: { powered?: boolean }) {
         </mesh>
       ))}
       {/* exhaust pipe up into the ceiling */}
+      {[-0.72, 0.72].map(x => <mesh key={x} position={[x, 0.95, -0.3]} rotation={[0, Math.PI / 2, 0]}>
+        <torusGeometry args={[0.63, 0.065, 6, 16]} /><meshToonMaterial color={palette.concreteTan} />
+      </mesh>)}
       <mesh position={[0.9, 2.1, -0.3]}>
         <cylinderGeometry args={[0.16, 0.16, 1.9, 10]} />
         <meshToonMaterial color={palette.outageGray} />
       </mesh>
       {/* fan grille on the front of the drum */}
-      <group ref={fan} position={[0, 0.95, 0.42]}>
+      <group ref={fan} position={[0, 0.95, 0.42]} userData={LIVE}>
         {[0, Math.PI / 3, (2 * Math.PI) / 3].map((r) => (
           <mesh key={r} rotation={[0, 0, r]}>
-            <boxGeometry args={[0.9, 0.1, 0.03]} />
+            <SoftBoxGeometry args={[0.9, 0.1, 0.03]} />
             <meshToonMaterial color={palette.boneWhite} />
           </mesh>
         ))}
@@ -76,22 +80,28 @@ export function PowerPlantRoom({ powered = true }: { powered?: boolean }) {
         <meshToonMaterial color={palette.coalBlack} />
       </mesh>
       {/* control cabinet with gauge face and warning beacon */}
+      <mesh position={[0, 0.95, 0.44]}>
+        <torusGeometry args={[0.54, 0.018, 4, 24]} /><meshToonMaterial color={palette.violetDim} emissive={palette.phosphorViolet} emissiveIntensity={powered ? 0.8 : 0} />
+      </mesh>
+      <mesh position={[0, 0.95, 0.46]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.11, 0.11, 0.07, 12]} /><meshToonMaterial color={palette.concreteTan} />
+      </mesh>
       <mesh position={[-1.5, 1.1, -0.9]}>
-        <boxGeometry args={[0.9, 2.2, 0.55]} />
+        <SoftBoxGeometry args={[0.9, 2.2, 0.55]} />
         <meshToonMaterial color={palette.outageGray} />
       </mesh>
       <mesh position={GAUGE.position}>
         <planeGeometry args={[GAUGE.width, GAUGE.height]} />
         <meshToonMaterial color="#0b0b0b" emissive={palette.glowYellow} emissiveIntensity={0.15} />
       </mesh>
-      <mesh position={[-1.5, 2.35, -0.9]}>
+      <mesh position={[-1.5, 2.35, -0.9]} userData={LIVE}>
         <sphereGeometry args={[0.13, 12, 12]} />
         <meshToonMaterial ref={beacon} color={palette.fadedRed} emissive={palette.fadedRed} emissiveIntensity={0.5} />
       </mesh>
       {/* refinement pass: hazard stripes, a steam pipe with a valve, a caged bulb, an oil stain, a cable coil, a sign */}
       {Array.from({ length: 8 }, (_, i) => (
         <mesh key={i} position={[-1.05 + i * 0.3, 0.31, 0.41]}>
-          <boxGeometry args={[0.15, 0.03, 0.02]} />
+          <SoftBoxGeometry args={[0.15, 0.03, 0.02]} />
           <meshToonMaterial color={i % 2 ? palette.amber : palette.coalBlack} />
         </mesh>
       ))}
