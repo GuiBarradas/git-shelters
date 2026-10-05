@@ -38,7 +38,7 @@ import type { Database } from "@/lib/supabase/database.types";
 export const BACKFILL_DAYS = 30;
 const MAX_PAGES = 3;
 /** An in_progress backfill older than this is assumed dead and retried. */
-const STALE_BACKFILL_MS = 10 * 60_000;
+export const STALE_BACKFILL_MS = 10 * 60_000;
 
 export type SyncResult =
   | { mode: "backfill" | "incremental"; credited: number }
