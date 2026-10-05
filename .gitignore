@@ -57,6 +57,7 @@ next-env.d.ts
 Thumbs.db
 
 # AI assistant private context
+.codex/agents/senior-gamedev-mentor.toml
 .claude/
 AGENTS.md
 CLAUDE.md
