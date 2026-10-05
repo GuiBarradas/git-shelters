@@ -10,14 +10,14 @@ For decisions that span code (schema, RLS, routing, etc.), see the [ADR director
 
 You are a **Maintainer** — one of the developers who survived *The Great Merge Conflict*, the day every public repository on the planet went into conflict at once. Hardware became scarce, agents went rogue, and the open internet collapsed into the **404 Lands**.
 
-You build, defend, and grow your **Repo** — a bunker in the wreckage — using **Bytes**, the in-game currency. Bytes are minted by your **real GitHub activity**: each commit, PR, issue, and release you author becomes resources for your Repo. You recruit **Forks** (survivors), craft **Payload** (ammo), and hold off **Crawlers** (zombie bots) that roam the 404 Lands looking for cores to merge.
+You build and grow your **Repo** — a bunker in the wreckage — using **Bytes**, the in-game currency. In the Alpha, public GitHub pushes earn Bytes; daily events and the welcome packet also provide them. You recruit **Forks** (survivors) and assign them to rooms that produce food, power and **Payload**. Combat against **Crawlers** is planned; Payload has no combat use yet.
 
 It is an idle / base-builder browser game where the act of *coding* is the act of *playing*.
 
 ## Pillars
 
 1. **Coding is playing.** Real GitHub activity drives the economy. Not a side feature — the core mechanic.
-2. **Cozy in the chaos.** Despite the apocalypse, the bunker is comforting. Soft music, charismatic survivors, terminals blinking green.
+2. **Cozy in the chaos.** Despite the apocalypse, the bunker is comforting. Music, charismatic survivors, violet terminals and amber lamps.
 3. **Dry and absurd humor.** Naming, descriptions, events, and dialogue lean Fallout but keep the warmth of Minecraft Story Mode.
 4. **Authored voxel aesthetics.** All visuals are generated from code. Disciplined palette, careful lighting. No asset flips.
 5. **Honest progression.** A casual dev and a heavy committer both feel progress. Anti-cheese filters are designed in from day one.
@@ -27,13 +27,15 @@ It is an idle / base-builder browser game where the act of *coding* is the act o
 
 1. Code something on GitHub (real life).
 2. The game polls activity and credits Bytes — including a one-time backfill of the past 30 days at first connect.
-3. Open the bunker. Spend Bytes on rooms, recruits, and crafting.
+3. Open the bunker. Spend Bytes on rooms and recruits; assign Forks to produce resources.
 4. Resolve the day's event (a small narrative choice with two outcomes).
 5. Close the tab. The world keeps running. Come back tomorrow.
 
 The loop is short by design. The hook is that **what happens between sessions is not arbitrary** — it is shaped by what you actually did as a developer.
 
 ## In-world glossary
+
+The glossary includes planned systems; it is not a list of implemented features.
 
 The naming is load-bearing. The world reads as satire only when the terms are used consistently.
 
@@ -58,7 +60,15 @@ The project deliberately runs as **two sequential paths**, not one.
 
 A dev-tool-shaped game. GitHub OAuth is required. Audience: developers active on GitHub.
 
-The first public release is the **Public Alpha** — a deliberately small first artifact: GitHub login, a 3-room bunker, byte sync, offline catch-up, one default Home Region, a minimal Daily Event, and read-only public profile pages at `/u/<login>`. Everything else (combat, exploration, multiple regions, a social world map, LLM-generated events, trading) is explicitly cut from the Public Alpha and kept for later iterations.
+The **Public Alpha is live**. It includes GitHub login, byte sync, offline resources, a two-floor bunker with an elevator, Forks and jobs, daily events, badges, music, an intro, read-only profiles and a 2D map of the 404 Lands. The Outage is the only open region. Combat, expeditions, other playable regions, LLM-generated events, trading and kudos remain future work.
+
+### Delivery status — 5 October 2026
+
+- **Shipped baseline:** the Alpha systems above, welcome packets, account export/deletion and server-side analytics, recorded in September.
+- **Implemented locally, deployment pending:** guided first steps, prominent welcome collection, worker guidance, next-event countdown, an eight-hour resource forecast and the offline blackout fix. These should not be assumed live until deployed and checked.
+- **Next decisions:** improve access to a second worker, collect player feedback, and compare activation and repeat daily events after the onboarding changes. Current room/recruit prices are unchanged.
+- **Verification still needed:** current production CI/cron/Sentry health, repeatable performance measurements and post-deploy authenticated checks. A feature existing in code does not establish those checks.
+- **Later:** branching events, combat/exploration, additional regions and social systems. Anonymous playable mode is conditional future work; today's landing demo is visual only.
 
 The success criterion of Path A is **shipped, playable, postable**. Stars and engagement are bonuses; the engineering is the deliverable.
 
@@ -72,9 +82,11 @@ Path C is intentionally a **late, reversible decision**. Committing to it now wo
 
 To keep Path C cheap to enter later, the architecture separates:
 
-- **The source of Bytes** (GitHub events) from **the act of crediting Bytes** (a pure function over `(last_seen_at, now, rates)`).
-- **Auth** from **gameplay state** — the schema does not assume the player has a GitHub identity.
-- **Content** (events, rooms, recipes) from **triggers** — events can be triggered by GitHub today and by other sources tomorrow.
+- **The source of Bytes** from **crediting Bytes** — the ledger accepts distinct sources and deduplicates credits.
+- **Resource simulation** from **persistence** — a pure function calculates offline resources; the server applies the result.
+- **Content** from **triggers** — event text and room catalogs can be reused with future entry points.
+
+GitHub authentication is still required for actual play. Anonymous auth and the necessary account/schema changes are not implemented yet.
 
 These are small upfront costs that buy a meaningful option later.
 

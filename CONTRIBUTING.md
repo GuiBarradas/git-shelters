@@ -51,7 +51,7 @@ Take a screenshot in the corridor and inside the room and attach both to the PR.
 
 - One change per PR. A room and a rebalance are two PRs.
 - The pre-commit hook runs ESLint (with the React Compiler rules) and `tsc`. `pnpm test` must pass; run `pnpm test:integration` if you touched SQL or the ledger.
-- Commit messages: `type(scope): what changed`, present tense, and a body that says why. Look at `git log` for the voice. No co-author trailers and no tool attribution; the author is the person who pressed the keys.
+- Commit messages: `type(scope): what changed`, present tense. Keep the subject short and the body to one brief sentence explaining why. No co-author trailers and no tool attribution; the author is the person who pressed the keys.
 - Screenshots for anything visual. Before and after if you changed something that existed.
 - No AI-generated dialogue or events. The catalog is written by hand and it reads that way.
 
