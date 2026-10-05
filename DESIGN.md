@@ -66,7 +66,9 @@ The **Public Alpha is live**. It includes GitHub login, byte sync, offline resou
 
 - **Shipped baseline:** the Alpha systems above, welcome packets, account export/deletion and server-side analytics, recorded in September.
 - **Implemented locally, deployment pending:** guided first steps, prominent welcome collection, worker guidance, next-event countdown, an eight-hour resource forecast and the offline blackout fix. These should not be assumed live until deployed and checked.
-- **Next decisions:** improve access to a second worker, collect player feedback, and compare activation and repeat daily events after the onboarding changes. Current room/recruit prices are unchanged.
+- **Recruitment balance:** every additional Fork now costs 200 B; the starter remains free. Deployment of this price change is pending.
+- **Alpha fixes ready locally:** initial sync status and retry feedback, visible-time analytics across tab changes/navigation, and separate intro start/completed/skipped milestones. Production verification is pending; visible segments are not whole sessions.
+- **Next steps:** collect player feedback and compare activation and repeat daily events after the onboarding and recruitment changes.
 - **Verification still needed:** current production CI/cron/Sentry health, repeatable performance measurements and post-deploy authenticated checks. A feature existing in code does not establish those checks.
 - **Later:** branching events, combat/exploration, additional regions and social systems. Anonymous playable mode is conditional future work; today's landing demo is visual only.
 

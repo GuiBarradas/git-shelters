@@ -37,7 +37,7 @@ export type Fork = {
 };
 
 /** Bytes to recruit one more survivor. Mirrored nowhere: the RPC takes the cost as a parameter. */
-export const RECRUIT_COST = 300;
+export const RECRUIT_COST = 200;
 
 /**
  * Beds (design doc §5.2): two on the Main Branch, two more per Dorm.
