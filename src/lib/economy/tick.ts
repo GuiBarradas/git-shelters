@@ -65,23 +65,40 @@ export function payloadCap(workshops: number): number {
   return RATES.payloadCapPerWorkshop * workshops;
 }
 
+/** Net Uptime per hour: what the engineers charge minus the drain. */
+function chargePerHour(work: Workforce): number {
+  return (work.powerPlants > 0 ? work.engineers * RATES.engineerPerHour : 0) - RATES.drainPerHour;
+}
+
+/**
+ * Hours of the window the lights stay on. Charge is linear, so if the
+ * battery is running down it lasts uptime / drain hours and then the
+ * kitchen and the bench go dark for the rest of the window.
+ */
+export function poweredHours(state: ResourceState, work: Workforce, hours: number): number {
+  const h = Math.min(RATES.maxHours, Math.max(0, hours));
+  const net = chargePerHour(work);
+  if (net > 0) return h;
+  if (net === 0) return state.uptime > 0 ? h : 0;
+  return Math.min(h, state.uptime / -net);
+}
+
 export function simulate(state: ResourceState, work: Workforce, hours: number): TickResult {
   const h = Math.min(RATES.maxHours, Math.max(0, hours));
 
-  // Kitchens only cook when the lights are on; a dead plant still drains.
-  const powered = state.uptime > 0 || (work.engineers > 0 && work.powerPlants > 0);
+  // Kitchens only cook while the lights are on; a dead plant still drains.
+  const lit = poweredHours(state, work, h);
 
-  const cooked = powered ? work.cooks * RATES.cookPerHour * h : 0;
+  const cooked = work.cooks * RATES.cookPerHour * lit;
   const eaten = work.forks * RATES.eatPerHour * h;
   const rawCache = state.cache + cooked - eaten;
   const cache = Math.min(cacheCap(work.cacheStorages), Math.max(0, rawCache));
 
-  const charged = work.powerPlants > 0 ? work.engineers * RATES.engineerPerHour * h : 0;
-  const rawUptime = state.uptime + charged - RATES.drainPerHour * h;
+  const rawUptime = state.uptime + chargePerHour(work) * h;
   const uptime = Math.min(RATES.uptimeCap, Math.max(0, rawUptime));
 
   // The bench needs light too; rounds keep once packed.
-  const packed = powered ? work.tinkerers * RATES.tinkerPerHour * h : 0;
+  const packed = work.tinkerers * RATES.tinkerPerHour * lit;
   const payload = Math.min(payloadCap(work.workshops), Math.max(0, state.payload + packed));
 
   return {

@@ -23,9 +23,16 @@ export function CrewPanel({
   const here = forks.filter((f) => (f.roomSlot ?? 0) === slot);
   const elsewhere = forks.filter((f) => (f.roomSlot ?? 0) !== slot);
   const roomName = slot === 0 ? "Main Branch" : (ROOM_CATALOG[kindOf(slot)!]?.name ?? "this room");
+  const kind = kindOf(slot);
+  const productive = kind === "cache_storage" || kind === "power_plant" || kind === "workshop";
 
   return (
     <section className="pointer-events-auto mt-4 max-w-xs space-y-3 font-mono text-xs">
+      {productive && <p className="border-l-2 border-[#E67E22] pl-2 text-[#E6DFC8]/90">
+        {kind === "cache_storage" ? "Assign a Cook to produce Cache. Cooking also needs Uptime or a staffed Power Plant." : kind === "power_plant" ? "Assign an Engineer to recharge Uptime while you are away." : "Assign a Tinkerer to pack Payload while the bunker has power."}
+        {here.length === 0 && <span className="block text-[#E67E22]">No worker assigned: this room is not producing.</span>}
+        <span className="block text-[#E6DFC8]/60">Moving a Fork is free. Their previous room loses that worker.</span>
+      </p>}
       <div>
         <p className="mb-1 text-[#E6DFC8]/50">on shift here</p>
         {here.length === 0 ? (
@@ -71,7 +78,7 @@ export function CrewPanel({
                   <input type="hidden" name="fork" value={f.id} />
                   <input type="hidden" name="slot" value={slot} />
                   <button type="submit" className="border border-[#BD93F9] px-2 py-0.5 text-[#BD93F9] hover:bg-[#BD93F9]/10">
-                    {slot === 0 ? "call back" : "assign here"}
+                    {slot === 0 ? "call back" : `assign as ${jobFor(kind).title}`}
                   </button>
                 </form>
               </li>

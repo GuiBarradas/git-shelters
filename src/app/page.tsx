@@ -5,7 +5,9 @@ import { SessionBeacon } from "@/components/analytics/SessionBeacon";
 import { AuthBar } from "@/components/auth/AuthBar";
 import { AwaySummary } from "@/components/hud/AwaySummary";
 import { BadgeToast } from "@/components/hud/BadgeToast";
-import { Packets } from "@/components/hud/Packets";
+import { ReturnPlan } from "@/components/hud/ReturnPlan";
+import { NextPacket } from "@/components/events/NextPacket";
+import { nextPacketAt } from "@/lib/events/schedule";
 import { Intro } from "@/components/intro/Intro";
 import { Landing } from "@/components/landing/Landing";
 import { BunkerSceneClient } from "@/components/scene/BunkerSceneClient";
@@ -18,7 +20,7 @@ import { fetchDailyEvent } from "@/lib/events/daily";
 import { loadCrew } from "@/lib/forks/load";
 import { describeCrew, eventEcho, settleMood } from "@/lib/forks/mood";
 import { loadUnread } from "@/lib/notices";
-import { isRoomKind, isSlot, type Room } from "@/lib/rooms/catalog";
+import { isRoomKind, isSlot, ROOM_CATALOG, type Room } from "@/lib/rooms/catalog";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -46,14 +48,16 @@ export default async function Home({ searchParams }: HomeProps) {
   // Main Branch tint is driven by persisted state, not a live GitHub fetch.
   // Anyone who pushed today will have at least one byte_transactions row
   // tagged source = 'github_sync' with created_at on today's UTC date.
-  const todayUtc = new Date().toISOString().slice(0, 10);
-  const [activeToday, rooms, dailyEvent, crew, commitsCounted, packets] = await Promise.all([
+  const observedAt = new Date().toISOString();
+  const todayUtc = observedAt.slice(0, 10);
+  const [activeToday, rooms, dailyEvent, crew, commitsCounted, packets, firstEvent] = await Promise.all([
     checkActivityToday(supabase, user.id, todayUtc),
     fetchRooms(supabase, user.id),
     fetchDailyEvent(supabase, user.id, todayUtc),
     loadCrew(supabase, admin, user.id),
     countCommits(supabase, user.id),
     loadUnread(supabase, user.id),
+    supabase.from("daily_event_outcomes").select("user_id").eq("user_id", user.id).limit(1),
   ]);
 
   // Badges are derived from the state above; a bonus lands in the ledger
@@ -81,6 +85,9 @@ export default async function Home({ searchParams }: HomeProps) {
 
   // "While you were away": what the ledger and the simulation did since the last tick.
   const work = workforce(crew.forks, rooms);
+  const unstaffedRoom = crew.forks.some(f => !f.roomSlot) ? rooms.find(r =>
+    (r.kind === "cache_storage" || r.kind === "power_plant" || r.kind === "workshop") && !crew.forks.some(f => f.roomSlot === r.slot)
+  ) : undefined;
   const report = awayReport({
     hours: resources.hours,
     before: resources.before,
@@ -103,6 +110,12 @@ export default async function Home({ searchParams }: HomeProps) {
         eventPending={echo === "pending"}
         echo={echo}
         powered={resources.uptime > 0}
+        onboarding={{
+          notices: packets,
+          eventDone: firstEvent.error ? null : (firstEvent.data?.length ?? 0) > 0,
+          eventAvailable: dailyEvent !== null,
+          staffingRoom: unstaffedRoom ? { slot: unstaffedRoom.slot, name: ROOM_CATALOG[unstaffedRoom.kind].name } : undefined,
+        }}
       />
       <div className="pointer-events-none absolute top-4 right-4 z-10">
         <AuthBar githubLogin={githubLogin} bytes={bytes} />
@@ -129,8 +142,8 @@ export default async function Home({ searchParams }: HomeProps) {
         {dailyEvent && !dailyEvent.resolved && (
           <p className="text-[#BD93F9]/80">&gt; incoming packet on the Main Branch terminal</p>
         )}
+        {dailyEvent?.resolved && <div className="pointer-events-auto"><NextPacket observedAt={observedAt} availableAt={nextPacketAt(observedAt)} /></div>}
         <p className="text-[#E6DFC8]/50">&gt; {describeCrew(crewMood, crew.lastPushAt, new Date(), echo)}</p>
-        <Packets notices={packets} />
         <p>
           <Link href="/map" className="pointer-events-auto text-[#BD93F9]/70 hover:text-[#BD93F9]">
             &gt; the 404 Lands: world map
@@ -140,6 +153,7 @@ export default async function Home({ searchParams }: HomeProps) {
             intro / credits
           </Link>
         </p>
+        <ReturnPlan resources={resources} work={work} rooms={rooms} bytes={bytes} resolved={!!dailyEvent?.resolved} observedAt={observedAt} />
       </div>
     </main>
   );

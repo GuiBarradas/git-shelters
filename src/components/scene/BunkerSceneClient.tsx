@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
 
 import { buildRoom, type BuildState } from "@/app/rooms/actions";
+import { FirstSteps, type FirstStepsState } from "@/components/hud/FirstSteps";
 import { FORK_TRAITS, type Fork as ForkData } from "@/lib/forks/catalog";
 import { type EventEcho, JOB_LINES, pickLine } from "@/lib/forks/mood";
-import { isLowerSlot, ROOM_CATALOG, type Room, type RoomKind, type Slot } from "@/lib/rooms/catalog";
+import { GROUND_SLOTS, isLowerSlot, ROOM_CATALOG, type Room, type RoomKind, type Slot } from "@/lib/rooms/catalog";
 
 const BunkerScene = dynamic(() => import("./BunkerScene"), {
   ssr: false,
@@ -36,6 +37,7 @@ type BunkerSceneClientProps = {
   /** Landing mode: auto-orbit, drag to rotate, tooltips, no interaction. */
   demo?: boolean;
   powered?: boolean;
+  onboarding?: FirstStepsState;
 };
 
 /**
@@ -52,6 +54,7 @@ export function BunkerSceneClient({
   demo = false,
   powered = true,
   echo = null,
+  onboarding,
 }: BunkerSceneClientProps) {
   const router = useRouter();
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
@@ -124,8 +127,15 @@ export function BunkerSceneClient({
           onClose={() => setSelectedSlot(null)}
           action={buildAction}
           building={building}
+          firstRoom={rooms.length === 0}
           error={build.tone === "warn" ? build.message : null}
         />
+      )}
+      {!demo && onboarding && menuSlot === null && (
+        <FirstSteps {...onboarding} built={rooms.length > 0} bytes={bytes} onBuild={() => {
+          const slot = GROUND_SLOTS.find((s) => !rooms.some((r) => r.slot === s));
+          if (slot !== undefined) onSlotClick(slot, false);
+        }} />
       )}
       {build.tone !== "idle" && !building && (
         <output
@@ -160,6 +170,7 @@ function BuildMenu({
   action,
   building,
   error,
+  firstRoom,
 }: {
   slot: Slot;
   bytes: number;
@@ -167,9 +178,10 @@ function BuildMenu({
   action: (formData: FormData) => void;
   building: boolean;
   error: string | null;
+  firstRoom: boolean;
 }) {
   return (
-    <div className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 border border-[#BD93F9] bg-[#0B0713]/90 p-4 font-mono text-sm text-[#BD93F9]">
+    <div className="absolute bottom-14 left-1/2 z-20 max-h-[60dvh] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 overflow-y-auto border border-[#BD93F9] bg-[#0B0713]/95 p-4 font-mono text-sm text-[#BD93F9]">
       <div className="mb-3 flex items-center justify-between gap-6">
         <span>
           SLOT {slot} — BUILD{isLowerSlot(slot) ? " · LOWER FLOOR" : ""}
@@ -178,7 +190,8 @@ function BuildMenu({
           [x]
         </button>
       </div>
-      <div className="flex gap-2">
+      {firstRoom && <p className="mb-3 text-xs text-[#E6DFC8]/80">Cache Storage + a Cook makes food while powered. Power Plant + an Engineer keeps the lights on. You start with one free Fork and two beds; save the Dorm for later.</p>}
+      <div className="flex flex-wrap gap-2">
         {(Object.keys(ROOM_CATALOG) as RoomKind[]).map((kind) => {
           // An Elevator only goes on the ground floor.
           if (kind === "elevator" && isLowerSlot(slot)) return null;
@@ -195,6 +208,7 @@ function BuildMenu({
                 className="border border-[#BD93F9] px-3 py-1 transition hover:bg-[#BD93F9]/10 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {name} · {cost} B
+                {firstRoom && <span className="mt-1 block max-w-48 text-[10px] text-[#E6DFC8]/70">{ROOM_CATALOG[kind].blurb}</span>}
               </button>
             </form>
           );

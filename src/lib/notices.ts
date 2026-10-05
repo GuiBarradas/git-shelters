@@ -4,7 +4,7 @@ import type { Database } from "@/lib/supabase/database.types";
 
 type Db = SupabaseClient<Database>;
 
-export type Notice = { id: string; title: string; body: string; bytes: number };
+export type Notice = { id: string; ref: string; title: string; body: string; bytes: number };
 
 /**
  * The welcome packet. Versioned in the ref: bump it to send everyone a
@@ -30,7 +30,7 @@ export async function ensureWelcome(admin: Db, userId: string): Promise<void> {
 export async function loadUnread(supabase: Db, userId: string): Promise<Notice[]> {
   const { data } = await supabase
     .from("notices")
-    .select("id, title, body, bytes")
+    .select("id, ref, title, body, bytes")
     .eq("user_id", userId)
     .is("opened_at", null)
     .order("created_at");

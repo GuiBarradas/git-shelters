@@ -57,4 +57,5 @@ export async function resolveDailyEvent(formData: FormData) {
   }
 
   revalidatePath("/");
+  revalidatePath("/room/0");
 }

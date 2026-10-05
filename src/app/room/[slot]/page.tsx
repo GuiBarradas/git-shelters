@@ -7,10 +7,13 @@ import { recruitFork } from "@/app/forks/actions";
 import { SessionBeacon } from "@/components/analytics/SessionBeacon";
 import { DailyEventCard } from "@/components/events/DailyEventCard";
 import { CrewPanel } from "@/components/rooms/CrewPanel";
+import { ReturnPlan } from "@/components/hud/ReturnPlan";
+import { NextPacket } from "@/components/events/NextPacket";
+import { nextPacketAt } from "@/lib/events/schedule";
 import { BenchPanel, BunkPanel, LedgerPanel, LiftPanel, UptimePanel } from "@/components/rooms/RoomPanels";
 import { RoomSceneClient } from "@/components/scene/RoomSceneClient";
 import { daysBetween } from "@/lib/analytics/track";
-import { settleResources } from "@/lib/economy/resources";
+import { settleResources, workforce } from "@/lib/economy/resources";
 import { cacheCap, payloadCap, type TickResult } from "@/lib/economy/tick";
 import { fetchDailyEvent, todayUtc } from "@/lib/events/daily";
 import { bedCount, RECRUIT_COST, type Fork } from "@/lib/forks/catalog";
@@ -50,7 +53,8 @@ export default async function RoomPage({ params }: Props) {
   if (!isMain && !isSlot(slotNumber)) notFound();
 
   const admin = createAdminClient();
-  const today = todayUtc();
+  const observedAt = new Date().toISOString();
+  const today = todayUtc(new Date(observedAt));
   const [rooms, crew, activeToday, dailyEvent, { data: me }] = await Promise.all([
     fetchRooms(supabase, user.id),
     loadCrew(supabase, admin, user.id),
@@ -115,6 +119,10 @@ export default async function RoomPage({ params }: Props) {
           </form>
         )}
         <CrewPanel forks={allForks} rooms={rooms} slot={slotNumber} />
+      </div>
+      <div className="absolute bottom-14 right-4 left-4 z-10 space-y-2 sm:left-auto sm:w-80">
+        {isMain && dailyEvent?.resolved && <div className="border border-[#BD93F9]/40 bg-[#0B0713]/95 p-3 font-mono text-xs"><NextPacket observedAt={observedAt} availableAt={nextPacketAt(observedAt)} /></div>}
+        <ReturnPlan resources={resources} work={workforce(allForks, rooms)} rooms={rooms} bytes={bytes} resolved={!!dailyEvent?.resolved} observedAt={observedAt} />
       </div>
     </main>
   );

@@ -1,76 +1,45 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 
 import { openNotice, type OpenState } from "@/app/notices/actions";
-import type { Notice } from "@/lib/notices";
+import { WELCOME, type Notice } from "@/lib/notices";
 
 const IDLE: OpenState = { tone: "idle", bytes: 0, message: "", at: 0 };
 
-/**
- * Packets waiting on the HUD: one amber line per unread notice. Clicking
- * opens it on a CRT, marks it read and collects whatever it carried.
- * The line disappears once the packet is opened; the revalidated page
- * agrees on the next render.
- */
+/** Each packet owns its action state; failed collections remain available to retry. */
 export function Packets({ notices }: { notices: Notice[] }) {
-  const [open, setOpen] = useState<Notice | null>(null);
-  const [state, action, pending] = useActionState(openNotice, IDLE);
-  const [collected, setCollected] = useState<Set<string>>(new Set());
+  return notices.map((notice) => <Packet key={notice.id} notice={notice} />);
+}
 
-  const waiting = notices.filter((n) => !collected.has(n.id));
-  if (waiting.length === 0 && !open) return null;
+function Packet({ notice }: { notice: Notice }) {
+  const [state, action, pending] = useActionState(async (previous: OpenState, formData: FormData) => {
+    try {
+      return await openNotice(previous, formData);
+    } catch {
+      return { tone: "warn" as const, bytes: 0, message: "Connection lost. Try collecting again.", at: Date.now() };
+    }
+  }, IDLE);
+  const welcome = notice.ref === WELCOME.ref;
 
   return (
-    <>
-      {waiting.map((n) => (
-        <p key={n.id}>
-          <button
-            type="button"
-            onClick={() => setOpen(n)}
-            className="pointer-events-auto text-left text-[#E67E22] hover:text-[#E6DFC8]"
-          >
-            &gt; packet waiting: {n.title} · open<span className="blink">_</span>
+    <section aria-label={notice.title} className="border border-[#E67E22]/70 bg-[#E67E22]/10 p-3">
+      <h3 className="font-bold text-[#E67E22]">{notice.title}</h3>
+      <p className="mt-1 leading-relaxed text-[#E6DFC8]/80">
+        {welcome ? `${notice.bytes} B are waiting for you. Collect them to help build your first room.` : notice.body}
+      </p>
+      {state.tone === "ok" ? (
+        <p role="status" className="mt-2 text-[#E67E22]">{state.message}</p>
+      ) : (
+        <form action={action} className="mt-3">
+          <input type="hidden" name="id" value={notice.id} />
+          <button type="submit" disabled={pending} aria-busy={pending}
+            className="min-h-11 w-full border border-[#E67E22] bg-[#E67E22] px-3 py-2 font-bold text-[#0B0713] hover:bg-[#F0A05A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E6DFC8] disabled:opacity-60">
+            {pending ? "Collecting…" : notice.bytes > 0 ? `Collect ${notice.bytes} B` : "Open packet"}
           </button>
-        </p>
-      ))}
-
-      {open && (
-        <div className="pointer-events-auto fixed inset-0 z-30 flex items-center justify-center bg-[#0B0713]/80 px-4">
-          <section className="crt route-enter w-full max-w-lg px-6 py-5 font-mono text-sm text-[#E6DFC8]">
-            <p className="mb-3 text-[10px] uppercase tracking-[0.25em] text-[#BD93F9]/70">main-branch:~$ open packet</p>
-            <h2 className="mb-3 uppercase tracking-[0.2em] text-[#BD93F9]">{open.title}</h2>
-            <p className="leading-relaxed">{open.body}</p>
-            {state.tone !== "idle" && state.at > 0 && collected.has(open.id) && (
-              <p className={`mt-3 ${state.tone === "ok" ? "text-[#E67E22]" : "text-[#A14545]"}`}>&gt; {state.message}</p>
-            )}
-            <div className="mt-4 flex items-center justify-between text-xs">
-              {collected.has(open.id) ? (
-                <button type="button" onClick={() => setOpen(null)} className="border border-[#BD93F9] px-3 py-1 text-[#BD93F9] hover:bg-[#BD93F9]/10">
-                  back to work
-                </button>
-              ) : (
-                <form
-                  action={(fd) => {
-                    setCollected((s) => new Set(s).add(open.id));
-                    action(fd);
-                  }}
-                >
-                  <input type="hidden" name="id" value={open.id} />
-                  <button
-                    type="submit"
-                    disabled={pending}
-                    className="border border-[#E67E22] px-3 py-1 text-[#E67E22] transition hover:bg-[#E67E22]/10 disabled:opacity-60"
-                  >
-                    {open.bytes > 0 ? `collect ${open.bytes} B` : "got it"}
-                  </button>
-                </form>
-              )}
-              <span className="text-[#E6DFC8]/40">{pending ? "opening_" : ""}</span>
-            </div>
-          </section>
-        </div>
+          {state.tone === "warn" && <p role="alert" className="mt-2 text-[#E6DFC8]">{state.message}</p>}
+        </form>
       )}
-    </>
+    </section>
   );
 }

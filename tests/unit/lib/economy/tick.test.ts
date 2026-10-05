@@ -64,6 +64,20 @@ describe("simulate", () => {
     expect(lit.cache).toBe(10 + 6 * 2 - 3 * 2);
   });
 
+  it("the kitchen stops when the battery dies mid-window", () => {
+    // No plant: 96 Uptime lasts exactly 12 h at 8/h.
+    const work: Workforce = { ...idle, cooks: 1, cacheStorages: 1 };
+    const once = simulate({ cache: 40, uptime: 96, payload: 0 }, work, 24);
+    expect(once.cache).toBe(40 + 6 * 12 - 24);
+    expect(once.blackout).toBe(true);
+
+    const half = simulate({ cache: 40, uptime: 96, payload: 0 }, work, 12);
+    const twice = simulate(half, work, 12);
+    expect(half.cache).toBe(40 + 6 * 12 - 12);
+    expect(twice.cache).toBe(once.cache);
+    expect(twice.uptime).toBe(once.uptime);
+  });
+
   it("caps the window at a week away", () => {
     const week = simulate({ cache: 40, uptime: 100, payload: 0 }, crewed, RATES.maxHours);
     const month = simulate({ cache: 40, uptime: 100, payload: 0 }, crewed, RATES.maxHours * 4);
