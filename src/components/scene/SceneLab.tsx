@@ -28,8 +28,8 @@ function Scene() {
       <RoomOccupants.Provider value={i%5===0?2:1}>
         {kinds[i%6] === null ? <MainBranchRoom powered={powered} active /> : <BuiltRoom kind={kinds[i%6]!} powered={powered} />}
       </RoomOccupants.Provider>
-      <Fork fork={person(i)} layout={roomLayout(kinds[i%6] ?? null)} />
-      {i%5 === 0 && <Fork fork={person(i+count)} layout={roomLayout(kinds[i%6] ?? null)} />}
+      <Fork fork={person(i)} powered={powered} layout={roomLayout(kinds[i%6] ?? null)} />
+      {i%5 === 0 && <Fork fork={person(i+count)} powered={powered} stationIndex={1} layout={roomLayout(kinds[i%6] ?? null)} />}
     </group>)}
     </SceneInstances>
     <SceneEffects quality={quality} />

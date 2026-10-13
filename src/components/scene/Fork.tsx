@@ -8,6 +8,7 @@ import { forkLook, mulberry32, type Fork as ForkData } from "@/lib/forks/catalog
 import { MOOD_MOTION } from "@/lib/forks/mood";
 import { palette } from "@/lib/palette";
 import { LIVE, SoftBoxGeometry, StaticBatch } from "./rooms/Details";
+import { ContactShade } from "./rooms/ContactShade";
 
 /** Something a Fork can do somewhere in a room. */
 export type Station = {
@@ -15,7 +16,7 @@ export type Station = {
   position: [number, number, number];
   /** Which way it faces (rotation around y) while acting. */
   facing: number;
-  action: "sit" | "type" | "work" | "inspect";
+  action: "sit" | "type" | "work" | "inspect" | "cook" | "crank";
   /** How long it stays, in seconds. */
   hold: number;
   /** For "sit"/"type": seat height the hips rest on. */
@@ -37,6 +38,9 @@ export type RoomLayout = {
 type Props = {
   fork: ForkData;
   layout: RoomLayout;
+  powered?: boolean;
+  /** One worker starts at each station; extras use the free walk lane. */
+  stationIndex?: number;
   onClick?: (fork: ForkData) => void;
   onHover?: (fork: ForkData | null) => void;
 };
@@ -57,7 +61,7 @@ type Phase = "pace" | "approach" | "enter" | "act" | "exit" | "leave";
  * a survivor is recognisable by how it moves, and the loop never touches
  * React state.
  */
-export function Fork({ fork, layout, onClick, onHover }: Props) {
+export function Fork({ fork, layout, powered = true, stationIndex = 0, onClick, onHover }: Props) {
   const look = useMemo(() => forkLook(fork.seed), [fork.seed]);
   const rand = useMemo(() => mulberry32(fork.seed ^ 0x2545f491), [fork.seed]);
 
@@ -69,24 +73,30 @@ export function Fork({ fork, layout, onClick, onHover }: Props) {
   const kneeL = useRef<Group>(null);
   const kneeR = useRef<Group>(null);
   const head = useRef<Group>(null);
+  const eyes = useRef<Group>(null);
+  const shade = useRef<Group>(null);
+  const firstStation = layout.stations[stationIndex];
 
   // Behaviour state lives in a ref: mutated every frame, never rendered.
   const state = useRef({
-    phase: "pace" as Phase,
-    x: layout.walk.xMin + rand() * (layout.walk.xMax - layout.walk.xMin),
-    z: layout.walk.z,
+    phase: (firstStation ? "act" : "pace") as Phase,
+    x: firstStation?.position[0] ?? layout.walk.xMin + rand() * (layout.walk.xMax - layout.walk.xMin),
+    z: firstStation?.position[2] ?? layout.walk.z,
     dir: rand() > 0.5 ? 1 : -1,
-    until: 4 + rand() * 6, // clock time when the current phase ends
-    station: null as Station | null,
+    until: firstStation ? firstStation.hold + rand() * 5 : 4 + rand() * 6,
+    station: firstStation ?? null as Station | null,
     target: [0, 0, 0] as [number, number, number],
-    facing: 0,
+    facing: firstStation?.facing ?? 0,
+    started: false,
   });
 
   useFrame(({ clock }, delta) => {
     const g = root.current;
     if (!g) return;
     const t = clock.elapsedTime;
+    const anim = t + (fork.seed % 997) * 0.37;
     const s = state.current;
+    if (!s.started) { s.until += t; s.started = true; }
     const { walk, stations } = layout;
 
     let moving = false;
@@ -172,7 +182,7 @@ export function Fork({ fork, layout, onClick, onHover }: Props) {
           s.station = null;
           s.phase = "pace";
           s.dir = rand() > 0.5 ? 1 : -1;
-          s.until = t + 5 + rand() * 8;
+          s.until = t + 3 + rand() * 4;
         }
         break;
       }
@@ -185,6 +195,7 @@ export function Fork({ fork, layout, onClick, onHover }: Props) {
     const originY = sitting ? (s.station?.seatY ?? 0.3) - HIP_HEIGHT : 0;
     g.position.set(s.x, originY + (moving ? Math.abs(Math.sin(t * 9)) * motion.bounce : 0), s.z);
     g.rotation.y = s.facing;
+    if (shade.current) shade.current.position.y = 0.025 - g.position.y;
 
     // Legs: thighs swing from the hips while walking; sitting folds the
     // thighs forward and drops the shins straight down from the knees.
@@ -200,26 +211,34 @@ export function Fork({ fork, layout, onClick, onHover }: Props) {
     let armLx = swing,
       armRx = -swing;
     if (action === "type" || action === "work") {
-      const jitter = Math.sin(t * 14) * 0.08;
+      const jitter = Math.sin(anim * 14) * 0.08;
       armLx = -1.0 + jitter;
       armRx = -1.0 - jitter;
+    } else if (action === "cook") {
+      armLx = -0.75;
+      armRx = -1.1 + Math.sin(anim * 2.6) * 0.18;
+    } else if (action === "crank") {
+      armLx = -1.25 + Math.sin(anim * 2.2) * 0.3;
+      armRx = -0.6;
     } else if (action === "sit") {
       armLx = armRx = -0.6;
     } else if (action === "inspect") {
       armLx = -1.6 + Math.sin(t * 2) * 0.1;
       armRx = 0;
     }
-    if (armL.current) armL.current.rotation.x = armLx;
-    if (armR.current) armR.current.rotation.x = armRx;
+    if (armL.current) armL.current.rotation.set(armLx, 0, action === "crank" ? Math.cos(anim * 2.2) * 0.2 : 0);
+    if (armR.current) armR.current.rotation.set(armRx, 0, action === "cook" ? Math.cos(anim * 2.6) * 0.15 : 0);
 
     // Head: nod while inspecting, tilt down while typing, glance around
     // idle; the mood adds a slump (stressed, bitter) or a lift (happy).
     if (head.current) {
       head.current.rotation.x =
         motion.headPitch +
-        (action === "inspect" ? Math.sin(t * 2) * 0.12 : action === "type" || action === "work" ? 0.25 : 0);
-      head.current.rotation.y = !action && !moving ? Math.sin(t * 0.7) * 0.4 : 0;
+        (action === "inspect" ? Math.sin(anim * 2) * 0.12 : action === "type" || action === "work" ? 0.18 : 0);
+      head.current.rotation.y = !moving ? Math.sin(anim * 0.7) * (action ? 0.035 : 0.25) : 0;
+      head.current.position.y = VOXEL * 5 + Math.sin(anim * 2) * 0.006;
     }
+    if (eyes.current) eyes.current.scale.y = anim % 4.7 < 0.13 ? 0.08 : 1;
   });
 
   const v = VOXEL;
@@ -243,22 +262,23 @@ export function Fork({ fork, layout, onClick, onHover }: Props) {
       }}
     >
       {/* each pivot draws its parts as one mesh; only the look changes their colours */}
-      <StaticBatch deps={[look]}>
+      <group ref={shade} userData={LIVE}><ContactShade /></group>
+      <StaticBatch deps={[look, powered]}>
       {/* legs: thigh pivots at the hip (y = 2.2 voxels), shin pivots at the knee */}
       {[-0.55, 0.55].map((side, i) => (
         <group key={side} ref={i === 0 ? thighL : thighR} position={[side * v, v * 2.2, 0]} userData={LIVE}>
           <mesh position={[0, -v * 0.55, 0]}>
             <SoftBoxGeometry args={[v, v * 1.1, v]} />
-            <meshToonMaterial color={look.pants} />
+            <dioramaMaterial power={powered ? 1 : 0.06} color={look.pants} />
           </mesh>
           <group ref={i === 0 ? kneeL : kneeR} position={[0, -v * 1.1, 0]} userData={LIVE}>
             <mesh position={[0, -v * 0.55, 0]}>
               <SoftBoxGeometry args={[v, v * 1.1, v]} />
-              <meshToonMaterial color={look.pants} />
+              <dioramaMaterial power={powered ? 1 : 0.06} color={look.pants} />
             </mesh>
             <mesh position={[0, -v * 1.05, v * 0.15]}>
               <SoftBoxGeometry args={[v, v * 0.3, v * 1.3]} />
-              <meshToonMaterial color={palette.coalBlack} />
+              <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} />
             </mesh>
           </group>
         </group>
@@ -266,37 +286,44 @@ export function Fork({ fork, layout, onClick, onHover }: Props) {
       {/* torso */}
       <mesh position={[0, v * 3.5, 0]}>
         <SoftBoxGeometry args={[v * 2.2, v * 2.6, v * 1.2]} />
-        <meshToonMaterial color={look.shirt} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={look.shirt} />
       </mesh>
       {/* arms hang from the shoulders at y = 4.6 voxels */}
       {[-1.6, 1.6].map((side, i) => (
         <group key={side} ref={i === 0 ? armL : armR} position={[side * v, v * 4.6, 0]} userData={LIVE}>
           <mesh position={[0, -v * 1.1, 0]}>
             <SoftBoxGeometry args={[v * 0.8, v * 2.3, v * 0.8]} />
-            <meshToonMaterial color={look.shirt} />
+            <dioramaMaterial power={powered ? 1 : 0.06} color={look.shirt} />
           </mesh>
           <mesh position={[0, -v * 2.4, 0]}>
             <SoftBoxGeometry args={[v * 0.7, v * 0.4, v * 0.7]} />
-            <meshToonMaterial color={look.skin} />
+            <dioramaMaterial power={powered ? 1 : 0.06} color={look.skin} />
           </mesh>
         </group>
       ))}
       {/* head pivots at the neck */}
       <group ref={head} position={[0, v * 5.0, 0]} userData={LIVE}>
-        <mesh position={[0, v * 0.9, 0]}>
-          <SoftBoxGeometry args={[v * 1.8, v * 1.8, v * 1.8]} />
-          <meshToonMaterial color={look.skin} />
+        <mesh position={[0, v * 1.05, 0]}>
+          <SoftBoxGeometry args={[v * 2.2, v * 2.1, v * 2]} />
+          <dioramaMaterial power={powered ? 1 : 0.06} color={look.skin} />
         </mesh>
-        {[-0.45, 0.45].map((ex) => (
-          <mesh key={ex} position={[ex * v, v * 1.05, v * 0.92]}>
+        <group ref={eyes} position={[0, v * 1.12, v * 1.02]} userData={LIVE}>
+        {[-0.48, 0.48].map((ex) => (
+          <mesh key={ex} position={[ex * v, 0, 0]}>
             <SoftBoxGeometry args={[v * 0.3, v * 0.3, v * 0.1]} />
-            <meshToonMaterial color={palette.coalBlack} />
+            <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} />
           </mesh>
         ))}
+        </group>
+        {!look.helmet && <>
+          <mesh position={[0, v * 2.08, -v * 0.12]}><SoftBoxGeometry args={[v * 2.35, v * 0.65, v * 2.18]} /><dioramaMaterial power={powered ? 1 : 0.06} color="#402317" /></mesh>
+          <mesh position={[-v * 0.94, v * 1.35, -v * 0.15]}><SoftBoxGeometry args={[v * 0.5, v * 1.2, v * 2]} /><dioramaMaterial power={powered ? 1 : 0.06} color="#4b2919" /></mesh>
+          <mesh position={[v * 0.7, v * 1.86, v * 0.91]}><SoftBoxGeometry args={[v * 0.7, v * 0.7, v * 0.3]} /><dioramaMaterial power={powered ? 1 : 0.06} color="#56301e" /></mesh>
+        </>}
         {look.helmet && (
-          <mesh position={[0, v * 1.9, 0]}>
-            <SoftBoxGeometry args={[v * 2.0, v * 0.6, v * 2.0]} />
-            <meshToonMaterial color={look.helmet} />
+          <mesh position={[0, v * 2.2, 0]}>
+            <SoftBoxGeometry args={[v * 2.4, v * 0.6, v * 2.25]} />
+            <dioramaMaterial power={powered ? 1 : 0.06} color={look.helmet} />
           </mesh>
         )}
       </group>

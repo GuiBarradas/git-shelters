@@ -7,7 +7,7 @@ const parts = ([[-1.35,0.75,0.6],[0.5,1.0,0.65],[1.45,0.45,0.45]] as [number,num
 const roomShade = mergeGeometries(parts);
 parts.forEach(part => part.dispose());
 export function ContactShade({ room = false }: { room?: boolean }) {
-  return <mesh geometry={room ? roomShade : disk} dispose={null} rotation={room ? [0,0,0] : [-Math.PI/2,0,0]} scale={room ? 1 : [0.4,0.25,1]}>
+  return <mesh renderOrder={1} userData={{ contactShade: true }} geometry={room ? roomShade : disk} dispose={null} rotation={room ? [0,0,0] : [-Math.PI/2,0,0]} scale={room ? 1 : [0.4,0.25,1]}>
     <meshBasicMaterial vertexColors transparent depthWrite={false} toneMapped={false} />
   </mesh>;
 }

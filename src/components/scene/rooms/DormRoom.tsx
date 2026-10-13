@@ -45,7 +45,7 @@ export function DormRoom({ powered = true }: { powered?: boolean }) {
 
   return (
     <RoomShell tone="#55434a" light={palette.lampWarm} lightIntensity={4.5} powered={powered}>
-      <SurfaceDetail tile={6} position={[0.15, 1.5, -1.23]} size={[0.7, 0.8]} />
+      <SurfaceDetail powered={powered} tile={6} position={[0.15, 1.5, -1.23]} size={[0.7, 0.8]} />
       {/* bunk posts */}
       {posts.map(([x, z], i) => (
         <mesh key={i} position={[x, BUNK.posts / 2, z]}>
@@ -56,8 +56,8 @@ export function DormRoom({ powered = true }: { powered?: boolean }) {
       {/* two bunks: slat frame, mattress, blanket, pillow */}
       {[BUNK.lower, BUNK.upper].map((y, i) => (
         <group key={y} position={[BUNK.x, y, BUNK.z]}>
-          <SurfaceDetail tile={3} position={[0.25, 0.139, 0]} size={[BUNK.length - 0.76, BUNK.depth - 0.26]} floor />
-          <SurfaceDetail tile={3} position={[0.25, -0.03, 0.412]} size={[1.05, 0.26]} />
+          <SurfaceDetail powered={powered} tile={3} position={[0.25, 0.139, 0]} size={[BUNK.length - 0.76, BUNK.depth - 0.26]} floor />
+          <SurfaceDetail powered={powered} tile={3} position={[0.25, -0.03, 0.412]} size={[1.05, 0.26]} />
           <mesh position={[0, -0.06, 0]}>
             <SoftBoxGeometry args={[BUNK.length, 0.08, BUNK.depth]} />
             <dioramaMaterial power={powered ? 1 : 0.06} color={palette.oldWoodBrown} />

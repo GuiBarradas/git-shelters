@@ -1,5 +1,6 @@
 "use client";
 
+import { useRoomPhase } from "./AmbientLife";
 import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import type { Group, MeshStandardMaterial } from "three";
@@ -26,26 +27,27 @@ export const LAYOUT: RoomLayout = {
   walk: { z: 1.15, xMin: -1.5, xMax: 1.4 },
   stations: [
     // Read the gauge from beside the plinth, not on it.
-    { position: [-1.5, 0, -0.2], facing: Math.PI, action: "inspect", hold: 5 },
+    { position: [-1.5, 0, -0.2], facing: Math.PI, action: "crank", hold: 18 },
     { position: [0.9, 0, 1.05], facing: Math.PI, action: "inspect", hold: 3 },
   ],
 };
 
 /** Power Plant: the generator. A humming drum, pipes, a spinning fan, a warning beacon. */
 export function PowerPlantRoom({ powered = true }: { powered?: boolean }) {
+  const { root, offset } = useRoomPhase();
   const beacon = useRef<MeshStandardMaterial>(null);
   const fan = useRef<Group>(null);
 
   useFrame(({ clock }, delta) => {
-    const t = clock.elapsedTime;
+    const t = clock.elapsedTime + offset();
     if (beacon.current) beacon.current.emissiveIntensity = powered ? 0.3 + (Math.sin(t * 5) > 0.6 ? 1.6 : 0) : 0;
-    if (fan.current && powered) fan.current.rotation.z += delta * 3;
+    if (fan.current && powered) { fan.current.rotation.z += delta * 3; fan.current.position.y = 0.95 + Math.sin(t * 27) * 0.003; }
   });
 
   return (
-    <RoomShell tone="#394654" light={palette.lampWarm} lightIntensity={4} powered={powered}>
-      <SurfaceDetail tile={0} position={[1.3, 1.9, -1.23]} size={[0.65, 0.8]} />
-      <SurfaceDetail tile={5} position={[0, 0.17, 0.405]} size={[2.2, 0.24]} />
+    <group ref={root}><RoomShell tone="#394654" light={palette.lampWarm} lightIntensity={4} powered={powered}>
+      <SurfaceDetail powered={powered} tile={0} position={[1.3, 1.9, -1.23]} size={[0.65, 0.8]} />
+      <SurfaceDetail powered={powered} tile={5} position={[0, 0.17, 0.405]} size={[2.2, 0.24]} />
       {/* generator drum on a plinth */}
       <mesh position={[0, 0.15, -0.3]}>
         <SoftBoxGeometry args={[2.4, 0.3, 1.4]} />
@@ -136,6 +138,6 @@ export function PowerPlantRoom({ powered = true }: { powered?: boolean }) {
         <planeGeometry args={[0.5, 0.06]} />
         <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} />
       </mesh>
-    </RoomShell>
+    </RoomShell></group>
   );
 }

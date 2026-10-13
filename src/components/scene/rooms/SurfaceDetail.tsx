@@ -13,11 +13,11 @@ const tiles = Array.from({ length: 8 }, (_, tile) => {
   return geometry;
 });
 
-export function SurfaceDetail({ tile, position, size, floor = false }: {
-  tile: number; position: [number, number, number]; size: [number, number]; floor?: boolean;
+export function SurfaceDetail({ tile, position, size, floor = false, powered = true }: {
+  tile: number; position: [number, number, number]; size: [number, number]; floor?: boolean; powered?: boolean;
 }) {
   const map = useTexture("/textures/shelter-details.svg", texture => { texture.colorSpace = SRGBColorSpace; });
   return <mesh geometry={tiles[tile]} dispose={null} position={position} scale={[...size, 1]} rotation={floor ? [-Math.PI / 2, 0, 0] : [0, 0, 0]}>
-    <dioramaMaterial power={1} map={map} alphaTest={0.4} polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-1} />
+    <dioramaMaterial power={powered ? 1 : 0.06} map={map} alphaTest={0.4} polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-1} />
   </mesh>;
 }

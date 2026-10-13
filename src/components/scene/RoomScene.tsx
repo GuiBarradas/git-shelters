@@ -83,8 +83,8 @@ export default function RoomScene({
           )}
         </RoomOccupants.Provider>
       </CloseUpLighting.Provider>
-      {forks.map((f) => (
-        <Fork key={f.id} fork={f} layout={roomLayout(kind)} onClick={onForkClick} onHover={onForkHover} />
+      {forks.map((f, i) => (
+        <Fork key={f.id} fork={f} powered={powered} stationIndex={i} layout={roomLayout(kind)} onClick={onForkClick} onHover={onForkHover} />
       ))}
       </SceneInstances>
       {panel && (

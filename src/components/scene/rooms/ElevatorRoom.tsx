@@ -42,8 +42,8 @@ export function ElevatorRoom({ powered = true }: { powered?: boolean }) {
   const doorW = 0.62;
   return (
     <RoomShell tone="#414853" light={palette.lampWarm} lightIntensity={4} powered={powered}>
-      <SurfaceDetail tile={5} position={[-0.4, 0.019, 0.3]} size={[1.5, 0.42]} floor />
-      <SurfaceDetail tile={0} position={[-1.55, 1.8, -1.23]} size={[0.45, 0.65]} />
+      <SurfaceDetail powered={powered} tile={5} position={[-0.4, 0.019, 0.3]} size={[1.5, 0.42]} floor />
+      <SurfaceDetail powered={powered} tile={0} position={[-1.55, 1.8, -1.23]} size={[0.45, 0.65]} />
       {/* shaft opening: a dark recess in the back wall, framed in steel */}
       <mesh position={[-0.4, 1.25, -1.2]}>
         <SoftBoxGeometry args={[1.5, 2.5, 0.12]} />

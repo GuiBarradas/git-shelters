@@ -18,7 +18,7 @@ export const CLIPBOARD = {
 export const LAYOUT: RoomLayout = {
   walk: { z: 1.15, xMin: -1.2, xMax: 0.7 },
   stations: [
-    { position: [0, 0, 0.55], facing: Math.PI, action: "work", hold: 6 },
+    { position: [0, 0, 0.55], facing: Math.PI, action: "cook", hold: 20 },
     { position: [1.0, 0, -0.35], facing: Math.PI, action: "inspect", hold: 4 },
   ],
 };
@@ -38,8 +38,9 @@ export function CacheStorageRoom({ powered = true }: { powered?: boolean }) {
 
   return (
     <RoomShell tone="#5b5146" light={palette.lampWarm} lightIntensity={4.5} powered={powered}>
-      <SurfaceDetail tile={2} position={[0.3, 2.13, -1.23]} size={[0.7, 0.8]} />
-      <SurfaceDetail tile={1} position={[0, 0.708, 0.1]} size={[1.1, 0.5]} floor />
+      <SurfaceDetail powered={powered} tile={2} position={[0.3, 2.13, -1.23]} size={[0.7, 0.8]} />
+      <SurfaceDetail powered={powered} tile={1} position={[0, 0.708, 0.1]} size={[1.1, 0.5]} floor />
+      <SurfaceDetail powered={powered} tile={6} position={[-1.65,1.16,-1.23]} size={[0.36,0.36]} />
       {/* two wall shelves */}
       {[1.4, 1.9].map((y) => (
         <mesh key={y} position={[0.9, y, -1.05]}>
@@ -95,7 +96,7 @@ export function CacheStorageRoom({ powered = true }: { powered?: boolean }) {
         <torusGeometry args={[0.12, 0.025, 6, 12, Math.PI]} /><dioramaMaterial power={powered ? 1 : 0.06} color={palette.oldWoodBrown} />
       </mesh>
       <mesh position={[-0.3, 1.0, 0.1]}><sphereGeometry args={[0.055, 8, 6]} /><dioramaMaterial power={powered ? 1 : 0.06} color={palette.oldWoodBrown} /></mesh>
-      <Planter position={[1.25, 1.95, -0.95]} />
+      <Planter powered={powered} position={[1.25, 1.95, -0.95]} />
       <mesh position={[0.25, 0.73, 0.1]}>
         <SoftBoxGeometry args={[0.36, 0.06, 0.3]} />
         <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} />

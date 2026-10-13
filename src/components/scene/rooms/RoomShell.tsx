@@ -52,8 +52,8 @@ export function RoomShell({ children, light = palette.lampWarm, lightIntensity =
     {!dim && <>
       <mesh position={[0, 2.88, -0.35]}><SoftBoxGeometry args={[1.45, 0.13, 0.5]} /><dioramaMaterial power={powered ? 1 : 0.06} color={palette.oldWoodBrown} /></mesh>
       <mesh position={[0, 2.79, -0.35]}><SoftBoxGeometry args={[1.25, 0.045, 0.36]} /><meshBasicMaterial color={powered ? palette.lampWarm : palette.oldWoodBrown} /></mesh>
-      <SurfaceDetail tile={1} position={[0, 1.5, -1.235]} size={[3.7, 2.7]} />
-      <SurfaceDetail tile={1} position={[0.2, 0.018, 0.65]} size={[2.8, 1.1]} floor />
+      <SurfaceDetail powered={powered} tile={1} position={[0, 1.5, -1.235]} size={[3.7, 2.7]} />
+      <SurfaceDetail powered={powered} tile={1} position={[0.2, 0.018, 0.65]} size={[2.8, 1.1]} floor />
       <RoomLight position={[0, 2.4, 0.6]} color={light} intensity={lightIntensity * strength * 0.4} distance={5} decay={2} />
       <LightPool position={[0, 1.8, -1.24]} scale={[1.94, 1.3, 1]} wall color={light} strength={0.08 * strength} />
       <LightPool position={[0, 0.012, 0.1]} scale={[1.95, 1.35, 1]} color={light} strength={0.05 * strength} />

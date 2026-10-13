@@ -23,7 +23,7 @@ export const CHALKBOARD = {
 export const LAYOUT: RoomLayout = {
   walk: { z: 1.15, xMin: -1.3, xMax: 1.3 },
   stations: [
-    { position: [-0.7, 0, 0.3], facing: Math.PI, action: "work", hold: 6 },
+    { position: [-0.7, 0, 0.3], facing: Math.PI, action: "work", hold: 20 },
     { position: [1.1, 0, 0.2], facing: Math.PI, action: "inspect", hold: 4 },
   ],
 };
@@ -49,8 +49,9 @@ export function WorkshopRoom({ powered = true }: { powered?: boolean }) {
 
   return (
     <RoomShell tone="#48454c" light={palette.lampWarm} lightIntensity={4.2} powered={powered}>
-      <SurfaceDetail tile={4} position={[-1.05, 2.05, -1.185]} size={[1.45, 0.85]} />
-      <SurfaceDetail tile={7} position={[-0.7, 0.875, -0.4]} size={[1.05, 0.5]} floor />
+      <SurfaceDetail powered={powered} tile={4} position={[-1.05, 2.05, -1.185]} size={[1.45, 0.85]} />
+      <SurfaceDetail powered={powered} tile={7} position={[-0.7, 0.875, -0.4]} size={[1.05, 0.5]} floor />
+      <SurfaceDetail powered={powered} tile={5} position={[1.28,0.78,-0.521]} size={[0.33,0.12]} />
       {/* pegboard */}
       <mesh position={[-1.05, 2.05, -1.22]}>
         <SoftBoxGeometry args={[1.5, 0.9, 0.04]} />

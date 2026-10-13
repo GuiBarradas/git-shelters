@@ -2,7 +2,7 @@
 
 import { createContext, useLayoutEffect, useRef, type ReactNode } from "react";
 import {
-  InstancedBufferAttribute, InstancedMesh, Material, Matrix4, Mesh,
+  AdditiveBlending, InstancedBufferAttribute, InstancedMesh, Material, Matrix4, Mesh,
   type BufferGeometry, type Color, type Group, type InstancedBufferGeometry, type Object3D, type Texture,
 } from "three";
 
@@ -14,6 +14,7 @@ export const SceneInstancesContext = createContext(false);
  * material (up to colour) as one InstancedMesh. Originals stay mounted but
  * hidden, so props, raycasts and disposal are untouched. Instance matrices
  * follow the originals each render, after every useFrame animation.
+ * Meshes that animate their own visibility must opt out with userData.live.
  * Rebuilds after each commit of this component, and on its own when an
  * original unmounts, swaps geometry/material or a material changes in place.
  */
@@ -35,7 +36,7 @@ export function SceneInstances({ children }: { children: ReactNode }) {
 }
 
 type Entry = { holder: Record<string, unknown>; key: string; value: unknown };
-type Member = { mesh: Mesh; material: Material; geometry: BufferGeometry; watch: Entry[] | null };
+type Member = { mesh: Mesh; material: Material; geometry: BufferGeometry };
 type Batch = { mesh: InstancedMesh; members: Member[]; tint: boolean };
 
 /** Groups `root`'s batchable meshes; `update` returns false once a rebuild is needed. */
@@ -56,6 +57,7 @@ export function instanceMeshes(root: Object3D) {
   });
 
   const batches: Batch[] = [];
+  const watched = new Map<Material, Entry[]>();
   for (const meshes of buckets.values()) {
     if (meshes.length < 2) continue;
     const first = meshes[0]!.material as Material & { color?: Color };
@@ -78,7 +80,8 @@ export function instanceMeshes(root: Object3D) {
     const members = meshes.map((original) => {
       original.visible = false;
       const own = original.material as Material;
-      return { mesh: original, material: own, geometry: original.geometry, watch: shared ? null : materials.get(own)!.entries };
+      if (!shared) watched.set(own, materials.get(own)!.entries);
+      return { mesh: original, material: own, geometry: original.geometry };
     });
     batches.push({ mesh, members, tint });
   }
@@ -86,6 +89,7 @@ export function instanceMeshes(root: Object3D) {
   const inverse = new Matrix4();
   const local = new Matrix4();
   function update() {
+    for (const [material, entries] of watched) if (!entries.every(unchanged)) return drifted(material);
     inverse.copy(root.matrixWorld).invert();
     for (const { mesh, members, tint } of batches) {
       const matrices = mesh.instanceMatrix.array;
@@ -93,9 +97,8 @@ export function instanceMeshes(root: Object3D) {
       let moved = false;
       let tinted = false;
       for (let i = 0; i < members.length; i++) {
-        const { mesh: original, material, geometry, watch } = members[i]!;
+        const { mesh: original, material, geometry } = members[i]!;
         if (original.material !== material || original.geometry !== geometry) return false;
-        if (watch && !watch.every(unchanged)) return drifted(material);
         let shown = true;
         for (let node = original.parent; node !== root; node = node.parent) {
           if (!node) return false; // unmounted
@@ -143,7 +146,8 @@ function batchable(mesh: Mesh) {
   const material = mesh.material as Material;
   // Plain meshes only: Instanced, Skinned, Batched and custom subclasses draw themselves.
   return Object.getPrototypeOf(mesh) === Mesh.prototype && mesh.visible && !mesh.userData.live
-    && !Array.isArray(material) && !material.userData.live && !material.transparent && !volatile.has(material)
+    && !Array.isArray(material) && !material.userData.live
+    && (!material.transparent || material.blending === AdditiveBlending || mesh.userData.contactShade) && !volatile.has(material)
     && material.onBeforeRender === Material.prototype.onBeforeRender
     && !(mesh.geometry as InstancedBufferGeometry).isInstancedBufferGeometry && !mesh.morphTargetInfluences
     && !mesh.customDepthMaterial && !mesh.customDistanceMaterial

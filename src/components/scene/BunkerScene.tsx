@@ -178,8 +178,8 @@ export default function BunkerScene({
 
       <group position={[slotX(0), 0, 0]}>
         <RoomOccupants.Provider value={forksIn(0).length}><MainBranchRoom active={activeToday} pending={eventPending} powered={powered} /></RoomOccupants.Provider>
-        {forksIn(0).map((f) => (
-          <Fork key={f.id} fork={f} layout={roomLayout(null)} onClick={onForkClick} onHover={forkHover} />
+        {forksIn(0).map((f, i) => (
+          <Fork key={f.id} fork={f} powered={powered} stationIndex={i} layout={roomLayout(null)} onClick={onForkClick} onHover={forkHover} />
         ))}
         <CellHitbox
           onClick={demo ? undefined : () => onSlotClick(0, true)}
@@ -204,8 +204,8 @@ export default function BunkerScene({
               <EmptyCell highlight={hovered === slot && !demo && !locked} locked={locked} />
             )}
             {room &&
-              forksIn(slot).map((f) => (
-                <Fork key={f.id} fork={f} layout={roomLayout(room.kind)} onClick={onForkClick} onHover={forkHover} />
+              forksIn(slot).map((f, i) => (
+                <Fork key={f.id} fork={f} powered={powered} stationIndex={i} layout={roomLayout(room.kind)} onClick={onForkClick} onHover={forkHover} />
               ))}
             <CellHitbox
               onClick={demo || locked ? undefined : () => onSlotClick(slot, Boolean(room), locked)}

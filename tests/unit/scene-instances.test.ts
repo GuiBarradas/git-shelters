@@ -1,6 +1,6 @@
 import { expect, it, vi } from "vitest";
 import {
-  BoxGeometry, Float32BufferAttribute, Group, InstancedMesh, Matrix4, Mesh, MeshToonMaterial, Raycaster,
+  AdditiveBlending, BoxGeometry, Float32BufferAttribute, Group, InstancedMesh, Matrix4, Mesh, MeshToonMaterial, Raycaster,
   SphereGeometry, Vector3, type Object3D,
 } from "three";
 import { instanceMeshes } from "@/components/scene/SceneInstances";
@@ -146,4 +146,19 @@ it("never merges custom-shader materials once their uniforms drift", () => {
   const rebuilt = instanceMeshes(root);
   expect(batches(root).map((mesh) => (mesh.material as DioramaMaterial).power)).toEqual([0.06]); // left now twins dim
   rebuilt.dispose();
+});
+
+
+it("instances only additive lights and explicitly ordered contact shadows among transparent meshes", () => {
+  const root = new Group();
+  const material = new MeshToonMaterial({ transparent: true, depthWrite: false });
+  const geometry = new BoxGeometry();
+  const meshes = Array.from({ length: 6 }, (_, i) => add(root, new Mesh(geometry, material.clone()), i));
+  for (const mesh of meshes.slice(0, 2)) { mesh.userData.contactShade = true; mesh.renderOrder = 1; }
+  for (const mesh of meshes.slice(2, 4)) { (mesh.material as MeshToonMaterial).blending = AdditiveBlending; mesh.renderOrder = 2; }
+  const instances = instanceMeshes(root);
+  expect(batches(root).map(mesh => [mesh.count, mesh.renderOrder])).toEqual([[2,1],[2,2]]);
+  expect(meshes.slice(4).every(mesh => mesh.visible)).toBe(true);
+  instances.dispose();
+  expect(meshes.every(mesh => mesh.visible)).toBe(true);
 });

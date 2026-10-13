@@ -116,17 +116,17 @@ pool.setAttribute("color", new Float32BufferAttribute(
 export function LightPool({ position, scale, wall = false, color = palette.lampWarm, strength = 0.2 }: {
   position: [number, number, number]; scale: [number, number, number]; wall?: boolean; color?: string; strength?: number;
 }) {
-  return <mesh geometry={pool} dispose={null} position={position} scale={scale} rotation={wall ? [0, 0, 0] : [-Math.PI / 2, 0, 0]}>
+  return <mesh renderOrder={2} geometry={pool} dispose={null} position={position} scale={scale} rotation={wall ? [0, 0, 0] : [-Math.PI / 2, 0, 0]}>
     <meshBasicMaterial color={color} vertexColors transparent opacity={strength} blending={AdditiveBlending} depthWrite={false} toneMapped={false} />
   </mesh>;
 }
 
-export function Planter({ position }: { position: [number, number, number] }) {
+export function Planter({ position, powered = true }: { position: [number, number, number]; powered?: boolean }) {
   return <group position={position}>
-    <mesh position={[0, 0.13, 0]}><cylinderGeometry args={[0.18, 0.12, 0.26, 10]} /><meshToonMaterial color={palette.fadedRed} /></mesh>
-    <mesh position={[0, 0.26, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.15, 10]} /><meshToonMaterial color={palette.oldWoodBrown} /></mesh>
+    <mesh position={[0, 0.13, 0]}><cylinderGeometry args={[0.18, 0.12, 0.26, 10]} /><dioramaMaterial power={powered ? 1 : 0.06} color={palette.fadedRed} /></mesh>
+    <mesh position={[0, 0.26, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.15, 10]} /><dioramaMaterial power={powered ? 1 : 0.06} color={palette.oldWoodBrown} /></mesh>
     {[0, 2.1, 4.2].map((angle, i) => <mesh key={angle} position={[Math.sin(angle) * 0.09, 0.38 + i * 0.035, Math.cos(angle) * 0.09]} rotation={[0.4, angle, 0.4]} scale={[0.08, 0.23, 0.045]}>
-      <sphereGeometry args={[1, 6, 4]} /><meshToonMaterial color={i === 1 ? palette.boneWhite : palette.concreteTan} />
+      <sphereGeometry args={[1, 6, 4]} /><dioramaMaterial power={powered ? 1 : 0.06} color={i === 1 ? palette.boneWhite : palette.concreteTan} />
     </mesh>)}
   </group>;
 }

@@ -1,9 +1,10 @@
 "use client";
 
+import { AmbientLife, ClockHands, useRoomPhase } from "./AmbientLife";
 import { useFrame } from "@react-three/fiber";
 import { memo, useRef } from "react";
 import type { Mesh, MeshStandardMaterial } from "three";
-import { BoxGeometry } from "three";
+import { BoxGeometry, DataTexture, RGBAFormat } from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
 import type { RoomLayout } from "@/components/scene/Fork";
@@ -47,6 +48,12 @@ const keyboard = mergeGeometries(keys);
 keys.forEach(geometry => geometry.dispose());
 
 /** Where a Fork can pace and what it can do here. Chair seat is at y = 0.3. */
+// Reused luminance stripes on every CRT; no transparent overlay or extra draw.
+const scanData = new Uint8Array(64 * 4);
+for (let row = 0; row < 64; row++) scanData.set([row % 3 === 0 ? 210 : 255, row % 3 === 0 ? 210 : 255, row % 3 === 0 ? 210 : 255, 255], row * 4);
+const scanlines = new DataTexture(scanData, 1, 64, RGBAFormat);
+scanlines.needsUpdate = true;
+
 export const LAYOUT: RoomLayout = {
   // The whole layout stays left of the terminal: its HTML panel is DOM and
   // paints over the canvas, so a Fork crossing the screen's area (even in
@@ -62,7 +69,7 @@ export const LAYOUT: RoomLayout = {
       approach: [-0.95, 0, 0.55],
       facing: Math.PI - 0.35,
       action: "type",
-      hold: 7,
+      hold: 24,
       seatY: 0.3,
     },
     { position: [-0.85, 0, -0.2], facing: -Math.PI / 2, action: "inspect", hold: 4 },
@@ -71,29 +78,31 @@ export const LAYOUT: RoomLayout = {
 
 // Memoised: its static batch rebuilds on every render.
 export const MainBranchRoom = memo(function MainBranchRoom({ pending = false, active = false, powered = true }: Props) {
+  const { root, offset } = useRoomPhase();
   const screen = useRef<MeshStandardMaterial>(null);
   const leds = useRef<Mesh[]>([]);
 
   useFrame(({ clock }) => {
-    const t = clock.elapsedTime;
+    const t = clock.elapsedTime + offset();
     if (screen.current) {
       // CRT flicker: a slow breathe plus a fast jitter, stronger when pending.
       const base = pending ? 1.4 : 0.8;
-      screen.current.emissiveIntensity = base + Math.sin(t * 2.1) * 0.15 + (Math.random() - 0.5) * 0.12;
+      screen.current.emissiveIntensity = powered ? base + Math.sin(t * 2.1) * 0.06 + Math.sin(t * 39.7) * 0.025 : 0;
     }
     leds.current.forEach((led, i) => {
       if (!led) return;
       const on = Math.sin(t * (1.7 + i * 0.9) + i) > 0.2;
-      (led.material as MeshStandardMaterial).emissiveIntensity = on ? 1.6 : 0.1;
+      (led.material as MeshStandardMaterial).emissiveIntensity = powered ? (on ? 2.2 : 0.1) : 0;
     });
   });
 
   const screenColor = pending ? palette.phosphorViolet : active ? palette.phosphorViolet : palette.glowYellow;
 
   return (
-    <RoomShell tone="#494553" light={active ? palette.amber : palette.lampWarm} lightIntensity={active ? 5.5 : 4.5} powered={powered}>
-      <SurfaceDetail tile={7} position={[1.48, 1.85, -1.23]} size={[0.65, 0.85]} />
-      <SurfaceDetail tile={6} position={[-0.45, 1.55, -1.23]} size={[0.48, 0.55]} />
+    <group ref={root}><RoomShell tone="#494553" light={active ? palette.amber : palette.lampWarm} lightIntensity={active ? 5.5 : 4.5} powered={powered}>
+      <SurfaceDetail powered={powered} tile={7} position={[1.48, 1.85, -1.23]} size={[0.65, 0.85]} />
+      <SurfaceDetail powered={powered} tile={6} position={[-0.45, 1.55, -1.23]} size={[0.48, 0.55]} />
+      <SurfaceDetail powered={powered} tile={0} position={[-1.4, 0.7, -0.535]} size={[0.48,0.5]} />
       {/* desk: waist height for a 1.45-tall survivor */}
       <mesh position={[0.55, 0.66, -0.55]}>
         <SoftBoxGeometry args={[2.1, 0.1, 0.9]} />
@@ -128,7 +137,7 @@ export const MainBranchRoom = memo(function MainBranchRoom({ pending = false, ac
       </mesh>
       <mesh position={SCREEN.position} userData={LIVE}>
         <planeGeometry args={[SCREEN.width, SCREEN.height]} />
-        <dioramaMaterial power={powered ? 1 : 0.06} ref={screen} color="#150a26" emissive={screenColor} emissiveIntensity={1} />
+        <dioramaMaterial power={powered ? 1 : 0.06} ref={screen} emissiveMap={scanlines} color="#150a26" emissive={screenColor} emissiveIntensity={1} />
       </mesh>
       <mesh position={[1.02, 0.78, -0.54]}>
         <SoftBoxGeometry args={[0.04, 0.04, 0.02]} />
@@ -234,7 +243,7 @@ export const MainBranchRoom = memo(function MainBranchRoom({ pending = false, ac
           <coneGeometry args={[0.12, 0.2, 10, 1, true]} />
           <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} emissive={palette.amber} emissiveIntensity={powered ? 0.9 : 0} side={2} />
         </mesh>
-        <RoomLight position={[0.3, 0.45, 0.1]} color={palette.amber} intensity={powered ? 1.6 : 0} distance={2.2} decay={2} />
+        <RoomLight position={[0.3, 0.45, 0.1]} color={palette.amber} intensity={powered ? 4.5 : 0} distance={2.2} decay={2} />
       </group>
       {/* the screen tints the desk violet */}
       <RoomLight position={[0.55, 1.1, -0.1]} color={palette.phosphorViolet} intensity={powered ? 0.9 : 0} distance={1.8} decay={2} />
@@ -271,25 +280,19 @@ export const MainBranchRoom = memo(function MainBranchRoom({ pending = false, ac
           <dioramaMaterial power={powered ? 1 : 0.06} color={i === 1 ? palette.phosphorViolet : palette.fadedRed} />
         </mesh>
       ))}
-      {/* wall clock, stopped at the Merge Conflict */}
+      {/* wall clock: local real time */}
       <mesh position={[1.2, 2.3, -1.22]} rotation={[Math.PI / 2, 0, 0]}>
         <cylinderGeometry args={[0.2, 0.2, 0.04, 16]} />
         <dioramaMaterial power={powered ? 1 : 0.06} color={palette.boneWhite} />
       </mesh>
-      <mesh position={[1.2, 2.36, -1.19]}>
-        <SoftBoxGeometry args={[0.02, 0.13, 0.01]} />
-        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} />
-      </mesh>
-      <mesh position={[1.26, 2.3, -1.19]} rotation={[0, 0, -1.1]}>
-        <SoftBoxGeometry args={[0.02, 0.15, 0.01]} />
-        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} />
-      </mesh>
+      <ClockHands powered={powered} />
       {/* a pipe along the top of the back wall */}
       <mesh position={[0, 2.8, -1.1]} rotation={[0, 0, Math.PI / 2]}>
         <cylinderGeometry args={[0.06, 0.06, 3.9, 10]} />
         <dioramaMaterial power={powered ? 1 : 0.06} color={palette.concrete} />
       </mesh>
-      <Planter position={[1.65, 0, 0.65]} />
-    </RoomShell>
+      <Planter powered={powered} position={[1.65, 0, 0.65]} />
+      <AmbientLife powered={powered} steam />
+    </RoomShell></group>
   );
 });
