@@ -1,8 +1,8 @@
 "use client";
 
-import { OrbitControls, OrthographicCamera, PerformanceMonitor } from "@react-three/drei";
-import { Canvas, useThree } from "@react-three/fiber";
-import { useLayoutEffect, useState } from "react";
+import { OrbitControls, PerformanceMonitor } from "@react-three/drei";
+import { Canvas } from "@react-three/fiber";
+import { useEffect, useRef, useState } from "react";
 
 import { FORK_TRAITS, type Fork as ForkData } from "@/lib/forks/catalog";
 import { MOOD_LABEL } from "@/lib/forks/mood";
@@ -16,9 +16,11 @@ import {
   MAIN_BRANCH_BLURB,
   ROOM_CATALOG,
   type Room,
+  type RoomKind,
   type Slot,
 } from "@/lib/rooms/catalog";
 
+import { DioramaCamera } from "./DioramaCamera";
 import { QualityControl, SceneEffects, useQuality } from "./SceneQuality";
 import { SceneInstances } from "./SceneInstances";
 import { Fork } from "./Fork";
@@ -40,6 +42,7 @@ type BunkerSceneProps = {
   demo?: boolean;
   /** False in a blackout: every lamp dies down. */
   powered?: boolean;
+  buildPreview?: { slot: Slot; kind: RoomKind; missingBytes: number } | null;
 };
 
 /** Distance between cell centres (pillars sit in the gap). */
@@ -52,24 +55,6 @@ const slotX = (slot: number) => ((slot >= 5 ? slot - 5 : slot) - (SLOT_COUNT - 1
 const LOWER_Y = -(CELL.h + 1.0);
 const slotY = (slot: number) => (slot >= 5 ? LOWER_Y : 0);
 const ROW_WIDTH = PITCH * SLOT_COUNT;
-
-/**
- * Cross-section camera (design doc §5.1): almost frontal, a little above
- * and to the right so the cells have depth. Zoom follows viewport width
- * so the whole floor fits a phone and stops growing past a laptop.
- */
-function Camera({ lookY }: { lookY: number }) {
-  const width = useThree((state) => state.size.width);
-  const camera = useThree((state) => state.camera);
-  const zoom = Math.min(58, Math.max(18, (width * 0.92) / ROW_WIDTH));
-  useLayoutEffect(() => {
-    camera.lookAt(0, lookY, 0);
-    camera.updateProjectionMatrix();
-  }, [camera, zoom, lookY]);
-  return (
-    <OrthographicCamera makeDefault position={[6, 6.5, 24]} zoom={zoom} near={0.1} far={200} />
-  );
-}
 
 /** Invisible pointer target covering one cell, so hover and click ignore the props. */
 function CellHitbox({ onClick, onHover }: { onClick?: () => void; onHover: (h: boolean) => void }) {
@@ -111,8 +96,19 @@ export default function BunkerScene({
   onHoverBlurb,
   demo = false,
   powered = true,
+  buildPreview,
 }: BunkerSceneProps) {
   const quality = useQuality();
+  const [focus, setFocus] = useState<[number, number, number] | null>(null);
+  const transition = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (transition.current) clearTimeout(transition.current); }, []);
+  const enter = (slot: 0 | Slot, built: boolean, locked = false) => {
+    if (transition.current) return;
+    if (!built) { setFocus(null); onSlotClick(slot, false, locked); return; }
+    setFocus([slotX(slot), slotY(slot) + CELL.h / 2, 0]);
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    transition.current = setTimeout(() => { transition.current = null; onSlotClick(slot, true, locked); }, reduced ? 0 : 550);
+  };
   const bySlot = new Map(rooms.map((room) => [room.slot, room]));
   const [hovered, setHovered] = useState<number | null>(null);
   // ponytail: quality only steps down this visit; add recovery if long sessions need it.
@@ -146,7 +142,7 @@ export default function BunkerScene({
         bounds={() => [60, 65]}
         onDecline={() => setDpr(value => Math.max(0.75, value - 0.1))}
       />
-      <Camera lookY={lookY} />
+      <DioramaCamera width={ROW_WIDTH} height={demo ? 12 : 9.5} center={[0,lookY,0]} focus={focus} controls={demo} />
       {demo && (
         <OrbitControls
           target={[0, lookY, 0]}
@@ -182,7 +178,7 @@ export default function BunkerScene({
           <Fork key={f.id} fork={f} powered={powered} stationIndex={i} layout={roomLayout(null)} onClick={onForkClick} onHover={forkHover} />
         ))}
         <CellHitbox
-          onClick={demo ? undefined : () => onSlotClick(0, true)}
+          onClick={demo ? undefined : () => enter(0, true)}
           onHover={hover(0, MAIN_BRANCH_BLURB)}
         />
       </group>
@@ -201,14 +197,14 @@ export default function BunkerScene({
             {room ? (
               <RoomOccupants.Provider value={forksIn(slot).length}><BuiltRoom kind={room.kind} powered={powered} /></RoomOccupants.Provider>
             ) : (
-              <EmptyCell highlight={hovered === slot && !demo && !locked} locked={locked} />
+              <EmptyCell highlight={(hovered === slot || buildPreview?.slot === slot) && !demo && !locked} locked={locked} preview={buildPreview?.slot === slot ? buildPreview : undefined} />
             )}
             {room &&
               forksIn(slot).map((f, i) => (
                 <Fork key={f.id} fork={f} powered={powered} stationIndex={i} layout={roomLayout(room.kind)} onClick={onForkClick} onHover={forkHover} />
               ))}
             <CellHitbox
-              onClick={demo || locked ? undefined : () => onSlotClick(slot, Boolean(room), locked)}
+              onClick={demo || locked ? undefined : () => enter(slot, Boolean(room), locked)}
               onHover={hover(slot, room ? ROOM_CATALOG[room.kind].blurb : locked ? LOCKED_SLOT_BLURB : EMPTY_SLOT_BLURB)}
             />
           </group>

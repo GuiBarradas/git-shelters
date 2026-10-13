@@ -1,5 +1,6 @@
 "use client";
 
+import { useRoomPhase } from "./AmbientLife";
 import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import type { MeshStandardMaterial } from "three";
@@ -30,11 +31,12 @@ export const LAYOUT: RoomLayout = {
 
 /** Workshop: a workbench with a vice, a pegboard of tools, crates of Payload, a welding flicker. */
 export function WorkshopRoom({ powered = true }: { powered?: boolean }) {
+  const { root, offset } = useRoomPhase();
   const spark = useRef<MeshStandardMaterial>(null);
 
   useFrame(({ clock }) => {
     if (!spark.current) return;
-    const t = clock.elapsedTime;
+    const t = clock.elapsedTime + offset();
     spark.current.emissiveIntensity = powered && Math.sin(t * 17) * Math.sin(t * 3.1) > 0.7 ? 2.5 : 0;
   });
 
@@ -48,7 +50,7 @@ export function WorkshopRoom({ powered = true }: { powered?: boolean }) {
   ];
 
   return (
-    <RoomShell tone="#48454c" light={palette.lampWarm} lightIntensity={4.2} powered={powered}>
+    <group ref={root}><RoomShell tone="#48454c" light={palette.lampWarm} lightIntensity={4.2} powered={powered}>
       <SurfaceDetail powered={powered} tile={4} position={[-1.05, 2.05, -1.185]} size={[1.45, 0.85]} />
       <SurfaceDetail powered={powered} tile={7} position={[-0.7, 0.875, -0.4]} size={[1.05, 0.5]} floor />
       <SurfaceDetail powered={powered} tile={5} position={[1.28,0.78,-0.521]} size={[0.33,0.12]} />
@@ -82,7 +84,7 @@ export function WorkshopRoom({ powered = true }: { powered?: boolean }) {
       </mesh>
       <mesh position={[-0.9, 0.93, -0.3]} userData={LIVE}>
         <SoftBoxGeometry args={[0.16, 0.16, 0.16]} />
-        <dioramaMaterial power={powered ? 1 : 0.06} ref={spark} color={palette.coalBlack} emissive={palette.glowYellow} emissiveIntensity={0} />
+        <dioramaMaterial power={powered ? 1 : 0.06} ref={spark} color={palette.coalBlack} emissive={palette.glowYellow} emissiveIntensity={powered ? 0 : 0} />
       </mesh>
       {/* crates of Payload, stencilled red */}
       <mesh position={[-0.7, 0.86, -0.4]}><SoftBoxGeometry args={[1.15, 0.02, 0.6]} /><dioramaMaterial power={powered ? 1 : 0.06} color={palette.steelBlue} /></mesh>
@@ -132,7 +134,7 @@ export function WorkshopRoom({ powered = true }: { powered?: boolean }) {
       </mesh>
       <mesh position={[-1.3, 0.93, -0.41]} rotation={[0.2, 0.6, 0]}>
         <SoftBoxGeometry args={[0.16, 0.06, 0.02]} />
-        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.phosphorViolet} emissive={palette.phosphorViolet} emissiveIntensity={0.6} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.phosphorViolet} emissive={palette.phosphorViolet} emissiveIntensity={powered ? 0.6 : 0} />
       </mesh>
       <mesh position={[0.05, 0.95, -0.6]}>
         <cylinderGeometry args={[0.06, 0.07, 0.2, 8]} />
@@ -160,6 +162,6 @@ export function WorkshopRoom({ powered = true }: { powered?: boolean }) {
           <dioramaMaterial power={powered ? 1 : 0.06} color="#3c3a44" />
         </mesh>
       ))}
-    </RoomShell>
+    </RoomShell></group>
   );
 }

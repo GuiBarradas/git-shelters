@@ -4,7 +4,7 @@ import { AmbientLife, ClockHands, useRoomPhase } from "./AmbientLife";
 import { useFrame } from "@react-three/fiber";
 import { memo, useRef } from "react";
 import type { Mesh, MeshStandardMaterial } from "three";
-import { BoxGeometry, DataTexture, RGBAFormat } from "three";
+import { BoxGeometry, DataTexture, LinearFilter, LinearMipmapLinearFilter, RGBAFormat } from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
 import type { RoomLayout } from "@/components/scene/Fork";
@@ -50,8 +50,11 @@ keys.forEach(geometry => geometry.dispose());
 /** Where a Fork can pace and what it can do here. Chair seat is at y = 0.3. */
 // Reused luminance stripes on every CRT; no transparent overlay or extra draw.
 const scanData = new Uint8Array(64 * 4);
-for (let row = 0; row < 64; row++) scanData.set([row % 3 === 0 ? 210 : 255, row % 3 === 0 ? 210 : 255, row % 3 === 0 ? 210 : 255, 255], row * 4);
+for (let row = 0; row < 64; row++) scanData.set([row % 3 === 0 ? 240 : 255, row % 3 === 0 ? 240 : 255, row % 3 === 0 ? 240 : 255, 255], row * 4);
 const scanlines = new DataTexture(scanData, 1, 64, RGBAFormat);
+scanlines.magFilter = LinearFilter;
+scanlines.minFilter = LinearMipmapLinearFilter;
+scanlines.generateMipmaps = true;
 scanlines.needsUpdate = true;
 
 export const LAYOUT: RoomLayout = {
@@ -137,11 +140,11 @@ export const MainBranchRoom = memo(function MainBranchRoom({ pending = false, ac
       </mesh>
       <mesh position={SCREEN.position} userData={LIVE}>
         <planeGeometry args={[SCREEN.width, SCREEN.height]} />
-        <dioramaMaterial power={powered ? 1 : 0.06} ref={screen} emissiveMap={scanlines} color="#150a26" emissive={screenColor} emissiveIntensity={1} />
+        <dioramaMaterial power={powered ? 1 : 0.06} ref={screen} emissiveMap={scanlines} color="#150a26" emissive={screenColor} emissiveIntensity={powered ? 1 : 0} />
       </mesh>
       <mesh position={[1.02, 0.78, -0.54]}>
         <SoftBoxGeometry args={[0.04, 0.04, 0.02]} />
-        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} emissive={palette.phosphorViolet} emissiveIntensity={1.4} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} emissive={palette.phosphorViolet} emissiveIntensity={powered ? 1.4 : 0} />
       </mesh>
       {/* keyboard: tilted base with three rows of keys and a space bar */}
       <group position={[-0.05, 0.71, -0.22]} rotation={[0.12, 0.35, 0]}>
@@ -189,7 +192,7 @@ export const MainBranchRoom = memo(function MainBranchRoom({ pending = false, ac
           }}
         >
           <SoftBoxGeometry args={[0.08, 0.08, 0.03]} />
-          <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} emissive={i % 3 === 0 ? palette.fadedRed : palette.phosphorViolet} emissiveIntensity={1} />
+          <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} emissive={i % 3 === 0 ? palette.fadedRed : palette.phosphorViolet} emissiveIntensity={powered ? 1 : 0} />
         </mesh>
       ))}
       {/* rack detail: three blade slots and a vent strip, so it reads as hardware, not a box */}

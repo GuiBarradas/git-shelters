@@ -1,13 +1,14 @@
 "use client";
 
-import { Html, OrthographicCamera } from "@react-three/drei";
-import { Canvas, useThree } from "@react-three/fiber";
-import { useLayoutEffect, type ReactNode } from "react";
+import { Html } from "@react-three/drei";
+import { Canvas } from "@react-three/fiber";
+import { type ReactNode } from "react";
 
 import type { Fork as ForkData } from "@/lib/forks/catalog";
 import { palette } from "@/lib/palette";
 import type { RoomKind } from "@/lib/rooms/catalog";
 
+import { DioramaCamera } from "./DioramaCamera";
 import { QualityControl, SceneEffects, useQuality } from "./SceneQuality";
 import { SceneInstances } from "./SceneInstances";
 import { Fork } from "./Fork";
@@ -32,23 +33,6 @@ type RoomSceneProps = {
   powered?: boolean;
 };
 
-/** Closer, more frontal camera than the overview: one cell fills the view. */
-function Camera() {
-  const width = useThree((state) => state.size.width);
-  const height = useThree((state) => state.size.height);
-  const camera = useThree((state) => state.camera);
-  // Fill the view with the cell (about 90% of the height) so the terminal
-  // text is legible; the pillars may crop, the room is what matters.
-  const zoom = Math.min(260, Math.max(60, Math.min(width / (CELL.w + 0.8), height / (CELL.h + 0.5))));
-  useLayoutEffect(() => {
-    camera.lookAt(0.2, CELL.h / 2 + 0.05, 0);
-    camera.updateProjectionMatrix();
-  }, [camera, zoom]);
-  return (
-    <OrthographicCamera makeDefault position={[2.2, 3.6, 16]} zoom={zoom} near={0.1} far={100} />
-  );
-}
-
 export default function RoomScene({
   kind,
   activeToday,
@@ -69,9 +53,9 @@ export default function RoomScene({
       gl={{ antialias: false, powerPreference: "high-performance" }}
       style={{ background: "radial-gradient(ellipse, #211529, #0c0911 75%)" }}
     >
-      <Camera />
-      <ambientLight color={palette.boneWhite} intensity={0.3} />
-      <directionalLight position={[6, 10, 8]} color={palette.boneWhite} intensity={0.5} />
+      <DioramaCamera width={CELL.w + 1.2} height={CELL.h + 1.1} center={[0,1.5,0]} />
+      <hemisphereLight args={["#b1a2d1", "#5b3d36", powered ? 0.5 : 0.2]} />
+      <directionalLight position={[6, 10, 8]} color={palette.boneWhite} intensity={powered ? 1.1 : 0.2} />
 
       <SceneInstances>
       <CloseUpLighting.Provider value={true}>

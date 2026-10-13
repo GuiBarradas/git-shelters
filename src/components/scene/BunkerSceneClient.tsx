@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
 
+import { useQuality } from "./SceneQuality";
 import { buildRoom, type BuildState } from "@/app/rooms/actions";
 import { FirstSteps, type FirstStepsState } from "@/components/hud/FirstSteps";
 import { FORK_TRAITS, type Fork as ForkData } from "@/lib/forks/catalog";
@@ -57,6 +58,8 @@ export function BunkerSceneClient({
   onboarding,
 }: BunkerSceneClientProps) {
   const router = useRouter();
+  const quality = useQuality();
+  const [previewKind, setPreviewKind] = useState<RoomKind | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [blurb, setBlurb] = useState<string | null>(null);
   const [speech, setSpeech] = useState<{ name: string; line: string } | null>(null);
@@ -89,6 +92,7 @@ export function BunkerSceneClient({
     if (built) {
       router.push(`/room/${slot}`);
     } else if (canBuild && slot !== 0 && !locked) {
+      setPreviewKind(null);
       setSelectedSlot(slot);
       setOpenedAt(Date.now());
     }
@@ -97,6 +101,7 @@ export function BunkerSceneClient({
   return (
     <>
       <BunkerScene
+        buildPreview={menuSlot !== null && previewKind && bytes !== null ? {slot: menuSlot, kind: previewKind, missingBytes: Math.max(0, ROOM_CATALOG[previewKind].cost - bytes)} : null}
         rooms={rooms}
         forks={forks}
         onForkClick={poke}
@@ -107,11 +112,11 @@ export function BunkerSceneClient({
         demo={demo}
         powered={powered}
       />
-      {/* Vignette in CSS: free, and it replaced a postprocessing pass that cost 40 fps on integrated GPUs. */}
+      {/* Low quality uses a CSS vignette; the other presets already have a post pass. */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
-        style={{ background: "radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%)" }}
+        style={{ background: quality === "low" ? "radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.25) 100%)" : undefined }}
       />
       {speech && <SpeechBubble name={speech.name} line={speech.line} />}
       {blurb && menuSlot === null && !speech && (
@@ -122,6 +127,7 @@ export function BunkerSceneClient({
       )}
       {menuSlot !== null && bytes !== null && (
         <BuildMenu
+          onPreview={setPreviewKind}
           slot={menuSlot}
           bytes={bytes}
           onClose={() => setSelectedSlot(null)}
@@ -164,6 +170,7 @@ export function SpeechBubble({ name, line }: { name: string; line: string }) {
 const IDLE_BUILD: BuildState = { tone: "idle", message: "", at: 0 };
 
 function BuildMenu({
+  onPreview,
   slot,
   bytes,
   onClose,
@@ -172,6 +179,7 @@ function BuildMenu({
   error,
   firstRoom,
 }: {
+  onPreview: (kind: RoomKind) => void;
   slot: Slot;
   bytes: number;
   onClose: () => void;
@@ -198,7 +206,7 @@ function BuildMenu({
           const { name, cost } = ROOM_CATALOG[kind];
           const affordable = bytes >= cost;
           return (
-            <form key={kind} action={action}>
+            <form key={kind} action={action} onMouseEnter={() => onPreview(kind)} onFocusCapture={() => onPreview(kind)}>
               <input type="hidden" name="slot" value={slot} />
               <input type="hidden" name="kind" value={kind} />
               <button

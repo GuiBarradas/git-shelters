@@ -211,9 +211,10 @@ export function Fork({ fork, layout, powered = true, stationIndex = 0, onClick, 
     let armLx = swing,
       armRx = -swing;
     if (action === "type" || action === "work") {
-      const jitter = Math.sin(anim * 14) * 0.08;
-      armLx = -1.0 + jitter;
-      armRx = -1.0 - jitter;
+      const jitter = Math.sin(anim * 14) * 0.045;
+      const reach = action === "type" ? -1.43 : -1.15;
+      armLx = reach + jitter;
+      armRx = reach - jitter;
     } else if (action === "cook") {
       armLx = -0.75;
       armRx = -1.1 + Math.sin(anim * 2.6) * 0.18;

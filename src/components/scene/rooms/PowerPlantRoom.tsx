@@ -97,11 +97,11 @@ export function PowerPlantRoom({ powered = true }: { powered?: boolean }) {
       </mesh>
       <mesh position={GAUGE.position}>
         <planeGeometry args={[GAUGE.width, GAUGE.height]} />
-        <dioramaMaterial power={powered ? 1 : 0.06} color="#0b0b0b" emissive={palette.glowYellow} emissiveIntensity={0.15} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color="#0b0b0b" emissive={palette.glowYellow} emissiveIntensity={powered ? 0.15 : 0} />
       </mesh>
       <mesh position={[-1.5, 2.35, -0.9]} userData={LIVE}>
         <sphereGeometry args={[0.13, 12, 12]} />
-        <dioramaMaterial power={powered ? 1 : 0.06} ref={beacon} color={palette.fadedRed} emissive={palette.fadedRed} emissiveIntensity={0.5} />
+        <dioramaMaterial power={powered ? 1 : 0.06} ref={beacon} color={palette.fadedRed} emissive={palette.fadedRed} emissiveIntensity={powered ? 0.5 : 0} />
       </mesh>
       {/* refinement pass: hazard stripes, a steam pipe with a valve, a caged bulb, an oil stain, a cable coil, a sign */}
       <mesh position={[1.3, 2.0, -0.9]}>

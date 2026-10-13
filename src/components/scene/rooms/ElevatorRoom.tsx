@@ -1,5 +1,6 @@
 "use client";
 
+import { useRoomPhase } from "./AmbientLife";
 import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import type { MeshStandardMaterial } from "three";
@@ -33,15 +34,16 @@ export const LAYOUT: RoomLayout = {
  * not animated; the shaft is what unlocks the floor below.
  */
 export function ElevatorRoom({ powered = true }: { powered?: boolean }) {
+  const { root, offset } = useRoomPhase();
   const indicator = useRef<MeshStandardMaterial>(null);
   useFrame(({ clock }) => {
     if (!indicator.current) return;
-    indicator.current.emissiveIntensity = powered ? 0.6 + (Math.sin(clock.elapsedTime * 1.5) > 0.5 ? 0.8 : 0) : 0;
+    indicator.current.emissiveIntensity = powered ? 0.6 + (Math.sin((clock.elapsedTime + offset()) * 1.5) > 0.5 ? 0.8 : 0) : 0;
   });
 
   const doorW = 0.62;
   return (
-    <RoomShell tone="#414853" light={palette.lampWarm} lightIntensity={4} powered={powered}>
+    <group ref={root}><RoomShell tone="#414853" light={palette.lampWarm} lightIntensity={4} powered={powered}>
       <SurfaceDetail powered={powered} tile={5} position={[-0.4, 0.019, 0.3]} size={[1.5, 0.42]} floor />
       <SurfaceDetail powered={powered} tile={0} position={[-1.55, 1.8, -1.23]} size={[0.45, 0.65]} />
       {/* shaft opening: a dark recess in the back wall, framed in steel */}
@@ -79,7 +81,7 @@ export function ElevatorRoom({ powered = true }: { powered?: boolean }) {
       {/* floor indicator over the doors */}
       <mesh position={[-0.4, 2.75, -1.1]} userData={LIVE}>
         <SoftBoxGeometry args={[0.5, 0.16, 0.06]} />
-        <dioramaMaterial power={powered ? 1 : 0.06} ref={indicator} color={palette.coalBlack} emissive={palette.amber} emissiveIntensity={0.6} />
+        <dioramaMaterial power={powered ? 1 : 0.06} ref={indicator} color={palette.coalBlack} emissive={palette.amber} emissiveIntensity={powered ? 0.6 : 0} />
       </mesh>
       {/* call panel: plate and the button */}
       <mesh position={[CALL_PANEL.position[0], CALL_PANEL.position[1], CALL_PANEL.position[2] - 0.01]}>
@@ -149,6 +151,6 @@ export function ElevatorRoom({ powered = true }: { powered?: boolean }) {
           <dioramaMaterial power={powered ? 1 : 0.06} color="#1c1e22" />
         </mesh>
       ))}
-    </RoomShell>
+    </RoomShell></group>
   );
 }

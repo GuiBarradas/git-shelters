@@ -147,7 +147,7 @@ export function DormRoom({ powered = true }: { powered?: boolean }) {
       </mesh>
       <mesh position={[-1.4, 2.35, -1.21]}>
         <planeGeometry args={[0.3, 0.3]} />
-        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.phosphorViolet} emissive={palette.phosphorViolet} emissiveIntensity={0.4} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.phosphorViolet} emissive={palette.phosphorViolet} emissiveIntensity={powered ? 0.4 : 0} />
       </mesh>
     </RoomShell>
   );

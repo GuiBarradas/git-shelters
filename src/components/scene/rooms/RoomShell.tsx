@@ -39,15 +39,15 @@ export function RoomShell({ children, light = palette.lampWarm, lightIntensity =
   const occupied = useContext(RoomOccupants) > 0;
   const strength = powered ? (occupied ? 1 : 0.65) : 0.12;
   return <StaticBatch>
-    <mesh position={[0, -0.13, 0]}><SoftBoxGeometry args={[4.12, 0.26, 3.04]} /><dioramaMaterial power={powered ? 1 : 0.06} color={dim ? "#24212d" : "#535361"} /></mesh>
-    <mesh position={[0, 1.5, -1.375]}><boxGeometry args={[4, 3, 0.25]} /><dioramaMaterial power={powered ? 1 : 0.06} color={dim ? "#282433" : tone} /></mesh>
+    <mesh position={[0, -0.13, 0]}><SoftBoxGeometry args={[4.12, 0.26, 3.04]} /><dioramaMaterial power={powered ? 1 : 0.06} color={dim ? "#514858" : "#535361"} /></mesh>
+    <mesh position={[0, 1.5, -1.375]}><boxGeometry args={[4, 3, 0.25]} /><dioramaMaterial power={powered ? 1 : 0.06} color={dim ? "#504556" : tone} /></mesh>
     {!dim && <>
       <mesh position={[0, 0.42, -1.22]}><SoftBoxGeometry args={[3.94, 0.8, 0.1]} /><dioramaMaterial power={powered ? 1 : 0.06} color="#383744" /></mesh>
       <mesh position={[0, 0.86, -1.14]}><boxGeometry args={[3.94, 0.045, 0.045]} /><dioramaMaterial power={powered ? 1 : 0.06} color={palette.concreteTan} /></mesh>
     </>}
     <mesh position={[0, 3.1, 0]}><SoftBoxGeometry args={[4.25, 0.22, 3]} /><dioramaMaterial power={powered ? 1 : 0.06} color={dim ? "#2c2934" : "#5b5260"} /></mesh>
-    {[-1, 1].map(side => <mesh key={side} position={[side * 2.07, 1.5, 0]}><boxGeometry args={[0.16, 3, 3]} /><dioramaMaterial power={powered ? 1 : 0.06} color={dim ? "#292631" : "#4c4354"} /></mesh>)}
-    <mesh geometry={rimGeometry} dispose={null} position={[0, 0, 1.20]}><dioramaMaterial concrete={1} power={powered ? 1 : 0.06} color={dim ? "#504152" : "#b29298"} /></mesh>
+    {[-1, 1].map(side => <mesh key={side} position={[side * 2.07, 1.5, 0]}><boxGeometry args={[0.16, 3, 3]} /><dioramaMaterial power={powered ? 1 : 0.06} color={dim ? "#4b4050" : "#4c4354"} /></mesh>)}
+    <mesh geometry={rimGeometry} dispose={null} position={[0, 0, 1.20]}><dioramaMaterial concrete={1} power={powered ? 1 : 0.06} color={dim ? "#88717f" : "#b29298"} /></mesh>
     <mesh geometry={insetGeometry} dispose={null} position={[0,0,1.02]}><dioramaMaterial concrete={1} power={powered ? 1 : 0.06} color="#6a545d" /></mesh>
     {!dim && <>
       <mesh position={[0, 2.88, -0.35]}><SoftBoxGeometry args={[1.45, 0.13, 0.5]} /><dioramaMaterial power={powered ? 1 : 0.06} color={palette.oldWoodBrown} /></mesh>
