@@ -18,11 +18,11 @@ export const LIVE = { live: true };
  * hidden, so props, raycasts and disposal are untouched. Rebuilds after
  * every commit (or when `deps` change): memoise callers past hover renders.
  */
-export function StaticBatch({ children, deps }: { children: ReactNode; deps?: DependencyList }) {
+export function StaticBatch({ children, deps, merge = true }: { children: ReactNode; deps?: DependencyList; merge?: boolean }) {
   const root = useRef<Group>(null);
   const instanced = useContext(SceneInstancesContext);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useLayoutEffect(() => instanced ? undefined : batch(root.current!), deps ? [...deps, instanced] : undefined);
+  useLayoutEffect(() => instanced && !merge ? undefined : batch(root.current!), deps ? [...deps, instanced, merge] : undefined);
   return <group ref={root}>{children}</group>;
 }
 
@@ -37,7 +37,7 @@ export function batch(root: Group) {
     if ((material.transparent && material.blending !== AdditiveBlending) || mesh.matrixWorld.determinant() < 0) return;
     let anchor = mesh.parent as Group;
     while (anchor !== root && !anchor.userData.live) anchor = anchor.parent as Group;
-    const key = anchor.uuid + JSON.stringify({ ...material.toJSON(), uuid: 0, color: 0, vertexColors: 0 });
+    const key = anchor.uuid + mesh.renderOrder + material.customProgramCacheKey() + JSON.stringify({ ...material.toJSON(), uuid: 0, color: 0, vertexColors: 0 });
     const bucket = buckets.get(key) ?? { anchor, meshes: [] };
     bucket.meshes.push(mesh);
     buckets.set(key, bucket);
@@ -69,6 +69,7 @@ export function batch(root: Group) {
     const geometry = mergeGeometries(parts);
     parts.forEach(part => part.dispose());
     const mesh = new Mesh(geometry, material);
+    mesh.renderOrder = meshes[0]!.renderOrder;
     mesh.raycast = () => {}; // pointer events keep hitting the hidden originals
     anchor.add(mesh);
     merged.push(mesh);

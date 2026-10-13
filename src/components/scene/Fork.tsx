@@ -264,7 +264,7 @@ export function Fork({ fork, layout, powered = true, stationIndex = 0, onClick, 
     >
       {/* each pivot draws its parts as one mesh; only the look changes their colours */}
       <group ref={shade} userData={LIVE}><ContactShade /></group>
-      <StaticBatch deps={[look, powered]}>
+      <StaticBatch deps={[look, powered]} merge={false}>
       {/* legs: thigh pivots at the hip (y = 2.2 voxels), shin pivots at the knee */}
       {[-0.55, 0.55].map((side, i) => (
         <group key={side} ref={i === 0 ? thighL : thighR} position={[side * v, v * 2.2, 0]} userData={LIVE}>

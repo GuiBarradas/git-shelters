@@ -5,7 +5,7 @@ import {
 } from "three";
 import { instanceMeshes } from "@/components/scene/SceneInstances";
 import { DioramaMaterial } from "@/components/scene/DioramaMaterial";
-import { LIVE } from "@/components/scene/rooms/Details";
+import { LIVE, batch } from "@/components/scene/rooms/Details";
 
 const add = (parent: Object3D, mesh: Mesh, x = 0) => { mesh.position.x = x; parent.add(mesh); return mesh; };
 const batches = (root: Object3D) => root.children.filter((child): child is InstancedMesh => child instanceof InstancedMesh);
@@ -201,4 +201,25 @@ it("instances only additive lights and explicitly ordered contact shadows among 
   expect(meshes.slice(4).every(mesh => mesh.visible)).toBe(true);
   instances.dispose();
   expect(meshes.every(mesh => mesh.visible)).toBe(true);
+});
+
+
+it("instances matching merged rooms and recovers after a room rebuild", () => {
+  const root = new Group();
+  const rooms = [new Group(), new Group()];
+  root.add(...rooms);
+  rooms[1]!.position.x = 5;
+  const cleanup = rooms.map(room => {
+    add(room, new Mesh(new BoxGeometry(), new DioramaMaterial()));
+    add(room, new Mesh(new SphereGeometry(0.3, 6, 4), new DioramaMaterial()), 1);
+    return batch(room);
+  });
+  const instances = instanceMeshes(root);
+  expect(batches(root).map(mesh => mesh.count)).toEqual([2]);
+  expect(instances.update()).toBe(true);
+  cleanup[0]!();
+  expect(instances.update()).toBe(false);
+  instances.dispose();
+  cleanup[1]!();
+  expect(rooms.every(room => room.children.length === 2 && room.children.every(mesh => mesh.visible))).toBe(true);
 });

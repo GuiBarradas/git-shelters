@@ -6,7 +6,7 @@ import {
   type BufferGeometry, type Color, type Group, type InstancedBufferGeometry, type Object3D, type Texture,
 } from "three";
 
-/** True under <SceneInstances>: per-object batchers (StaticBatch) should step aside. */
+/** Rooms merge before instancing; moving Fork parts opt out of that first merge. */
 export const SceneInstancesContext = createContext(false);
 
 /**

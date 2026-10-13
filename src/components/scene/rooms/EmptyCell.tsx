@@ -59,7 +59,7 @@ export const EmptyCell = memo(function EmptyCell({ highlight = false, locked = f
       {/* cold work light so the rubble reads even before anyone builds */}
       {RUBBLE.map(([x, y, z, s], i) => (
         <mesh key={i} position={[x, y, z]} rotation={[0.2 * i, 0.5 * i, 0]}>
-          <boxGeometry args={[s, s, s]} />
+          <dodecahedronGeometry args={[s * 0.65, 0]} />
           <dioramaMaterial power={0.3} color="#77707e" />
         </mesh>
       ))}
