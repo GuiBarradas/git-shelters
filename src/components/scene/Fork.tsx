@@ -68,6 +68,8 @@ export function Fork({ fork, layout, powered = true, stationIndex = 0, onClick, 
   const root = useRef<Group>(null);
   const armL = useRef<Group>(null);
   const armR = useRef<Group>(null);
+  const elbowL = useRef<Group>(null);
+  const elbowR = useRef<Group>(null);
   const thighL = useRef<Group>(null);
   const thighR = useRef<Group>(null);
   const kneeL = useRef<Group>(null);
@@ -212,7 +214,7 @@ export function Fork({ fork, layout, powered = true, stationIndex = 0, onClick, 
       armRx = -swing;
     if (action === "type" || action === "work") {
       const jitter = Math.sin(anim * 14) * 0.045;
-      const reach = action === "type" ? -1.43 : -1.15;
+      const reach = action === "type" ? -1.15 : -0.85;
       armLx = reach + jitter;
       armRx = reach - jitter;
     } else if (action === "cook") {
@@ -229,6 +231,9 @@ export function Fork({ fork, layout, powered = true, stationIndex = 0, onClick, 
     }
     if (armL.current) armL.current.rotation.set(armLx, 0, action === "crank" ? Math.cos(anim * 2.2) * 0.2 : 0);
     if (armR.current) armR.current.rotation.set(armRx, 0, action === "cook" ? Math.cos(anim * 2.6) * 0.15 : 0);
+    const elbow = action === "type" ? -0.65 : action ? -0.45 : -0.1;
+    if (elbowL.current) elbowL.current.rotation.x = elbow;
+    if (elbowR.current) elbowR.current.rotation.x = elbow;
 
     // Head: nod while inspecting, tilt down while typing, glance around
     // idle; the mood adds a slump (stressed, bitter) or a lift (happy).
@@ -289,17 +294,27 @@ export function Fork({ fork, layout, powered = true, stationIndex = 0, onClick, 
         <SoftBoxGeometry args={[v * 2.2, v * 2.6, v * 1.2]} />
         <dioramaMaterial power={powered ? 1 : 0.06} color={look.shirt} />
       </mesh>
-      {/* arms hang from the shoulders at y = 4.6 voxels */}
-      {[-1.6, 1.6].map((side, i) => (
-        <group key={side} ref={i === 0 ? armL : armR} position={[side * v, v * 4.6, 0]} userData={LIVE}>
-          <mesh position={[0, -v * 1.1, 0]}>
-            <SoftBoxGeometry args={[v * 0.8, v * 2.3, v * 0.8]} />
+      <mesh position={[0, v * 4.92, 0]}>
+        <SoftBoxGeometry args={[v * 0.85, v * 0.42, v * 0.8]} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={look.skin} />
+      </mesh>
+      {/* Short sleeves meet the torso; forearms pivot at the elbows. */}
+      {[-1.5, 1.5].map((side, i) => (
+        <group key={side} ref={i === 0 ? armL : armR} position={[side * v, v * 4.75, 0]} userData={LIVE}>
+          <mesh position={[0, -v * 0.55, 0]}>
+            <SoftBoxGeometry args={[v * 0.85, v * 1.3, v * 0.85]} />
             <dioramaMaterial power={powered ? 1 : 0.06} color={look.shirt} />
           </mesh>
-          <mesh position={[0, -v * 2.4, 0]}>
-            <SoftBoxGeometry args={[v * 0.7, v * 0.4, v * 0.7]} />
-            <dioramaMaterial power={powered ? 1 : 0.06} color={look.skin} />
-          </mesh>
+          <group ref={i === 0 ? elbowL : elbowR} position={[0, -v * 1.15, 0]} userData={LIVE}>
+            <mesh position={[0, -v * 0.48, 0]}>
+              <SoftBoxGeometry args={[v * 0.68, v * 1.05, v * 0.68]} />
+              <dioramaMaterial power={powered ? 1 : 0.06} color={look.skin} />
+            </mesh>
+            <mesh position={[0, -v * 1.13, v * 0.03]}>
+              <SoftBoxGeometry args={[v * 0.64, v * 0.4, v * 0.72]} />
+              <dioramaMaterial power={powered ? 1 : 0.06} color={look.skin} />
+            </mesh>
+          </group>
         </group>
       ))}
       {/* head pivots at the neck */}
@@ -317,15 +332,30 @@ export function Fork({ fork, layout, powered = true, stationIndex = 0, onClick, 
         ))}
         </group>
         {!look.helmet && <>
-          <mesh position={[0, v * 2.08, -v * 0.12]}><SoftBoxGeometry args={[v * 2.35, v * 0.65, v * 2.18]} /><dioramaMaterial power={powered ? 1 : 0.06} color="#402317" /></mesh>
-          <mesh position={[-v * 0.94, v * 1.35, -v * 0.15]}><SoftBoxGeometry args={[v * 0.5, v * 1.2, v * 2]} /><dioramaMaterial power={powered ? 1 : 0.06} color="#4b2919" /></mesh>
-          <mesh position={[v * 0.7, v * 1.86, v * 0.91]}><SoftBoxGeometry args={[v * 0.7, v * 0.7, v * 0.3]} /><dioramaMaterial power={powered ? 1 : 0.06} color="#56301e" /></mesh>
+          <mesh position={[0, v * 1.34, -v * 0.14]}>
+            <SoftBoxGeometry args={[v * 2.34, v * 2.18, v * 2.16]} />
+            <dioramaMaterial power={powered ? 1 : 0.06} color="#4a2b1d" />
+          </mesh>
+          <mesh position={[-v * 0.35, v * 1.93, v * 0.83]} rotation={[0, 0, -0.12]}>
+            <SoftBoxGeometry args={[v * 1.55, v * 0.65, v * 0.55]} />
+            <dioramaMaterial power={powered ? 1 : 0.06} color="#4a2b1d" />
+          </mesh>
         </>}
         {look.helmet && (
-          <mesh position={[0, v * 2.2, 0]}>
-            <SoftBoxGeometry args={[v * 2.4, v * 0.6, v * 2.25]} />
-            <dioramaMaterial power={powered ? 1 : 0.06} color={look.helmet} />
-          </mesh>
+          <>
+            <mesh position={[0, v * 2.05, -v * 0.03]}>
+              <SoftBoxGeometry args={[v * 2.4, v * 1.05, v * 2.3]} />
+              <dioramaMaterial power={powered ? 1 : 0.06} color={look.helmet} />
+            </mesh>
+            <mesh position={[0, v * 1.7, v * 0.06]}>
+              <SoftBoxGeometry args={[v * 2.56, v * 0.18, v * 2.5]} />
+              <dioramaMaterial power={powered ? 1 : 0.06} color={look.helmet} />
+            </mesh>
+            <mesh position={[0, v * 2.53, 0]}>
+              <SoftBoxGeometry args={[v * 0.25, v * 0.2, v * 1.7]} />
+              <dioramaMaterial power={powered ? 1 : 0.06} color={look.helmet} />
+            </mesh>
+          </>
         )}
       </group>
       </StaticBatch>

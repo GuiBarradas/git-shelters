@@ -68,7 +68,7 @@ export const LAYOUT: RoomLayout = {
     // over the canvas, so a Fork sitting dead-centre would vanish behind it.
     // Enter and leave the chair from its open left side, never through the back.
     {
-      position: [-0.32, 0, 0.42],
+      position: [-0.32, 0, 0.28],
       approach: [-0.95, 0, 0.55],
       facing: Math.PI - 0.35,
       action: "type",
@@ -147,7 +147,7 @@ export const MainBranchRoom = memo(function MainBranchRoom({ pending = false, ac
         <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} emissive={palette.phosphorViolet} emissiveIntensity={powered ? 1.4 : 0} />
       </mesh>
       {/* keyboard: tilted base with three rows of keys and a space bar */}
-      <group position={[-0.05, 0.71, -0.22]} rotation={[0.12, 0.35, 0]}>
+      <group position={[-0.11, 0.71, -0.22]} rotation={[0.12, -0.35, 0]}>
         <mesh position={[0, 0.02, 0]}>
           <SoftBoxGeometry args={[0.72, 0.04, 0.26]} />
           <dioramaMaterial power={powered ? 1 : 0.06} color="#2b2d31" />
@@ -159,7 +159,7 @@ export const MainBranchRoom = memo(function MainBranchRoom({ pending = false, ac
         </mesh>
       </group>
       {/* chair at the desk, facing the screen; the Fork sits here to type */}
-      <group position={[-0.32, 0, 0.42]} rotation={[0, -0.35, 0]}>
+      <group position={[-0.32, 0, 0.28]} rotation={[0, -0.35, 0]}>
         <mesh position={[0, 0.3, 0]}>
           <cylinderGeometry args={[0.28, 0.25, 0.12, 12]} />
           <dioramaMaterial power={powered ? 1 : 0.06} color={palette.fadedRed} />

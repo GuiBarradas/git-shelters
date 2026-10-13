@@ -1,7 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import { Canvas } from "@react-three/fiber";
-import { PerformanceMonitor } from "@react-three/drei";
+import { Html, PerformanceMonitor } from "@react-three/drei";
 import { DioramaCamera } from "./DioramaCamera";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -12,6 +12,7 @@ import { Fork } from "./Fork";
 import { QualityControl, SceneEffects, useQuality } from "./SceneQuality";
 import { RoomOccupants } from "./rooms/Details";
 import type { RoomKind } from "@/lib/rooms/catalog";
+import { forkLook } from "@/lib/forks/catalog";
 const RoomScene = dynamic(() => import("./RoomScene"), { ssr: false });
 const kinds: (RoomKind | null)[] = [null,"cache_storage","power_plant","dorm","elevator","workshop"];
 function Scene() {
@@ -29,6 +30,19 @@ function Scene() {
     window.dispatchEvent(new Event("shelter-quality"));
   }, [requested]);
   const person = (i: number) => ({ id: `preview-${i}`, name: "Preview", trait: "junior" as const, mood: "content" as const, seed: i * 131, roomSlot: 0 });
+  if (query.has("forks")) return <Canvas dpr={1} gl={{antialias:true}} style={{background:"#19141f"}}>
+    <DioramaCamera width={7.4} height={4.4} center={[0,-0.25,0]} />
+    <hemisphereLight args={["#ddd2ef","#493343",1.5]} />
+    <directionalLight position={[-3,5,6]} intensity={2.2} color="#ffe1bc" />
+    <SceneInstances>
+      {[0, Array.from({length:32},(_,i)=>i).find(i=>forkLook(person(i).seed).helmet)!].map((seed,row)=><group key={row} position={[0,-row*2.15,0]}>
+        {[0, Math.PI/2, Math.PI, -Math.PI/4].map((facing,column)=><group key={column} position={[(column-1.5)*1.7,0,0]}>
+          <Fork fork={person(seed)} layout={{walk:{z:0,xMin:0,xMax:0},stations:[{position:[0,0,0],facing,action:"inspect",hold:3600}]}} />
+          <Html position={[0,-0.23,0]} center style={{color:"#ddcbe9",font:"12px monospace",whiteSpace:"nowrap"}}>{["Frente","Perfil","Costas","3/4"][column]}</Html>
+        </group>)}
+      </group>)}
+    </SceneInstances>
+  </Canvas>;
   const sampleRooms = [{slot:1,kind:"cache_storage"},{slot:2,kind:"power_plant"},{slot:3,kind:"dorm"},{slot:4,kind:"elevator"},{slot:5,kind:"workshop"}] as const;
   if (query.has("overview") && entered === null) return <>
     <BunkerScene rooms={[...sampleRooms]} forks={[person(1), {...person(2),roomSlot:1}]} activeToday powered={powered} onSlotClick={(slot,built) => { setAction(`${slot}:${built}`); if (built) setEntered(slot); }} />
