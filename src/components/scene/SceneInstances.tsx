@@ -13,10 +13,11 @@ export const SceneInstancesContext = createContext(false);
  * Draws every opaque mesh of the subtree that shares a geometry shape and a
  * material (up to colour) as one InstancedMesh. Originals stay mounted but
  * hidden, so props, raycasts and disposal are untouched. Instance matrices
- * follow the originals each render, after every useFrame animation.
- * Meshes that animate their own visibility must opt out with userData.live.
- * Rebuilds after each commit of this component, and on its own when an
- * original unmounts, swaps geometry/material or a material changes in place.
+ * follow the originals each render, after every useFrame animation; static
+ * ones cost one matrix compare. Meshes that animate their own visibility must
+ * opt out with userData.live. Rebuilds after each commit of this component,
+ * and on its own when an original unmounts, swaps geometry/material or a
+ * WATCHed material property (power, concrete, opacity...) changes in place.
  */
 export function SceneInstances({ children }: { children: ReactNode }) {
   const root = useRef<Group>(null);
@@ -36,8 +37,9 @@ export function SceneInstances({ children }: { children: ReactNode }) {
 }
 
 type Entry = { holder: Record<string, unknown>; key: string; value: unknown };
-type Member = { mesh: Mesh; material: Material; geometry: BufferGeometry };
-type Batch = { mesh: InstancedMesh; members: Member[]; tint: boolean };
+type Member = { mesh: Mesh; material: Material; geometry: BufferGeometry; holder: Object3D; node: number };
+/** `worlds`/`states` remember each member's last world matrix and visibility. */
+type Batch = { mesh: InstancedMesh; members: Member[]; tint: boolean; worlds: Float64Array; states: Uint8Array };
 
 /** Groups `root`'s batchable meshes; `update` returns false once a rebuild is needed. */
 export function instanceMeshes(root: Object3D) {
@@ -55,6 +57,25 @@ export function instanceMeshes(root: Object3D) {
     if (bucket) bucket.push(mesh);
     else buckets.set(key, [mesh]);
   });
+
+  // Ancestors between members and root, parents first, so visibility and
+  // unmounts are checked once per group instead of once per member.
+  const nodes: Object3D[] = [];
+  const parents: (Object3D | null)[] = [];
+  const parentIndex: number[] = [];
+  const indices = new Map<Object3D, number>();
+  const indexOf = (node: Object3D): number => {
+    if (node === root) return -1;
+    let index = indices.get(node);
+    if (index === undefined) {
+      const parent = indexOf(node.parent!);
+      indices.set(node, index = nodes.length);
+      nodes.push(node);
+      parents.push(node.parent);
+      parentIndex.push(parent);
+    }
+    return index;
+  };
 
   const batches: Batch[] = [];
   const watched = new Map<Material, Entry[]>();
@@ -81,37 +102,47 @@ export function instanceMeshes(root: Object3D) {
       original.visible = false;
       const own = original.material as Material;
       if (!shared) watched.set(own, materials.get(own)!.entries);
-      return { mesh: original, material: own, geometry: original.geometry };
+      return { mesh: original, material: own, geometry: original.geometry, holder: original.parent!, node: indexOf(original.parent!) };
     });
-    batches.push({ mesh, members, tint });
+    const worlds = new Float64Array(meshes.length * 16).fill(NaN);
+    batches.push({ mesh, members, tint, worlds, states: new Uint8Array(meshes.length).fill(2) });
   }
 
   const inverse = new Matrix4();
   const local = new Matrix4();
+  const rootWorld = new Float64Array(16).fill(NaN);
+  const shown = new Uint8Array(nodes.length);
   function update() {
     for (const [material, entries] of watched) if (!entries.every(unchanged)) return drifted(material);
-    inverse.copy(root.matrixWorld).invert();
-    for (const { mesh, members, tint } of batches) {
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i]!;
+      if (node.parent !== parents[i]) return false; // unmounted
+      const parent = parentIndex[i]!;
+      shown[i] = node.visible && (parent < 0 || shown[parent]) ? 1 : 0;
+    }
+    const rootMoved = !same(root.matrixWorld.elements, rootWorld, 0);
+    if (rootMoved) {
+      rootWorld.set(root.matrixWorld.elements);
+      inverse.copy(root.matrixWorld).invert();
+    }
+    for (const { mesh, members, tint, worlds, states } of batches) {
       const matrices = mesh.instanceMatrix.array;
       const colors = mesh.instanceColor?.array;
       let moved = false;
       let tinted = false;
       for (let i = 0; i < members.length; i++) {
-        const { mesh: original, material, geometry } = members[i]!;
-        if (original.material !== material || original.geometry !== geometry) return false;
-        let shown = true;
-        for (let node = original.parent; node !== root; node = node.parent) {
-          if (!node) return false; // unmounted
-          shown &&= node.visible;
-        }
-        if (shown) local.multiplyMatrices(inverse, original.matrixWorld);
-        else local.makeScale(0, 0, 0);
-        const e = local.elements;
-        for (let k = 0; k < 16; k++) {
-          if (matrices[i * 16 + k] === Math.fround(e[k]!)) continue;
+        const { mesh: original, material, geometry, holder, node } = members[i]!;
+        if (original.material !== material || original.geometry !== geometry || original.parent !== holder) return false;
+        const state = node < 0 ? 1 : shown[node]!;
+        const world = original.matrixWorld.elements;
+        // Static props keep the same world matrix: one cheap compare, no multiply.
+        if (rootMoved || state !== states[i] || !same(world, worlds, i * 16)) {
+          states[i] = state;
+          worlds.set(world, i * 16);
+          if (state) local.multiplyMatrices(inverse, original.matrixWorld);
+          else local.makeScale(0, 0, 0);
           local.toArray(matrices, i * 16);
           moved = true;
-          break;
         }
         if (!tint) continue;
         const { r, g, b } = (material as Material & { color: Color }).color;
@@ -136,6 +167,8 @@ export function instanceMeshes(root: Object3D) {
       for (const member of members) member.mesh.visible = true;
     }
     batches.length = 0;
+    nodes.length = parents.length = parentIndex.length = 0;
+    watched.clear();
   }
 
   update();
@@ -160,6 +193,11 @@ function unchanged({ holder, key, value }: Entry) {
   return Object.is(holder[key], value);
 }
 
+function same(a: ArrayLike<number>, b: Float64Array, at: number) {
+  for (let k = 0; k < 16; k++) if (a[k] !== b[at + k]) return false;
+  return true;
+}
+
 // A material edited in place twice within a second is animated: leave it live.
 const volatile = new WeakSet<Material>();
 const lastDrift = new WeakMap<Material, number>();
@@ -171,9 +209,12 @@ function drifted(material: Material) {
 }
 
 const SKIP = new Set(["uuid", "id", "name", "version", "color", "_listeners"]);
+// What the scene edits in place (DioramaMaterial's power/concrete uniform `value`s, emissive r/g/b);
+// anything else only changes through a rebuild.
+const WATCH = new Set(["opacity", "visible", "emissiveIntensity", "value", "r", "g", "b"]);
 const classes = new Map<unknown, number>();
 
-/** Every own property but colour, as a key and as entries cheap to re-check each frame. */
+/** Every own property but colour as a key; the WATCH subset as entries re-checked each frame. */
 function describe(material: Material) {
   const entries: Entry[] = [];
   const parts: string[] = [];
@@ -182,7 +223,7 @@ function describe(material: Material) {
       const value = holder[key];
       // `__r3f` and kin are framework bookkeeping (props, parent mesh), not appearance.
       if ((depth === 0 && SKIP.has(key)) || key.startsWith("__") || typeof value === "function") continue;
-      entries.push({ holder, key, value });
+      if (WATCH.has(key)) entries.push({ holder, key, value });
       const nested = value !== null && typeof value === "object" && !(value as Texture).isTexture;
       parts.push(`${depth}${key}=${nested ? "{" : (value as Texture)?.isTexture ? (value as Texture).uuid : String(value)}`);
       if (nested && depth < 3) walk(value as Record<string, unknown>, depth + 1);

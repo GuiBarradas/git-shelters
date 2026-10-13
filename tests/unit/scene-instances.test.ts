@@ -145,7 +145,47 @@ it("never merges custom-shader materials once their uniforms drift", () => {
   instances.dispose();
   const rebuilt = instanceMeshes(root);
   expect(batches(root).map((mesh) => (mesh.material as DioramaMaterial).power)).toEqual([0.06]); // left now twins dim
+  expect(rebuilt.update()).toBe(true);
+  dim.concrete = 1;
+  expect(rebuilt.update()).toBe(false);
   rebuilt.dispose();
+});
+
+it("rewrites instance matrices only when a member's world pose or visibility changes", () => {
+  const root = new Group();
+  const fork = new Group(); // walks without LIVE, like Fork's root group
+  root.add(fork);
+  const geometry = new BoxGeometry();
+  const material = new MeshToonMaterial();
+  [0, 1].forEach((x) => add(fork, new Mesh(geometry, material), x));
+  const instances = instanceMeshes(root);
+  const [batch] = batches(root);
+  const version = batch!.instanceMatrix.version;
+
+  root.updateMatrixWorld(true);
+  expect(instances.update()).toBe(true);
+  expect(batch!.instanceMatrix.version).toBe(version); // static frame: nothing uploaded
+
+  fork.position.x = 3;
+  root.updateMatrixWorld(true);
+  expect(instances.update()).toBe(true);
+  expect(translations(batch!)).toEqual([3, 4]);
+
+  root.position.x = 10; // the batch lives under root, so root-relative poses stay put
+  root.updateMatrixWorld(true);
+  expect(instances.update()).toBe(true);
+  expect(translations(batch!)).toEqual([3, 4]);
+
+  fork.visible = false;
+  expect(instances.update()).toBe(true);
+  expect(translations(batch!)).toEqual([0, 0]);
+  fork.visible = true;
+  expect(instances.update()).toBe(true);
+  expect(translations(batch!)).toEqual([3, 4]);
+
+  fork.removeFromParent();
+  expect(instances.update()).toBe(false);
+  instances.dispose();
 });
 
 
