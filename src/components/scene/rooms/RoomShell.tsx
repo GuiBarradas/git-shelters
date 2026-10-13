@@ -23,7 +23,14 @@ rounded(rim, -2.17, -0.22, 4.34, 3.45, 0.48);
 const opening = new Path();
 rounded(opening, -1.97, 0.01, 3.94, 2.98, 0.42);
 rim.holes.push(opening);
-const rimGeometry = new ExtrudeGeometry(rim, { depth: 0.16, bevelEnabled: false, curveSegments: 4, steps: 1 });
+const rimGeometry = new ExtrudeGeometry(rim, { depth: 0.34, bevelEnabled: true, bevelThickness: 0.085, bevelSize: 0.07, bevelSegments: 2, curveSegments: 6, steps: 1 });
+
+const inset = new Shape();
+rounded(inset, -2.02, -0.04, 4.04, 3.10, 0.43);
+const insetOpening = new Path();
+rounded(insetOpening, -1.90, 0.09, 3.80, 2.85, 0.36);
+inset.holes.push(insetOpening);
+const insetGeometry = new ExtrudeGeometry(inset, { depth:0.18, bevelEnabled:true, bevelThickness:0.035, bevelSize:0.035, bevelSegments:1, curveSegments:6 });
 
 /** Rounded pressure hull; front lane and panel anchors retain their footprint. */
 export function RoomShell({ children, light = palette.lampWarm, lightIntensity = 6, tone = "#514551", dim = false, powered = true }: {
@@ -40,7 +47,8 @@ export function RoomShell({ children, light = palette.lampWarm, lightIntensity =
     </>}
     <mesh position={[0, 3.1, 0]}><SoftBoxGeometry args={[4.25, 0.22, 3]} /><dioramaMaterial power={powered ? 1 : 0.06} color={dim ? "#2c2934" : "#5b5260"} /></mesh>
     {[-1, 1].map(side => <mesh key={side} position={[side * 2.07, 1.5, 0]}><boxGeometry args={[0.16, 3, 3]} /><dioramaMaterial power={powered ? 1 : 0.06} color={dim ? "#292631" : "#4c4354"} /></mesh>)}
-    <mesh geometry={rimGeometry} dispose={null} position={[0, 0, 1.38]}><dioramaMaterial power={powered ? 1 : 0.06} color={dim ? "#39313f" : "#82717c"} /></mesh>
+    <mesh geometry={rimGeometry} dispose={null} position={[0, 0, 1.20]}><dioramaMaterial concrete={1} power={powered ? 1 : 0.06} color={dim ? "#504152" : "#b29298"} /></mesh>
+    <mesh geometry={insetGeometry} dispose={null} position={[0,0,1.02]}><dioramaMaterial concrete={1} power={powered ? 1 : 0.06} color="#6a545d" /></mesh>
     {!dim && <>
       <mesh position={[0, 2.88, -0.35]}><SoftBoxGeometry args={[1.45, 0.13, 0.5]} /><dioramaMaterial power={powered ? 1 : 0.06} color={palette.oldWoodBrown} /></mesh>
       <mesh position={[0, 2.79, -0.35]}><SoftBoxGeometry args={[1.25, 0.045, 0.36]} /><meshBasicMaterial color={powered ? palette.lampWarm : palette.oldWoodBrown} /></mesh>

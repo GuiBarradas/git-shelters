@@ -45,8 +45,8 @@ export class DioramaMaterial extends MeshStandardMaterial {
         float corner = smoothstep(0.0,0.32,min(2.02-abs(p.x),p.z+1.32));
         float contact = mix(0.65,1.0,corner);
         outgoingLight = (outgoingLight + diffuseColor.rgb * localLight * shelterPower) * contact;
-        float wear = mix(0.87,1.08,shelterNoise(p * 32.0));
-        float patches = mix(0.86,1.04,shelterNoise(p * 5.0));
+        float wear = mix(0.97,1.03,shelterNoise(p * 24.0));
+        float patches = mix(0.90,1.07,shelterNoise(p * 3.0));
         outgoingLight *= mix(1.0,wear * patches,shelterConcrete);
         #include <opaque_fragment>`);
   }
