@@ -161,7 +161,7 @@ export default function BunkerScene({
       <hemisphereLight args={["#978dbb", "#30232f", powered ? 0.42 : 0.18]} />
       <directionalLight position={[-3, 8, 10]} color={palette.lampWarm} intensity={powered ? 0.65 : 0.18} />
 
-      <SceneInstances>
+      <SceneInstances simpleLighting={quality === "low"}>
       {/* the earth the bunker is dug into */}
       <mesh position={[0, LOWER_Y - 2.2, -1]}>
         <boxGeometry args={[ROW_WIDTH * 3, 4, CELL.d + 6]} />

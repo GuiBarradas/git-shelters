@@ -137,7 +137,7 @@ it("never merges custom-shader materials once their uniforms drift", () => {
   const [batch, ...rest] = batches(root);
   expect(rest).toHaveLength(0);
   expect(batch!.count).toBe(2);
-  expect((batch!.material as DioramaMaterial).customProgramCacheKey()).toBe("shelter-local-light-v1");
+  expect((batch!.material as DioramaMaterial).customProgramCacheKey()).toBe(left.customProgramCacheKey());
   expect((batch!.material as DioramaMaterial).power).toBe(1);
 
   left.power = 0.06; // a room loses power in place: the batch must rebuild
@@ -222,4 +222,17 @@ it("instances matching merged rooms and recovers after a room rebuild", () => {
   instances.dispose();
   cleanup[1]!();
   expect(rooms.every(room => room.children.length === 2 && room.children.every(mesh => mesh.visible))).toBe(true);
+});
+
+
+it("preserves the low-cost lighting program when cloning for instancing", () => {
+  const material = new DioramaMaterial();
+  const full = material.customProgramCacheKey();
+  material.simpleLighting = true;
+  const copy = material.clone();
+  expect(copy.simpleLighting).toBe(true);
+  expect(copy.customProgramCacheKey()).not.toBe(full);
+  copy.simpleLighting = false;
+  expect(copy.customProgramCacheKey()).toBe(full);
+  expect(material.simpleLighting).toBe(true);
 });

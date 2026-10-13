@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useLayoutEffect, useRef, type ReactNode } from "react";
+import { DioramaMaterial } from "./DioramaMaterial";
 import {
   AdditiveBlending, InstancedBufferAttribute, InstancedMesh, Material, Matrix4, Mesh,
   type BufferGeometry, type Color, type Group, type InstancedBufferGeometry, type Object3D, type Texture,
@@ -19,10 +20,14 @@ export const SceneInstancesContext = createContext(false);
  * and on its own when an original unmounts, swaps geometry/material or a
  * WATCHed material property (power, concrete, opacity...) changes in place.
  */
-export function SceneInstances({ children }: { children: ReactNode }) {
+export function SceneInstances({ children, simpleLighting = false }: { children: ReactNode; simpleLighting?: boolean }) {
   const root = useRef<Group>(null);
   useLayoutEffect(() => {
     const group = root.current!;
+    group.traverse(object => {
+      const material = (object as Mesh).material;
+      if (material instanceof DioramaMaterial) material.simpleLighting = simpleLighting;
+    });
     let scene: Object3D = group;
     while (scene.parent) scene = scene.parent;
     let instances = instanceMeshes(group);

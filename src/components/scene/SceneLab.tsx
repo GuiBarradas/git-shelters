@@ -40,7 +40,7 @@ function Scene() {
     <PerformanceMonitor ms={500} iterations={4} threshold={0.5} bounds={() => [60,65]} onDecline={() => setDpr(value => Math.max(0.75,value - 0.1))} />
     <DioramaCamera width={selected === "empty" ? 5.2 : 24} height={selected === "empty" ? 4.1 : count / 5 * 4} center={[0,selected === "empty" ? 1.5 : 1.5 - (count / 5 - 1) * 2,0]} />
     <hemisphereLight args={["#978dbb","#30232f",powered ? 0.42 : 0.18]} /><directionalLight position={[-3,8,10]} intensity={powered ? 0.65 : 0.18} color="#ffe2b4" />
-    <SceneInstances>
+    <SceneInstances simpleLighting={quality === "low"}>
     {selected === "empty" ? <EmptyCell highlight preview={{kind: "workshop", missingBytes: 80}} /> : Array.from({length:count},(_,i) => <group key={i} position={[(i%5-2)*4.55,-Math.floor(i/5)*4,0]}>
       <RoomOccupants.Provider value={i%5===0?2:1}>
         {kinds[i%6] === null ? <MainBranchRoom powered={powered} active /> : <BuiltRoom kind={kinds[i%6]!} powered={powered} />}
