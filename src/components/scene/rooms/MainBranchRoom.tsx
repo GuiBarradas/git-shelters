@@ -2,13 +2,14 @@
 
 import { useFrame } from "@react-three/fiber";
 import { memo, useRef } from "react";
-import type { Mesh, MeshToonMaterial } from "three";
+import type { Mesh, MeshStandardMaterial } from "three";
 import { BoxGeometry } from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
 import type { RoomLayout } from "@/components/scene/Fork";
 import { palette } from "@/lib/palette";
 
+import { SurfaceDetail } from "./SurfaceDetail";
 import { RoomShell } from "./RoomShell";
 import { LIVE, SoftBoxGeometry, RoomLight, Planter } from "./Details";
 
@@ -70,7 +71,7 @@ export const LAYOUT: RoomLayout = {
 
 // Memoised: its static batch rebuilds on every render.
 export const MainBranchRoom = memo(function MainBranchRoom({ pending = false, active = false, powered = true }: Props) {
-  const screen = useRef<MeshToonMaterial>(null);
+  const screen = useRef<MeshStandardMaterial>(null);
   const leds = useRef<Mesh[]>([]);
 
   useFrame(({ clock }) => {
@@ -83,89 +84,91 @@ export const MainBranchRoom = memo(function MainBranchRoom({ pending = false, ac
     leds.current.forEach((led, i) => {
       if (!led) return;
       const on = Math.sin(t * (1.7 + i * 0.9) + i) > 0.2;
-      (led.material as MeshToonMaterial).emissiveIntensity = on ? 1.6 : 0.1;
+      (led.material as MeshStandardMaterial).emissiveIntensity = on ? 1.6 : 0.1;
     });
   });
 
   const screenColor = pending ? palette.phosphorViolet : active ? palette.phosphorViolet : palette.glowYellow;
 
   return (
-    <RoomShell light={active ? palette.amber : palette.lampWarm} lightIntensity={active ? 5.5 : 4.5} powered={powered}>
+    <RoomShell tone="#494553" light={active ? palette.amber : palette.lampWarm} lightIntensity={active ? 5.5 : 4.5} powered={powered}>
+      <SurfaceDetail tile={7} position={[1.48, 1.85, -1.23]} size={[0.65, 0.85]} />
+      <SurfaceDetail tile={6} position={[-0.45, 1.55, -1.23]} size={[0.48, 0.55]} />
       {/* desk: waist height for a 1.45-tall survivor */}
       <mesh position={[0.55, 0.66, -0.55]}>
         <SoftBoxGeometry args={[2.1, 0.1, 0.9]} />
-        <meshToonMaterial color={palette.oldWoodBrown} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.oldWoodBrown} />
       </mesh>
       {[-0.95, 0.95].map((x) => (
         <mesh key={x} position={[0.55 + x, 0.31, -0.55]}>
           <SoftBoxGeometry args={[0.1, 0.62, 0.7]} />
-          <meshToonMaterial color={palette.oldWoodBrown} />
+          <dioramaMaterial power={powered ? 1 : 0.06} color={palette.oldWoodBrown} />
         </mesh>
       ))}
       {/* terminal: base plate, neck, body with a stepped bezel, screen, power LED */}
       <mesh position={[0.55, 0.735, -0.75]}>
         <SoftBoxGeometry args={[0.5, 0.03, 0.36]} />
-        <meshToonMaterial color="#8a7d5c" />
+        <dioramaMaterial power={powered ? 1 : 0.06} color="#8a7d5c" />
       </mesh>
       <mesh position={[0.55, 0.8, -0.78]}>
         <SoftBoxGeometry args={[0.16, 0.1, 0.14]} />
-        <meshToonMaterial color="#6f6448" />
+        <dioramaMaterial power={powered ? 1 : 0.06} color="#6f6448" />
       </mesh>
       <mesh position={[0.55, 1.14, -0.78]}>
         <SoftBoxGeometry args={[1.12, 0.86, 0.44]} />
-        <meshToonMaterial color={palette.concreteTan} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.concreteTan} />
       </mesh>
       <mesh position={[0.55, 1.14, -0.545]}>
         <SoftBoxGeometry args={[1.04, 0.78, 0.04]} />
-        <meshToonMaterial color="#5a523c" />
+        <dioramaMaterial power={powered ? 1 : 0.06} color="#5a523c" />
       </mesh>
       <mesh position={[0.55, 1.14, -0.52]}>
         <planeGeometry args={[0.99, 0.72]} />
-        <meshToonMaterial color={palette.coalBlack} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} />
       </mesh>
       <mesh position={SCREEN.position} userData={LIVE}>
         <planeGeometry args={[SCREEN.width, SCREEN.height]} />
-        <meshToonMaterial ref={screen} color="#150a26" emissive={screenColor} emissiveIntensity={1} />
+        <dioramaMaterial power={powered ? 1 : 0.06} ref={screen} color="#150a26" emissive={screenColor} emissiveIntensity={1} />
       </mesh>
       <mesh position={[1.02, 0.78, -0.54]}>
         <SoftBoxGeometry args={[0.04, 0.04, 0.02]} />
-        <meshToonMaterial color={palette.coalBlack} emissive={palette.phosphorViolet} emissiveIntensity={1.4} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} emissive={palette.phosphorViolet} emissiveIntensity={1.4} />
       </mesh>
       {/* keyboard: tilted base with three rows of keys and a space bar */}
       <group position={[-0.05, 0.71, -0.22]} rotation={[0.12, 0.35, 0]}>
         <mesh position={[0, 0.02, 0]}>
           <SoftBoxGeometry args={[0.72, 0.04, 0.26]} />
-          <meshToonMaterial color="#2b2d31" />
+          <dioramaMaterial power={powered ? 1 : 0.06} color="#2b2d31" />
         </mesh>
-        <mesh geometry={keyboard} dispose={null}><meshToonMaterial color={palette.boneWhite} /></mesh>
+        <mesh geometry={keyboard} dispose={null}><dioramaMaterial power={powered ? 1 : 0.06} color={palette.boneWhite} /></mesh>
         <mesh position={[0.02, 0.055, 0.095]}>
           <SoftBoxGeometry args={[0.3, 0.03, 0.05]} />
-          <meshToonMaterial color={palette.boneWhite} />
+          <dioramaMaterial power={powered ? 1 : 0.06} color={palette.boneWhite} />
         </mesh>
       </group>
       {/* chair at the desk, facing the screen; the Fork sits here to type */}
       <group position={[-0.32, 0, 0.42]} rotation={[0, -0.35, 0]}>
         <mesh position={[0, 0.3, 0]}>
           <cylinderGeometry args={[0.28, 0.25, 0.12, 12]} />
-          <meshToonMaterial color={palette.fadedRed} />
+          <dioramaMaterial power={powered ? 1 : 0.06} color={palette.fadedRed} />
         </mesh>
         <mesh position={[0, 0.6, 0.24]}>
           <SoftBoxGeometry args={[0.54, 0.55, 0.16]} />
-          <meshToonMaterial color={palette.fadedRed} />
+          <dioramaMaterial power={powered ? 1 : 0.06} color={palette.fadedRed} />
         </mesh>
         <mesh position={[0, 0.14, 0]}>
           <cylinderGeometry args={[0.04, 0.04, 0.28, 8]} />
-          <meshToonMaterial color={palette.coalBlack} />
+          <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} />
         </mesh>
         <mesh position={[0, 0.02, 0]}>
           <cylinderGeometry args={[0.25, 0.25, 0.04, 12]} />
-          <meshToonMaterial color={palette.coalBlack} />
+          <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} />
         </mesh>
       </group>
       {/* server rack with LEDs */}
       <mesh position={[-1.4, 1.1, -0.9]}>
         <SoftBoxGeometry args={[0.7, 2.2, 0.7]} />
-        <meshToonMaterial color="#23262b" />
+        <dioramaMaterial power={powered ? 1 : 0.06} color="#23262b" />
       </mesh>
       {[0, 1, 2, 3].map((i) => (
         <mesh
@@ -177,59 +180,59 @@ export const MainBranchRoom = memo(function MainBranchRoom({ pending = false, ac
           }}
         >
           <SoftBoxGeometry args={[0.08, 0.08, 0.03]} />
-          <meshToonMaterial color={palette.coalBlack} emissive={i % 3 === 0 ? palette.fadedRed : palette.phosphorViolet} emissiveIntensity={1} />
+          <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} emissive={i % 3 === 0 ? palette.fadedRed : palette.phosphorViolet} emissiveIntensity={1} />
         </mesh>
       ))}
       {/* rack detail: three blade slots and a vent strip, so it reads as hardware, not a box */}
       {[1.35, 1.0, 0.65].map((y) => (
         <mesh key={y} position={[-1.4, y, -0.54]}>
           <SoftBoxGeometry args={[0.6, 0.22, 0.02]} />
-          <meshToonMaterial color="#15171b" />
+          <dioramaMaterial power={powered ? 1 : 0.06} color="#15171b" />
         </mesh>
       ))}
       <mesh position={[-1.4, 0.25, -0.54]}>
         <SoftBoxGeometry args={[0.6, 0.12, 0.02]} />
-        <meshToonMaterial color={palette.coalBlack} emissive={palette.amber} emissiveIntensity={powered ? 0.35 : 0} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} emissive={palette.amber} emissiveIntensity={powered ? 0.35 : 0} />
       </mesh>
       {/* cable bundle from the rack to the desk, along the wall base */}
       <mesh position={[-0.4, 0.05, -1.15]}>
         <SoftBoxGeometry args={[1.9, 0.06, 0.08]} />
-        <meshToonMaterial color="#1c1e22" />
+        <dioramaMaterial power={powered ? 1 : 0.06} color="#1c1e22" />
       </mesh>
       <mesh position={[0.55, 0.3, -0.98]}>
         <SoftBoxGeometry args={[0.05, 0.6, 0.05]} />
-        <meshToonMaterial color="#1c1e22" />
+        <dioramaMaterial power={powered ? 1 : 0.06} color="#1c1e22" />
       </mesh>
       {/* desk clutter: mug, papers, a notebook */}
       <mesh position={[1.3, 0.78, -0.3]}>
         <cylinderGeometry args={[0.07, 0.06, 0.14, 10]} />
-        <meshToonMaterial color={palette.boneWhite} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.boneWhite} />
       </mesh>
       <mesh position={[1.38, 0.79, -0.3]}>
         <torusGeometry args={[0.035, 0.012, 6, 10]} />
-        <meshToonMaterial color={palette.boneWhite} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.boneWhite} />
       </mesh>
       <mesh position={[1.25, 0.72, -0.8]} rotation={[0, 0.2, 0]}>
         <SoftBoxGeometry args={[0.32, 0.03, 0.42]} />
-        <meshToonMaterial color="#d9d2b8" />
+        <dioramaMaterial power={powered ? 1 : 0.06} color="#d9d2b8" />
       </mesh>
       <mesh position={[-0.25, 0.72, -0.75]} rotation={[0, -0.15, 0]}>
         <SoftBoxGeometry args={[0.28, 0.025, 0.36]} />
-        <meshToonMaterial color={palette.steelBlue} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.steelBlue} />
       </mesh>
       {/* desk lamp: base, arm, head, and its own warm pool of light */}
       <group position={[1.35, 0.71, -0.85]}>
         <mesh position={[0, 0.02, 0]}>
           <cylinderGeometry args={[0.1, 0.11, 0.04, 10]} />
-          <meshToonMaterial color={palette.coalBlack} />
+          <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} />
         </mesh>
         <mesh position={[0.08, 0.3, 0]} rotation={[0, 0, -0.35]}>
           <SoftBoxGeometry args={[0.04, 0.6, 0.04]} />
-          <meshToonMaterial color={palette.coalBlack} />
+          <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} />
         </mesh>
         <mesh position={[0.24, 0.55, 0]} rotation={[0, 0, 0.9]}>
           <coneGeometry args={[0.12, 0.2, 10, 1, true]} />
-          <meshToonMaterial color={palette.coalBlack} emissive={palette.amber} emissiveIntensity={powered ? 0.9 : 0} side={2} />
+          <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} emissive={palette.amber} emissiveIntensity={powered ? 0.9 : 0} side={2} />
         </mesh>
         <RoomLight position={[0.3, 0.45, 0.1]} color={palette.amber} intensity={powered ? 1.6 : 0} distance={2.2} decay={2} />
       </group>
@@ -238,23 +241,23 @@ export const MainBranchRoom = memo(function MainBranchRoom({ pending = false, ac
       {/* filing cabinet in the corner */}
       <mesh position={[1.78, 0.55, -0.95]}>
         <SoftBoxGeometry args={[0.38, 1.1, 0.5]} />
-        <meshToonMaterial color={palette.steelBlue} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.steelBlue} />
       </mesh>
       {[0.85, 0.55, 0.25].map((y) => (
         <mesh key={y} position={[1.78, y, -0.69]}>
           <SoftBoxGeometry args={[0.16, 0.03, 0.03]} />
-          <meshToonMaterial color={palette.boneWhite} />
+          <dioramaMaterial power={powered ? 1 : 0.06} color={palette.boneWhite} />
         </mesh>
       ))}
       {/* rubber mat under the chair */}
       <mesh position={[-0.32, 0.005, 0.42]}>
         <SoftBoxGeometry args={[1.1, 0.01, 1.0]} />
-        <meshToonMaterial color="#1e2026" />
+        <dioramaMaterial power={powered ? 1 : 0.06} color="#1e2026" />
       </mesh>
       {/* pinned map on the wall, with pins; the wall face is at z = -1.25 */}
       <mesh position={[-0.2, 2.2, -1.22]}>
         <planeGeometry args={[0.9, 0.6]} />
-        <meshToonMaterial color={palette.boneWhite} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.boneWhite} />
       </mesh>
       {(
         [
@@ -265,26 +268,26 @@ export const MainBranchRoom = memo(function MainBranchRoom({ pending = false, ac
       ).map(([x, y], i) => (
         <mesh key={i} position={[x, y, -1.2]}>
           <SoftBoxGeometry args={[0.04, 0.04, 0.03]} />
-          <meshToonMaterial color={i === 1 ? palette.phosphorViolet : palette.fadedRed} />
+          <dioramaMaterial power={powered ? 1 : 0.06} color={i === 1 ? palette.phosphorViolet : palette.fadedRed} />
         </mesh>
       ))}
       {/* wall clock, stopped at the Merge Conflict */}
       <mesh position={[1.2, 2.3, -1.22]} rotation={[Math.PI / 2, 0, 0]}>
         <cylinderGeometry args={[0.2, 0.2, 0.04, 16]} />
-        <meshToonMaterial color={palette.boneWhite} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.boneWhite} />
       </mesh>
       <mesh position={[1.2, 2.36, -1.19]}>
         <SoftBoxGeometry args={[0.02, 0.13, 0.01]} />
-        <meshToonMaterial color={palette.coalBlack} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} />
       </mesh>
       <mesh position={[1.26, 2.3, -1.19]} rotation={[0, 0, -1.1]}>
         <SoftBoxGeometry args={[0.02, 0.15, 0.01]} />
-        <meshToonMaterial color={palette.coalBlack} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} />
       </mesh>
       {/* a pipe along the top of the back wall */}
       <mesh position={[0, 2.8, -1.1]} rotation={[0, 0, Math.PI / 2]}>
         <cylinderGeometry args={[0.06, 0.06, 3.9, 10]} />
-        <meshToonMaterial color={palette.concrete} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.concrete} />
       </mesh>
       <Planter position={[1.65, 0, 0.65]} />
     </RoomShell>

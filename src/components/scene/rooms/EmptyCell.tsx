@@ -27,12 +27,12 @@ export const EmptyCell = memo(function EmptyCell({ highlight = false, locked = f
       <RoomShell dim>
         <mesh position={[0, 1.5, 0.9]}>
           <SoftBoxGeometry args={[3.6, 2.7, 0.16]} />
-          <meshToonMaterial color="#1a171f" />
+          <dioramaMaterial power={0.12} color="#1a171f" />
         </mesh>
         {[-0.9, 0.9].map((x) => (
           <mesh key={x} position={[x, 1.5, 1.0]} rotation={[0, 0, x > 0 ? 0.6 : -0.6]}>
             <boxGeometry args={[0.12, 1.6, 0.04]} />
-            <meshToonMaterial color={palette.violetDim} emissive={palette.violetDim} emissiveIntensity={highlight ? 0.5 : 0.15} />
+            <dioramaMaterial power={0.12} color={palette.violetDim} emissive={palette.violetDim} emissiveIntensity={highlight ? 0.5 : 0.15} />
           </mesh>
         ))}
       </RoomShell>
@@ -44,7 +44,7 @@ export const EmptyCell = memo(function EmptyCell({ highlight = false, locked = f
       {RUBBLE.map(([x, y, z, s], i) => (
         <mesh key={i} position={[x, y, z]} rotation={[0.2 * i, 0.5 * i, 0]}>
           <boxGeometry args={[s, s, s]} />
-          <meshToonMaterial color="#33363c" />
+          <dioramaMaterial power={0.12} color="#33363c" />
         </mesh>
       ))}
       {/* build frame */}

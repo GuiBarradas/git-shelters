@@ -1,5 +1,5 @@
 import { expect, it, vi } from "vitest";
-import { BoxGeometry, Group, Mesh, MeshToonMaterial, Raycaster, Vector3 } from "three";
+import { BoxGeometry, Group, Mesh, MeshToonMaterial, Raycaster, Vector3, Texture } from "three";
 import { batch, LIVE } from "@/components/scene/rooms/Details";
 
 it("batches colours within each moving pivot and restores raycastable originals on cleanup", () => {
@@ -45,4 +45,21 @@ it("batches colours within each moving pivot and restores raycastable originals 
   disposals.forEach(dispose => expect(dispose).toHaveBeenCalledOnce());
   expect(sharedDisposal).not.toHaveBeenCalled();
   geometry.dispose(); red.dispose(); blue.dispose();
+});
+
+it("retains atlas UVs and the shared map when batching textured marks", () => {
+  const root = new Group();
+  const geometry = new BoxGeometry();
+  const map = new Texture();
+  const material = new MeshToonMaterial({ map, alphaTest: 0.4 });
+  root.add(new Mesh(geometry, material), new Mesh(geometry, material));
+  const cleanup = batch(root);
+  const merged = root.children[2] as Mesh;
+  const expected = geometry.toNonIndexed();
+  expect(Array.from(merged.geometry.getAttribute("uv").array)).toEqual([
+    ...expected.getAttribute("uv").array, ...expected.getAttribute("uv").array,
+  ]);
+  expect((merged.material as MeshToonMaterial).map).toBe(map);
+  cleanup();
+  expected.dispose(); geometry.dispose(); material.dispose(); map.dispose();
 });

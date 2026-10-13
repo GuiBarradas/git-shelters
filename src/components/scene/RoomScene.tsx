@@ -8,8 +8,10 @@ import type { Fork as ForkData } from "@/lib/forks/catalog";
 import { palette } from "@/lib/palette";
 import type { RoomKind } from "@/lib/rooms/catalog";
 
+import { QualityControl, SceneEffects, useQuality } from "./SceneQuality";
+import { SceneInstances } from "./SceneInstances";
 import { Fork } from "./Fork";
-import { CloseUpLighting } from "./rooms/Details";
+import { CloseUpLighting, RoomOccupants } from "./rooms/Details";
 import { BuiltRoom, CELL, MainBranchRoom, panelAnchor, roomLayout } from "./rooms";
 
 /** CSS pixels per world unit in drei's transform mode (measured, camera-independent). */
@@ -57,27 +59,34 @@ export default function RoomScene({
   onForkHover,
   powered = true,
 }: RoomSceneProps) {
+  const quality = useQuality();
   const anchor = panelAnchor(kind);
   return (
+    <>
+    <QualityControl value={quality} />
     <Canvas
-      dpr={[1, 1.5]}
-      gl={{ antialias: true, powerPreference: "high-performance" }}
-      style={{ background: palette.coalBlack }}
+      dpr={quality === "high" ? 1.5 : 1}
+      gl={{ antialias: false, powerPreference: "high-performance" }}
+      style={{ background: "radial-gradient(ellipse, #211529, #0c0911 75%)" }}
     >
       <Camera />
-      <ambientLight color={palette.boneWhite} intensity={0.55} />
-      <directionalLight position={[6, 10, 8]} color={palette.boneWhite} intensity={0.45} />
+      <ambientLight color={palette.boneWhite} intensity={0.3} />
+      <directionalLight position={[6, 10, 8]} color={palette.boneWhite} intensity={0.5} />
 
+      <SceneInstances>
       <CloseUpLighting.Provider value={true}>
-        {kind === null ? (
-          <MainBranchRoom active={activeToday} pending={eventPending} powered={powered} />
-        ) : (
-          <BuiltRoom kind={kind} powered={powered} />
-        )}
+        <RoomOccupants.Provider value={forks.length}>
+          {kind === null ? (
+            <MainBranchRoom active={activeToday} pending={eventPending} powered={powered} />
+          ) : (
+            <BuiltRoom kind={kind} powered={powered} />
+          )}
+        </RoomOccupants.Provider>
       </CloseUpLighting.Provider>
       {forks.map((f) => (
         <Fork key={f.id} fork={f} layout={roomLayout(kind)} onClick={onForkClick} onHover={onForkHover} />
       ))}
+      </SceneInstances>
       {panel && (
         // CSS3D panel glued to the room's read-out surface (monitor, clipboard, gauge).
         <Html
@@ -91,6 +100,8 @@ export default function RoomScene({
           {panel}
         </Html>
       )}
+      <SceneEffects quality={quality} closeUp />
     </Canvas>
+    </>
   );
 }

@@ -5,6 +5,8 @@ import type { ThreeElements } from "@react-three/fiber";
 import { AdditiveBlending, CircleGeometry, Float32BufferAttribute, Matrix4, Mesh, type Group, type MeshBasicMaterial } from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import "../DioramaMaterial";
+import { SceneInstancesContext } from "../SceneInstances";
 import { palette } from "@/lib/palette";
 
 /** userData for a mesh whose material animates or a group that moves: batching leaves it live. */
@@ -18,8 +20,9 @@ export const LIVE = { live: true };
  */
 export function StaticBatch({ children, deps }: { children: ReactNode; deps?: DependencyList }) {
   const root = useRef<Group>(null);
+  const instanced = useContext(SceneInstancesContext);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useLayoutEffect(() => batch(root.current!), deps);
+  useLayoutEffect(() => instanced ? undefined : batch(root.current!), deps ? [...deps, instanced] : undefined);
   return <group ref={root}>{children}</group>;
 }
 
@@ -56,7 +59,7 @@ export function batch(root: Group) {
         colors[i * 3 + 1] = color.g * (base ? base.getY(i) : 1);
         colors[i * 3 + 2] = color.b * (base ? base.getZ(i) : 1);
       }
-      for (const name of Object.keys(part.attributes)) if (name !== "position" && name !== "normal") part.deleteAttribute(name);
+      for (const name of Object.keys(part.attributes)) if (name !== "position" && name !== "normal" && !(name === "uv" && (mesh.material as MeshBasicMaterial).map)) part.deleteAttribute(name);
       part.setAttribute("color", new Float32BufferAttribute(colors, 3));
       return part.applyMatrix4(toAnchor.multiplyMatrices(inverse, mesh.matrixWorld));
     });
@@ -84,6 +87,8 @@ export function batch(root: Group) {
   };
 }
 
+/** Assigned Forks, not a claim that the room is producing resources. */
+export const RoomOccupants = createContext(0);
 /** Local lights only in close-up, never ten rooms at once. */
 export const CloseUpLighting = createContext(false);
 export function RoomLight(props: ThreeElements["pointLight"]) {

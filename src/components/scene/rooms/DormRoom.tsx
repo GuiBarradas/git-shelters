@@ -3,6 +3,7 @@
 import type { RoomLayout } from "@/components/scene/Fork";
 import { palette } from "@/lib/palette";
 
+import { SurfaceDetail } from "./SurfaceDetail";
 import { RoomShell } from "./RoomShell";
 import { SoftBoxGeometry, RoomLight, LightPool } from "./Details";
 
@@ -43,35 +44,38 @@ export function DormRoom({ powered = true }: { powered?: boolean }) {
   ];
 
   return (
-    <RoomShell light={palette.lampWarm} lightIntensity={4.5} powered={powered}>
+    <RoomShell tone="#55434a" light={palette.lampWarm} lightIntensity={4.5} powered={powered}>
+      <SurfaceDetail tile={6} position={[0.15, 1.5, -1.23]} size={[0.7, 0.8]} />
       {/* bunk posts */}
       {posts.map(([x, z], i) => (
         <mesh key={i} position={[x, BUNK.posts / 2, z]}>
           <SoftBoxGeometry args={[0.1, BUNK.posts, 0.1]} />
-          <meshToonMaterial color={palette.oldWoodBrown} />
+          <dioramaMaterial power={powered ? 1 : 0.06} color={palette.oldWoodBrown} />
         </mesh>
       ))}
       {/* two bunks: slat frame, mattress, blanket, pillow */}
       {[BUNK.lower, BUNK.upper].map((y, i) => (
         <group key={y} position={[BUNK.x, y, BUNK.z]}>
+          <SurfaceDetail tile={3} position={[0.25, 0.139, 0]} size={[BUNK.length - 0.76, BUNK.depth - 0.26]} floor />
+          <SurfaceDetail tile={3} position={[0.25, -0.03, 0.412]} size={[1.05, 0.26]} />
           <mesh position={[0, -0.06, 0]}>
             <SoftBoxGeometry args={[BUNK.length, 0.08, BUNK.depth]} />
-            <meshToonMaterial color={palette.oldWoodBrown} />
+            <dioramaMaterial power={powered ? 1 : 0.06} color={palette.oldWoodBrown} />
           </mesh>
           <mesh position={[0, 0.04, 0]}>
             <SoftBoxGeometry args={[BUNK.length - 0.14, 0.18, BUNK.depth - 0.14]} />
-            <meshToonMaterial color={palette.boneWhite} />
+            <dioramaMaterial power={powered ? 1 : 0.06} color={palette.boneWhite} />
           </mesh>
           <mesh position={[0.25, 0.11, 0]}>
             <SoftBoxGeometry args={[BUNK.length - 0.7, 0.05, BUNK.depth - 0.2]} />
-            <meshToonMaterial color={i === 0 ? palette.steelBlue : palette.fadedRed} />
+            <dioramaMaterial power={powered ? 1 : 0.06} color={i === 0 ? palette.steelBlue : palette.fadedRed} />
           </mesh>
           <mesh position={[-BUNK.length / 2 + 0.35, 0.13, 0]}>
             <SoftBoxGeometry args={[0.44, 0.17, 0.52]} />
-            <meshToonMaterial color={palette.boneWhite} />
+            <dioramaMaterial power={powered ? 1 : 0.06} color={palette.boneWhite} />
           </mesh>
           <mesh position={[0.25, -0.03, 0.37]} rotation={[0.12, 0, 0]}>
-            <SoftBoxGeometry args={[1.15, 0.33, 0.07]} /><meshToonMaterial color={i === 0 ? palette.steelBlue : palette.fadedRed} />
+            <SoftBoxGeometry args={[1.15, 0.33, 0.07]} /><dioramaMaterial power={powered ? 1 : 0.06} color={i === 0 ? palette.steelBlue : palette.fadedRed} />
           </mesh>
         </group>
       ))}
@@ -79,44 +83,44 @@ export function DormRoom({ powered = true }: { powered?: boolean }) {
       {[0.6, 0.95, 1.3, 1.65].map((y) => (
         <mesh key={y} position={[BUNK.x + BUNK.length / 2 + 0.08, y, BUNK.z + 0.1]}>
           <SoftBoxGeometry args={[0.06, 0.05, 0.5]} />
-          <meshToonMaterial color={palette.concreteTan} />
+          <dioramaMaterial power={powered ? 1 : 0.06} color={palette.concreteTan} />
         </mesh>
       ))}
       {/* footlocker */}
       <mesh position={[0.7, 0.24, -0.85]}>
         <SoftBoxGeometry args={[0.8, 0.48, 0.5]} />
-        <meshToonMaterial color={palette.steelBlue} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.steelBlue} />
       </mesh>
       <mesh position={[0.7, 0.5, -0.85]}>
         <SoftBoxGeometry args={[0.84, 0.05, 0.54]} />
-        <meshToonMaterial color={palette.oldWoodBrown} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.oldWoodBrown} />
       </mesh>
       {/* pinboard: cork, frame, a couple of pinned notes */}
       <mesh position={[PINBOARD.position[0], PINBOARD.position[1], PINBOARD.position[2] - 0.01]}>
         <SoftBoxGeometry args={[PINBOARD.width + 0.12, PINBOARD.height + 0.12, 0.04]} />
-        <meshToonMaterial color={palette.oldWoodBrown} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.oldWoodBrown} />
       </mesh>
       <mesh position={PINBOARD.position}>
         <planeGeometry args={[PINBOARD.width, PINBOARD.height]} />
-        <meshToonMaterial color={palette.concreteTan} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.concreteTan} />
       </mesh>
       {/* refinement pass: a rug, a nightstand with its own lamp, boots, a clothes line, two posters */}
       <mesh position={[-0.3, 0.02, 0.35]} rotation={[-Math.PI / 2, 0, 0]} scale={[1.2, 0.65, 1]}>
         <circleGeometry args={[1, 24]} />
-        <meshToonMaterial color="#4a2a3a" />
+        <dioramaMaterial power={powered ? 1 : 0.06} color="#4a2a3a" />
       </mesh>
       <group position={[1.55, 0, -0.9]}>
         <mesh position={[0, 0.3, 0]}>
           <SoftBoxGeometry args={[0.45, 0.6, 0.45]} />
-          <meshToonMaterial color={palette.oldWoodBrown} />
+          <dioramaMaterial power={powered ? 1 : 0.06} color={palette.oldWoodBrown} />
         </mesh>
         <mesh position={[0, 0.75, 0]}>
           <cylinderGeometry args={[0.05, 0.08, 0.3, 8]} />
-          <meshToonMaterial color={palette.coalBlack} />
+          <dioramaMaterial power={powered ? 1 : 0.06} color={palette.coalBlack} />
         </mesh>
         <mesh position={[0, 0.98, 0]}>
           <coneGeometry args={[0.16, 0.16, 10, 1, true]} />
-          <meshToonMaterial color={palette.boneWhite} emissive={palette.amber} emissiveIntensity={powered ? 0.7 : 0} side={2} />
+          <dioramaMaterial power={powered ? 1 : 0.06} color={palette.boneWhite} emissive={palette.amber} emissiveIntensity={powered ? 0.7 : 0} side={2} />
         </mesh>
         <RoomLight position={[0, 0.9, 0.2]} color={palette.amber} intensity={powered ? 1.2 : 0} distance={2.2} decay={2} />
       </group>
@@ -124,26 +128,26 @@ export function DormRoom({ powered = true }: { powered?: boolean }) {
       {[-1.7, -1.5].map((x) => (
         <mesh key={x} position={[x, 0.09, 0.05]}>
           <SoftBoxGeometry args={[0.14, 0.18, 0.28]} />
-          <meshToonMaterial color={palette.oldWoodBrown} />
+          <dioramaMaterial power={powered ? 1 : 0.06} color={palette.oldWoodBrown} />
         </mesh>
       ))}
       <mesh position={[0.7, 2.45, -0.6]} rotation={[0, 0, Math.PI / 2]}>
         <cylinderGeometry args={[0.01, 0.01, 2.2, 6]} />
-        <meshToonMaterial color={palette.boneWhite} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.boneWhite} />
       </mesh>
       {([[0.1, palette.steelBlue], [0.75, palette.fadedRed], [1.35, palette.boneWhite]] as Array<[number, string]>).map(([x, c], i) => (
         <mesh key={i} position={[x, 2.15, -0.6]}>
           <SoftBoxGeometry args={[0.36, 0.5, 0.04]} />
-          <meshToonMaterial color={c} />
+          <dioramaMaterial power={powered ? 1 : 0.06} color={c} />
         </mesh>
       ))}
       <mesh position={[-1.4, 2.35, -1.22]}>
         <planeGeometry args={[0.5, 0.7]} />
-        <meshToonMaterial color={palette.inactivePlum} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.inactivePlum} />
       </mesh>
       <mesh position={[-1.4, 2.35, -1.21]}>
         <planeGeometry args={[0.3, 0.3]} />
-        <meshToonMaterial color={palette.phosphorViolet} emissive={palette.phosphorViolet} emissiveIntensity={0.4} />
+        <dioramaMaterial power={powered ? 1 : 0.06} color={palette.phosphorViolet} emissive={palette.phosphorViolet} emissiveIntensity={0.4} />
       </mesh>
     </RoomShell>
   );

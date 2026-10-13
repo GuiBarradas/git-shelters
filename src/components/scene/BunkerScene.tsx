@@ -19,7 +19,10 @@ import {
   type Slot,
 } from "@/lib/rooms/catalog";
 
+import { QualityControl, SceneEffects, useQuality } from "./SceneQuality";
+import { SceneInstances } from "./SceneInstances";
 import { Fork } from "./Fork";
+import { RoomOccupants } from "./rooms/Details";
 import { BuiltRoom, CELL, EmptyCell, MainBranchRoom, roomLayout } from "./rooms";
 
 type BunkerSceneProps = {
@@ -109,6 +112,7 @@ export default function BunkerScene({
   demo = false,
   powered = true,
 }: BunkerSceneProps) {
+  const quality = useQuality();
   const bySlot = new Map(rooms.map((room) => [room.slot, room]));
   const [hovered, setHovered] = useState<number | null>(null);
   // ponytail: quality only steps down this visit; add recovery if long sessions need it.
@@ -128,10 +132,12 @@ export default function BunkerScene({
   const elevator = hasElevator(rooms);
 
   return (
+    <>
+    <QualityControl value={quality} />
     <Canvas
-      dpr={dpr}
+      dpr={Math.min(dpr, quality === "low" ? 1 : 1.25)}
       gl={{ antialias: false, powerPreference: "high-performance" }}
-      style={{ background: palette.coalBlack }}
+      style={{ background: "radial-gradient(ellipse at 50% 45%, #211529, #0c0911 75%)" }}
     >
       <PerformanceMonitor
         ms={500}
@@ -156,9 +162,10 @@ export default function BunkerScene({
       )}
 
       {/* cold fill from outside; the warm light is each room's own lamp */}
-      <hemisphereLight args={["#E8DCEF", "#5C3A35", powered ? 1.5 : 0.45]} />
-      <directionalLight position={[-3, 8, 10]} color={palette.lampWarm} intensity={powered ? 2.2 : 0.25} />
+      <hemisphereLight args={["#978dbb", "#30232f", powered ? 0.42 : 0.18]} />
+      <directionalLight position={[-3, 8, 10]} color={palette.lampWarm} intensity={powered ? 0.65 : 0.18} />
 
+      <SceneInstances>
       {/* the earth the bunker is dug into */}
       <mesh position={[0, LOWER_Y - 2.2, -1]}>
         <boxGeometry args={[ROW_WIDTH * 3, 4, CELL.d + 6]} />
@@ -170,7 +177,7 @@ export default function BunkerScene({
       </mesh>
 
       <group position={[slotX(0), 0, 0]}>
-        <MainBranchRoom active={activeToday} pending={eventPending} powered={powered} />
+        <RoomOccupants.Provider value={forksIn(0).length}><MainBranchRoom active={activeToday} pending={eventPending} powered={powered} /></RoomOccupants.Provider>
         {forksIn(0).map((f) => (
           <Fork key={f.id} fork={f} layout={roomLayout(null)} onClick={onForkClick} onHover={forkHover} />
         ))}
@@ -192,7 +199,7 @@ export default function BunkerScene({
         return (
           <group key={slot} position={[slotX(slot), slotY(slot), 0]}>
             {room ? (
-              <BuiltRoom kind={room.kind} powered={powered} />
+              <RoomOccupants.Provider value={forksIn(slot).length}><BuiltRoom kind={room.kind} powered={powered} /></RoomOccupants.Provider>
             ) : (
               <EmptyCell highlight={hovered === slot && !demo && !locked} locked={locked} />
             )}
@@ -207,6 +214,9 @@ export default function BunkerScene({
           </group>
         );
       })}
+      </SceneInstances>
+      <SceneEffects quality={quality} />
     </Canvas>
+    </>
   );
 }

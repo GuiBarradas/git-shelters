@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="512" viewBox="0 0 1024 512">
+  <!-- Eight padded tiles: service panel, wear, pantry, fabric, tools, hazard, keepsakes, circuits. -->
+  <defs><clipPath id="hazard"><rect width="224" height="224" rx="4"/></clipPath></defs>
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <g transform="translate(16 16)">
+      <rect width="224" height="224" rx="16" fill="#343442" stroke="#92848c" stroke-width="4"/>
+      <path d="M32 48h160M32 66h160M32 84h160M32 102h160M32 120h160" stroke="#181922" stroke-width="9"/>
+      <path d="M28 174h62m-62 12h42" stroke="#c4b9a0" stroke-width="4"/>
+      <path d="M152 167h42v25h-42z" fill="none" stroke="#a791bf" stroke-width="4"/>
+      <path d="M14 16h4m188 0h4M14 208h4m188 0h4" stroke="#ded0b5" stroke-width="5"/>
+    </g>
+    <g transform="translate(256 0)" fill="none" stroke="#75686f" stroke-width="1.5">
+      <path d="M18 220l37-4 13 4m-39-11 49-6m91-159 37-8m-24 12 47-7M130 208l21-4m-58-73 13-4m-87-94 27 5"/>
+      <path d="M18 226l27-1m130-166 38-6m-75 161 17-1" stroke="#39333e" stroke-width="2"/>
+    </g>
+    <g transform="translate(528 16)">
+      <rect width="224" height="224" rx="6" fill="#d5bf91"/>
+      <path d="M15 19h194v186H15z" fill="none" stroke="#967d64" stroke-width="3"/>
+      <path d="M79 65h57v46q-28 30-57 0zm57 5h15q15 27-15 27M91 54q-8-10 0-20m18 20q-8-10 0-20" fill="none" stroke="#76534a" stroke-width="7"/>
+      <text x="112" y="159" text-anchor="middle" font-family="monospace" font-size="20" font-weight="bold" fill="#614849">STAY AWHILE</text>
+      <path d="M56 180h112m-87 11h62" stroke="#9b745a" stroke-width="3"/>
+      <path d="M80 0h64v16H80zM80 208h64v16H80z" fill="#a3927b"/>
+    </g>
+    <g transform="translate(768 0)" fill="none">
+      <path d="M18 30h220M18 42h220M18 212h220M18 224h220" stroke="#c1b8b4" stroke-width="3" stroke-dasharray="8 6"/>
+      <path d="M55 18v220m9-220v220m120-220v220m9-220v220" stroke="#968b9c" stroke-width="2"/>
+      <path d="M100 80h60v68h-60z" fill="#987281" stroke="#d2c2aa" stroke-width="3" stroke-dasharray="5 5"/>
+      <path d="M107 87l45 53m0-53-45 53" stroke="#685868" stroke-width="2"/>
+    </g>
+    <g transform="translate(16 272)" fill="none" stroke="#a99986" stroke-width="3">
+      <path d="M8 8h208v208H8zM25 32h48m-48 15h27M144 180h54m-54 12h34"/>
+      <path d="M38 81l11 12 17-17-12-12q31-8 34 20l-18 18-28 78-16-6 26-79zM139 57h39v17h-10v92h-17V74h-12z" stroke-dasharray="6 5"/>
+      <circle cx="174" cy="125" r="19"/><path d="M174 98v54m-27-27h54M104 182l17-31 17 31z"/>
+    </g>
+    <g transform="translate(272 272)" clip-path="url(#hazard)">
+      <rect width="224" height="224" rx="4" fill="#252632"/>
+      <path d="M-8 224L20 0m4 224L52 0m4 224L84 0m4 224L116 0m4 224L148 0m4 224L180 0m4 224L212 0m4 224L244 0" stroke="#bea36c" stroke-width="14"/>
+    </g>
+    <g transform="translate(512 256)">
+      <g transform="rotate(-7 70 104)"><path d="M19 36h97v133H19z" fill="#cebea2"/><path d="M28 45h79v88H28z" fill="#635a77"/><circle cx="84" cy="68" r="12" fill="#bba1bc"/><path d="M28 125l27-41 20 27 14-19 18 33" fill="#93818d"/></g>
+      <g transform="rotate(8 184 147)"><path d="M138 94h91v132h-91z" fill="#baa684"/><path d="M153 124h58m-58 13h43m-43 13h53m-53 13h32" stroke="#795e5a" stroke-width="4"/><path d="M167 186l8-8 8 8 8-8 8 8-16 17z" fill="#996270"/></g>
+      <path d="M51 31h34v17H51zM167 90h36v17h-36z" fill="#aa9781"/>
+    </g>
+    <g transform="translate(768 256)" fill="none" stroke="#9480aa" stroke-width="3">
+      <path d="M18 28h72l27 27v49h59l24 24v98M18 46h61l20 20v56h68l15 15v89M18 180h42l18-18v-22M142 18v40l22 22h64M160 18v31l18 18h50"/>
+      <path d="M62 128h32v20H62zM188 216h24v16h-24z" fill="#b199ca"/>
+      <circle cx="222" cy="80" r="6"/><circle cx="23" cy="180" r="6"/>
+    </g>
+  </g>
+</svg>
