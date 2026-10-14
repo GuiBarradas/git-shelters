@@ -63,6 +63,8 @@ export const mapTones = {
   beige: "#b3a888",
   /** A shaded boneWhite: the Edge obelisks. */
   obelisk: "#cfc8b2",
+  /** The signal-fog cloud cards over locked regions (a dim violet). */
+  fogCard: "#4a3a62",
   clusterBlue: "#8fb3d9",
   beaconRed: "#e05a5a",
 } as const;

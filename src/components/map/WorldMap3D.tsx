@@ -19,9 +19,11 @@ import { mapTime, REDUCED_MOTION_SPEED } from "./scene/clock";
 import { FOV, type Vec3 } from "./scene/framing";
 import { Glows } from "./scene/Glows";
 import { MapCameraRig, type MapRigHandle } from "./scene/MapCameraRig";
-import { mapProps } from "./scene/props";
+import { inOpenRegion, mapProps } from "./scene/props";
 import { RegionProps } from "./scene/RegionProps";
 import { Regions } from "./scene/Regions";
+import { SignalFog } from "./scene/SignalFog";
+import { SHARP_LAYER } from "./scene/SignalFogEffect";
 
 function useMedia(query: string): boolean {
   return useSyncExternalStore(
@@ -98,6 +100,8 @@ export default function WorldMap3D({ pins, me, review, hidden, onReady, onLost }
   const reducedMotion = useMedia("(prefers-reduced-motion: reduce)");
   const visible = usePageVisible();
   const [drift, setDrift] = useState(true);
+  const [fog, setFog] = useState(true);
+  const [peek, setPeek] = useState<string | null>(null);
   const [selected, setSelected] = useState<Region | null>(null);
   const labels = useRef(new Map<string, HTMLElement>());
   const rig = useRef<MapRigHandle>(null);
@@ -106,7 +110,11 @@ export default function WorldMap3D({ pins, me, review, hidden, onReady, onLost }
   const bunkers = useMemo(() => mapBunkers(pins, me), [pins, me]);
   // Pylons and rubble keep clear of the Repos, so the props follow the pins.
   const props = useMemo(() => mapProps(bunkers.filter((b) => b.pin.region === "the_outage").map((b) => [b.at[0], b.at[2]])), [bunkers]);
-  const glows = useMemo(() => [...bunkerGlows(bunkers), ...props.glows], [bunkers, props]);
+  // Lights over open ground stay sharp in front of the fog; lights inside locked regions blur with them.
+  const glows = useMemo(() => {
+    const all = [...bunkerGlows(bunkers), ...props.glows];
+    return { sharp: all.filter((g) => inOpenRegion(g.at)), fogged: all.filter((g) => !inOpenRegion(g.at)) };
+  }, [bunkers, props]);
   const ownBunker = bunkers.find((b) => b.mine) ?? null;
   const mine = ownBunker?.pin ?? null;
   const own = ownBunker?.at ?? null;
@@ -147,10 +155,12 @@ export default function WorldMap3D({ pins, me, review, hidden, onReady, onLost }
         <hemisphereLight args={[mapTones.nightSky, palette.bunkerBlack, 3]} />
         <directionalLight position={[-30, 60, 25]} color={mapTones.moon} intensity={1.6} />
         <MapTime reducedMotion={reducedMotion} />
-        <Regions onSelect={selectRegion} />
+        <Regions onSelect={selectRegion} onPeek={setPeek} />
         <RegionProps props={props} />
         <Bunkers bunkers={bunkers} />
-        <Glows glows={glows} cycle={CYCLE} />
+        <Glows glows={glows.sharp} cycle={CYCLE} layer={SHARP_LAYER} />
+        <Glows glows={glows.fogged} cycle={CYCLE} />
+        <SignalFog on={fog} quality={quality} peek={peek} reducedMotion={reducedMotion} />
         <BunkerPicker bunkers={bunkers} hot={hot} onHover={setHovered} onOpen={openProfile} onPin={setPinned} />
         <ScreenAnchor at={lift(tip, 0.5)} el={tipEl} />
         {/* Like the prototype, the YOU tag waits for a closer look so it never crowds the whole-map view. */}
@@ -171,6 +181,8 @@ export default function WorldMap3D({ pins, me, review, hidden, onReady, onLost }
         labels={labels}
         selected={selected}
         onClose={() => setSelected(null)}
+        fog={fog}
+        onFog={setFog}
         drift={reducedMotion ? null : drift}
         onDrift={setDrift}
         quality={quality}

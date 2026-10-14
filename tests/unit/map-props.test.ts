@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 
-import { insideXZ, mapProps, sampleIn } from "@/components/map/scene/props";
+import { fogCards, inOpenRegion, insideXZ, mapProps, sampleIn } from "@/components/map/scene/props";
 import { mapTones, palette } from "@/lib/palette";
 import { REGION_BY_ID, REGIONS } from "@/lib/regions/catalog";
 import { REGION_LOOK, toWorld } from "@/lib/regions/look";
@@ -75,6 +75,25 @@ describe("map region props", () => {
   it("use palette tokens and their named tones only", () => {
     const tokens = new Set<string>([...Object.values(palette), ...Object.values(mapTones)]);
     for (const c of [...props.boxes, ...props.cylinders, ...props.glows].map((s) => s.color)) expect(tokens.has(c), c).toBe(true);
+  });
+});
+
+describe("signal fog cards", () => {
+  it("float eight over every locked region and none over open ground", () => {
+    const cards = fogCards();
+    const locked = REGIONS.filter((r) => !r.open);
+    expect(cards).toHaveLength(locked.length * 8);
+    for (const c of cards) {
+      expect(inOpenRegion(c.at)).toBe(false);
+      expect(locked.some((r) => insideXZ([c.at[0], c.at[2]], shapeOf(r.id)))).toBe(true);
+    }
+  });
+
+  it("tell open ground from locked ground", () => {
+    const outage = toWorld(REGION_BY_ID.get("the_outage")!.label);
+    const edge = toWorld(REGION_BY_ID.get("the_edge")!.label);
+    expect(inOpenRegion([outage[0], 5, outage[1]])).toBe(true);
+    expect(inOpenRegion([edge[0], 5, edge[1]])).toBe(false);
   });
 });
 
