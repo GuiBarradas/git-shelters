@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { AdditiveBlending, BufferGeometry, Color, Float32BufferAttribute, type Points, ShaderMaterial } from "three";
 
 import { mapTime } from "./clock";
@@ -47,12 +47,15 @@ const FRAGMENT = /* glsl */ `
   }`;
 
 /**
- * Every point light of the 404 Lands in one Points draw: bunker cores,
+ * Point lights of the 404 Lands in one Points draw: bunker cores,
  * beacons, LEDs, CRT flicker, dust. Each glow animates on the GPU by its
- * mode, so nothing here touches buffers after the first frame.
+ * mode, so nothing here touches buffers after the first frame. The map
+ * mounts two: lights over open ground on the fog-free layer, and lights
+ * inside locked regions, which the fog blurs with their terrain.
  */
-export function Glows({ glows, cycle }: { glows: readonly Glow[]; cycle: readonly [string, string, string] }) {
+export function Glows({ glows, cycle, layer = 0 }: { glows: readonly Glow[]; cycle: readonly [string, string, string]; layer?: number }) {
   const points = useRef<Points>(null);
+  useLayoutEffect(() => { points.current?.layers.set(layer); }, [layer]);
   const geometry = useMemo(() => {
     const g = new BufferGeometry();
     g.setAttribute("position", new Float32BufferAttribute(glows.flatMap((l) => l.at), 3));

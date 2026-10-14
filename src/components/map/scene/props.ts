@@ -1,7 +1,7 @@
 import { mulberry32 } from "@/lib/forks/catalog";
 import { hash32 } from "@/lib/forks/load";
 import { mapTones, palette } from "@/lib/palette";
-import { REGION_BY_ID, type Region } from "@/lib/regions/catalog";
+import { REGION_BY_ID, REGIONS, type Region } from "@/lib/regions/catalog";
 import { REGION_LOOK, toWorld } from "@/lib/regions/look";
 
 import type { Vec3 } from "./framing";
@@ -243,4 +243,24 @@ export function mapProps(bunkers: readonly XZ[]): MapProps {
   }
 
   return out;
+}
+
+/** True over a region that has signal: lights there stay sharp in front of the fog. */
+export function inOpenRegion([x, , z]: Vec3): boolean {
+  return REGIONS.some((r) => r.open && insideXZ([x, z], poly(r)));
+}
+
+/** A billboard cloud of the signal fog. `seed` (0..1) sets its drift and turn. */
+export type FogCard = { at: Vec3; size: number; seed: number };
+
+/** Eight cloud cards over every locked region, none over open ground. */
+export function fogCards(): FogCard[] {
+  const rand = rngFor("signal_fog_cards");
+  return REGIONS.filter((r) => !r.open).flatMap((r) => {
+    const shape = poly(r);
+    return Array.from({ length: 8 }, (): FogCard => {
+      const [x, z] = sampleIn(shape, rand, 2.6);
+      return { at: [x, top(r.id) + 0.8 + rand() * 2.4, z], size: 4.5 + rand() * 4, seed: rand() };
+    });
+  });
 }
