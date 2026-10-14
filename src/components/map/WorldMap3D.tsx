@@ -19,6 +19,8 @@ import { mapTime, REDUCED_MOTION_SPEED } from "./scene/clock";
 import { FOV, type Vec3 } from "./scene/framing";
 import { Glows } from "./scene/Glows";
 import { MapCameraRig, type MapRigHandle } from "./scene/MapCameraRig";
+import { mapProps } from "./scene/props";
+import { RegionProps } from "./scene/RegionProps";
 import { Regions } from "./scene/Regions";
 
 function useMedia(query: string): boolean {
@@ -102,7 +104,9 @@ export default function WorldMap3D({ pins, me, review, hidden, onReady, onLost }
 
   const router = useRouter();
   const bunkers = useMemo(() => mapBunkers(pins, me), [pins, me]);
-  const glows = useMemo(() => bunkerGlows(bunkers), [bunkers]);
+  // Pylons and rubble keep clear of the Repos, so the props follow the pins.
+  const props = useMemo(() => mapProps(bunkers.filter((b) => b.pin.region === "the_outage").map((b) => [b.at[0], b.at[2]])), [bunkers]);
+  const glows = useMemo(() => [...bunkerGlows(bunkers), ...props.glows], [bunkers, props]);
   const ownBunker = bunkers.find((b) => b.mine) ?? null;
   const mine = ownBunker?.pin ?? null;
   const own = ownBunker?.at ?? null;
@@ -144,6 +148,7 @@ export default function WorldMap3D({ pins, me, review, hidden, onReady, onLost }
         <directionalLight position={[-30, 60, 25]} color={mapTones.moon} intensity={1.6} />
         <MapTime reducedMotion={reducedMotion} />
         <Regions onSelect={selectRegion} />
+        <RegionProps props={props} />
         <Bunkers bunkers={bunkers} />
         <Glows glows={glows} cycle={CYCLE} />
         <BunkerPicker bunkers={bunkers} hot={hot} onHover={setHovered} onOpen={openProfile} onPin={setPinned} />

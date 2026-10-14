@@ -68,7 +68,7 @@ export const REGION_LOOK: Readonly<Record<string, RegionLook>> = {
     height: 1.5,
     top: mapTones.clusterTop,
     side: mapTones.clusterSide,
-    props: [{ kind: "server_rack", count: 40, note: "grid rows, about 10% toppled; the brief sets no count, 40 is a starting budget" }],
+    props: [{ kind: "server_rack", count: 40, note: "rows on a 2.3 × 1.7 grid, gaps and about 10% toppled; the count is what the grid fits, roughly 40" }],
     lights: [{ kind: "led_blink", colors: [palette.phosphorViolet, mapTones.clusterBlue], note: "half and half" }],
   },
   the_mainframe: {
