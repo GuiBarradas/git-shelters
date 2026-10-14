@@ -34,10 +34,11 @@ export function GameDock({ share }: { share: { bunker: GeneratedBunker; forks: F
   const [sharing, setSharing] = useState(false);
   return (
     <nav aria-label="Game" className="pointer-events-auto flex border-t border-hud-violet/40 bg-hud-bg/95 pb-[env(safe-area-inset-bottom)] font-mono sm:border sm:pb-0">
-      <Link href="/" aria-current="page" className={`${ITEM} border-b-2 border-hud-violet bg-hud-violet/14 text-hud-bone`}>
+      {/* No prefetch on HUD links: a prefetch would run a stateful game page (resource catch-up) before the player navigates. */}
+      <Link href="/" prefetch={false} aria-current="page" className={`${ITEM} border-b-2 border-hud-violet bg-hud-violet/14 text-hud-bone`}>
         <Item icon="M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h5v5H9z" label="Bunker" />
       </Link>
-      <Link href="/map" className={IDLE}>
+      <Link href="/map" prefetch={false} className={IDLE}>
         <Item icon="M1.5 3.5 5.5 2l5 1.5 4-1.5v10.5l-4 1.5-5-1.5-4 1.5zM5.5 2v10.5M10.5 3.5V14" label="404 Lands" />
       </Link>
       {share && (

@@ -103,10 +103,87 @@ Do not add faces beyond the two eyes, and do not add animations that are not dri
 ## 7. Interface
 
 - One monospaced font everywhere. Uppercase with wide tracking for labels, sentence case for lines the game says, `>` as the prompt prefix.
-- Panels are `bunkerBlack` at 90 to 95% with a one-pixel `phosphorViolet` border at 40 to 60%. No rounded corners, no shadows except the CRT's inner shadow.
+- **Silkscreen is the one exception**, and only for three things: the "GIT SHELTERS" wordmark in the TopBar, the Bytes number and the packet countdown (the share card already used it). Nothing else.
+- Panels are `bunkerBlack` at 90 to 95% with a one-pixel `phosphorViolet` border at 40 to 60%. No rounded corners, no shadows except the CRT's inner shadow, no hover glow on HUD surfaces (`[data-hud]`).
 - The CRT (`.crt`) is for terminals only: the Main Branch screen and the intro. Scanlines, vignette, a slow flicker. Do not put it on ordinary panels.
-- Notices that fade (`.hud-fade`) are for one-shot facts: a build result, a badge, a sync outcome. Persistent state goes in the HUD lines at top left.
-- Amber marks the thing you can do. Red marks the thing that went wrong. Violet is everything else.
+- Notices that fade (`.hud-fade`) are for one-shot facts: a build result, a badge, a sync outcome. Persistent state lives in the TopBar and the lower band.
+- Amber marks the thing you can do. Red marks the thing that went wrong. Violet is everything else. No green.
+
+### 7.1 Three zones
+
+| Zone | Desktop (≥ 1280 px) | 1024 to 1279 px | Below 1024 px | Phone (< 640 px) |
+|---|---|---|---|---|
+| **TopBar**: state | one 56 px row: mascot, wordmark, login and "REPO · THE OUTAGE"; gauges and FORECAST; sound, Bytes, sync, account | one compact row: wordmark, login, "BYTES" label and rates hidden, 136 px gauges | 52 px row (mascot, Bytes, sync, account) over a 56 px resource strip: 108 px | same, sound moves into the account menu, sync age hidden, 44 px targets |
+| **Scene** | the bunker between the bars; the blocker shows in the room itself | same | same | two columns at a time, paged |
+| **Lower band**: context and navigation | CrewLog 380×128, GameDock 3×92 px, PacketCard 320×128 | one compact row: one-line log, compact packet, 80 px dock items | the same compact row, down to 640 px | pager, one-line log, compact packet, dock full width on the bottom edge with `env(safe-area-inset-bottom)` |
+
+The AlertBanner (44 px, under the TopBar) only appears while something is broken: blackout before an empty pantry. Pop-outs (forecast, account, sync note) open 8 px under the bar and the banner: 64 or 108 px on desktop, 116 or 160 px below 1024 px.
+
+### 7.2 Components (`src/components/hud/`)
+
+- **TopBar**, **ResourceGauge**: one `role="meter"` per resource with a readable label; 16 segments (6×8 px, 2 px gap) on desktop, 10 filling the phone strip, both drawn `aria-hidden`. Violet when fine, red text under 20%, outlined red at zero.
+- **ForecastDrawer**: the 8-hour forecast from the same simulation the catch-up runs. 420 px drawer on desktop; on phones the whole resource strip is its button, beside the meters, never wrapping them.
+- **AccountMenu**: public Repo, **Intro / credits** with the REPLAY tag, Settings, visual quality, Privacy, Terms, Log out; Sound on phones.
+- **AlertBanner**: one line on what stopped and one amber action to the room that fixes it, or to build it with its catalog price.
+- **CrewLog**: crew size and idle hands, then up to three `>` lines (mood, today's packet, the most useful tip). Below 1280 px it is one line that expands upward over the scene. FirstSteps takes its slot during onboarding; the two never show together.
+- **GameDock**: Bunker, 404 Lands, Share. Crew and Badges are left out until they have real screens.
+- **PacketCard**: resolved (countdown to 00:00 UTC) or pending (amber, "Open terminal"). No event loaded, no card.
+- **In the scene** (`RoomOverlay`): one DOM overlay, never an `<Html>` per room. Hover draws a violet outline and a 252 px card; the room that blocks the economy gets an amber dashed outline and a "+ ASSIGN" chip. On phones the chip hides when its room is paged off screen.
+
+### 7.3 Tokens and contrast
+
+Components use the `--hud-*` tokens in `globals.css` through Tailwind (`bg-hud-bg`, `text-hud-violet`...), never inline hex.
+
+| Token | Value | Use | Contrast on `--hud-bg` |
+|---|---|---|---|
+| `--hud-bg` | `#0B0713` | panels, bar | |
+| `--hud-bone` at 60% | `#E6DFC8` | secondary text, the floor for 9 to 10 px labels | 5.71:1 |
+| `--hud-violet` | `#BD93F9` | labels, borders, values | 8.26:1 |
+| `--hud-amber` | `#E67E22` | actions only | 6.99:1 |
+| `--hud-red-text` | `#C95F5F` | text for what went wrong | 5.01:1 |
+| `--hud-red` | `#A14545` | danger borders only | |
+| `--hud-violet-dim` | `#8D46A3` | dividers, locked; never small text | |
+| `--hud-plum` | `#2D2235` | empty segments | |
+| `--hud-alert-bg` | `#1C0E16` | the AlertBanner | |
+
+### 7.4 Honest numbers
+
+The HUD shows only what the game computes. Rates come from `ratesPerHour`, the drawer from `forecast`; when a case has no honest number the rate is left out. No invented capacity, no blackout timestamp, no lamp percentage. A missing balance or payload is omitted, never shown as 0 or "--". Worker counts are the real ones.
+
+Where the brief and the canvas disagreed, the brief won:
+
+- **FULL** replaces the rate whenever a store is full, even while the rate is positive or paused; screen readers still hear a drain.
+- The forecast speaks of **8 hours** (`FORECAST_HOURS`), not an invented 3-hour deadline.
+- The hover card shows the room's **actual** workers, not a fixed "1/1".
+- The dock has **3** items, not 5.
+
+### 7.5 Layout, motion and input
+
+- **Camera**: the overview fits between the TopBar (`hudTop`) and the lower band, measured with a ResizeObserver and on resize. The expanding crew log overlays the scene and never moves the camera.
+- **Phone pager**: pages of two columns, `[0,1]`, `[2,3]`, `[3,4]` (the last overlaps rather than framing a lone room). A swipe is more than 40 px sideways and more than 1.5 times its vertical travel; a press that moved more than 8 px is not a tap on a room or a Fork. The page holds for the session. Dots, previous/next and the arrow keys do the same.
+- **Reduced motion**: the camera moves instantly; the HUD adds no animation of its own.
+- **Keyboard**: the DOM follows the visual order at each breakpoint, so Tab reads the bar left to right (then the strip on phones), the banner, the lower band, and only then the scene's own controls (the staffing chip): the HUD layer comes before the canvas layer in the DOM, while z-index keeps it on top. Focus is always visible; Esc closes the drawer, the menu and the crew log.
+- **Navigation**: HUD links (dock, packet card, alert banner, account menu, onboarding, back to the corridor) set `prefetch={false}`. A game page settles resources when it renders, so it runs only when the player actually navigates. The persistent renderer is unaffected.
+- **Quality**: the picker lives in the AccountMenu, with the same `shelter-quality` localStorage key and event as before. The floating picker only appears on screens without the TopBar.
+
+### 7.6 Visual QA fixture
+
+`/dev/scene-lab?hud=normal` or `?hud=blackout` (development, or a build with `SCENE_REVIEW_BUILD=1`; the route is a 404 otherwise) renders the real TopBar, scene, lower band and room HUD over one persistent renderer, fed by synthetic values in `HudLab.tsx`. They are **fixture values, not a player's stats**: "GuiBarradas" as the reference login, 1,709 B, five rooms (Cache Storage, Power Plant, Dorm, Elevator, Workshop) around the Main Branch, four Forks.
+
+- Normal: everyone on shift, cache 160, uptime 100%, payload 30, today's packet resolved, last sync 14 minutes earlier.
+- Blackout: the Engineer idle, cache 12, uptime 0%, payload 30, packet pending, crew stressed, last sync 2 hours earlier.
+- `&at=<ISO time>` pins the fixture clock for stable captures; `&seed=<n>` picks the bunker layout.
+
+The fixture's data comes from no database, it writes nothing and it needs no login; the only server call is the SyncButton's read-only `getBackfillStatus`, which answers "unavailable" before any query when there is no session. Every form submit (every Server Action) is cancelled, the share upload is blocked (including inside its modal dialog), and every outgoing navigation is cancelled: room and corridor links open locally, other links go nowhere, and no HUD link prefetches. Image downloads still work. Screenshots live in `docs/screenshots/hud-v2/`:
+
+| State | 1440×900 | 1920×1080 | 390×844 |
+|---|---|---|---|
+| Normal | [image](screenshots/hud-v2/desktop-normal.png) | [image](screenshots/hud-v2/wide-normal.png) | [image](screenshots/hud-v2/mobile-normal.png) |
+| Blackout | [image](screenshots/hud-v2/desktop-blackout.png) | [image](screenshots/hud-v2/wide-blackout.png) | [image](screenshots/hud-v2/mobile-blackout.png) |
+| Forecast open | [image](screenshots/hud-v2/desktop-forecast.png) | | [image](screenshots/hud-v2/mobile-forecast.png) |
+| Account menu open | [image](screenshots/hud-v2/desktop-menu.png) | | [image](screenshots/hud-v2/mobile-menu.png) |
+
+[Visual comparison, observed differences and verification limits](screenshots/hud-v2/README.md). Captured in isolated Chromium with synthetic HUD data; no production test users or gameplay writes. Mobile input was emulated, not tested on a physical phone.
 
 ## 8. Brand
 
@@ -147,6 +224,7 @@ The 404 Lands are seven regions. Only The Outage is open in the alpha; the other
 - [ ] A Fork walked through it for a minute without crossing furniture.
 - [ ] The HTML read-out does not cover a station.
 - [ ] Sixty frames per second on an integrated GPU (headed Chrome, not headless).
+- [ ] HUD changes: normal and blackout at 1440×900, 1920×1080 and 390×844 from the §7.6 fixture.
 
 ## 12. Procedural bunker identity
 

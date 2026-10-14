@@ -54,13 +54,13 @@ export function FirstSteps({ notices, eventDone, eventAvailable, built, bytes, o
             {ready ? "Choose your first room" : "See room costs"}
           </button>
           {!ready && <p className="mt-2 text-hud-bone/70">{bytes === null ? "Your balance is unavailable. Reload to try again." : `You need ${cost - bytes} more B for Cache Storage. Public GitHub pushes earn Bytes; today's event may also help.`}</p>}
-          {!ready && !eventDone && eventAvailable && <Link href="/room/0" className="mt-2 inline-block py-2 text-hud-violet underline">Read today&apos;s event</Link>}
+          {!ready && !eventDone && eventAvailable && <Link href="/room/0" prefetch={false} className="mt-2 inline-block py-2 text-hud-violet underline">Read today&apos;s event</Link>}
         </div>
       ) : (
         <div>
-          {staffingRoom && <div className="mb-3 space-y-2"><p className="text-hud-amber">You have an idle Fork. Your {staffingRoom.name} needs a worker before it can produce.</p><Link href={`/room/${staffingRoom.slot}`} className="block min-h-11 border border-hud-amber px-3 py-3 text-center text-hud-amber">Assign your first worker · free</Link></div>}
+          {staffingRoom && <div className="mb-3 space-y-2"><p className="text-hud-amber">You have an idle Fork. Your {staffingRoom.name} needs a worker before it can produce.</p><Link href={`/room/${staffingRoom.slot}`} prefetch={false} className="block min-h-11 border border-hud-amber px-3 py-3 text-center text-hud-amber">Assign your first worker · free</Link></div>}
           {!eventDone && <><p className="mb-3 leading-relaxed">Your first room is built. The Main Branch terminal has a daily decision for you.</p>
-          {eventAvailable ? <Link href="/room/0" className="block min-h-11 border border-hud-violet px-3 py-3 text-center text-hud-violet hover:bg-hud-violet/10">Read your first event</Link> : <p role="status">The terminal is unavailable. Reload to try again.</p>}</>}
+          {eventAvailable ? <Link href="/room/0" prefetch={false} className="block min-h-11 border border-hud-violet px-3 py-3 text-center text-hud-violet hover:bg-hud-violet/10">Read your first event</Link> : <p role="status">The terminal is unavailable. Reload to try again.</p>}</>}
         </div>
       ))}
     </aside>

@@ -37,7 +37,8 @@ export function ShareDialog({ bunker, forks, close }: { bunker: GeneratedBunker;
       <p className="mt-4 text-xs text-[#aca1b5]">Update the image shown when someone shares your public profile. The card adds your current balance, living Forks and built rooms.</p>
       {error && <p role="alert" className="mt-3 text-sm text-[#f2b482]">{error}</p>}
       <div className="mt-5 flex flex-wrap gap-5 text-sm">
-        <button disabled={!capture || busy} className="border border-[#bd93f9] px-3 py-2 text-[#bd93f9] disabled:opacity-40" onClick={publish}>{busy ? "Saving…" : published ? "Update again" : "Update profile preview"}</button>
+        {/* data-share-publish: the scene lab's HUD fixture blocks this upload by marker. */}
+        <button data-share-publish disabled={!capture || busy} className="border border-[#bd93f9] px-3 py-2 text-[#bd93f9] disabled:opacity-40" onClick={publish}>{busy ? "Saving…" : published ? "Update again" : "Update profile preview"}</button>
         {image && <a className="py-2" href={image} download="gitshelters-room.png">Download room PNG</a>}
         {published && <a className="py-2 text-[#bd93f9]" href={published} target="_blank" rel="noreferrer">Open share card ↗</a>}
       </div>

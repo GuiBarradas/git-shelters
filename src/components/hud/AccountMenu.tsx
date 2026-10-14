@@ -82,18 +82,18 @@ export function AccountMenu({ login, alerting = false }: { login: string | null;
           </div>
           <nav className="border-b border-hud-violet/40 py-1">
             {login && (
-              <Link href={`/u/${login}`} onClick={close} className={ROW}>
+              <Link href={`/u/${login}`} prefetch={false} onClick={close} className={ROW}>
                 <Icon d={REPO_ICON} />
                 Public Repo
                 <span className="ml-auto truncate text-xs text-hud-bone/60">/u/{login}</span>
               </Link>
             )}
-            <Link href="/?intro=1" onClick={close} className={ROW}>
+            <Link href="/?intro=1" prefetch={false} onClick={close} className={ROW}>
               <Icon d={REPLAY_ICON} />
               Intro / credits
               <span className={`ml-auto ${SMALL} text-hud-violet`}>Replay</span>
             </Link>
-            <Link href="/settings" onClick={close} className={ROW}>
+            <Link href="/settings" prefetch={false} onClick={close} className={ROW}>
               <Icon d={SETTINGS_ICON} />
               Settings
             </Link>
@@ -125,10 +125,10 @@ export function AccountMenu({ login, alerting = false }: { login: string | null;
             </div>
           </div>
           <div className="flex items-center gap-4 p-4">
-            <Link href="/legal/privacy" onClick={close} className={`${SMALL} text-hud-bone/60 hover:text-hud-bone`}>
+            <Link href="/legal/privacy" prefetch={false} onClick={close} className={`${SMALL} text-hud-bone/60 hover:text-hud-bone`}>
               Privacy
             </Link>
-            <Link href="/legal/terms" onClick={close} className={`${SMALL} text-hud-bone/60 hover:text-hud-bone`}>
+            <Link href="/legal/terms" prefetch={false} onClick={close} className={`${SMALL} text-hud-bone/60 hover:text-hud-bone`}>
               Terms
             </Link>
             <form action={signOut} className="ml-auto">
