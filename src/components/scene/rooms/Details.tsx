@@ -4,7 +4,7 @@ import { createContext, useContext, useLayoutEffect, useRef, type DependencyList
 import type { ThreeElements } from "@react-three/fiber";
 import { AdditiveBlending, CircleGeometry, Float32BufferAttribute, Matrix4, Mesh, type Group, type MeshBasicMaterial } from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
-import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import { mergeGeometries, mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import "../DioramaMaterial";
 import { SceneInstancesContext } from "../SceneInstances";
 import { palette } from "@/lib/palette";
@@ -66,7 +66,10 @@ export function batch(root: Group) {
     const material = (meshes[0]!.material as MeshBasicMaterial).clone();
     material.color.setRGB(1, 1, 1);
     material.vertexColors = true;
-    const geometry = mergeGeometries(parts);
+    const mergedGeometry = mergeGeometries(parts);
+    // Keep normal/color/UV seams while reusing identical vertices on the GPU.
+    const geometry = mergeVertices(mergedGeometry);
+    mergedGeometry.dispose();
     parts.forEach(part => part.dispose());
     const mesh = new Mesh(geometry, material);
     mesh.renderOrder = meshes[0]!.renderOrder;

@@ -47,7 +47,7 @@ it("batches colours within each moving pivot and restores raycastable originals 
   geometry.dispose(); red.dispose(); blue.dispose();
 });
 
-it("retains atlas UVs and the shared map when batching textured marks", () => {
+it("reuses vertices while retaining surfaces, normals, atlas UVs and the shared map", () => {
   const root = new Group();
   const geometry = new BoxGeometry();
   const map = new Texture();
@@ -56,10 +56,14 @@ it("retains atlas UVs and the shared map when batching textured marks", () => {
   const cleanup = batch(root);
   const merged = root.children[2] as Mesh;
   const expected = geometry.toNonIndexed();
-  expect(Array.from(merged.geometry.getAttribute("uv").array)).toEqual([
-    ...expected.getAttribute("uv").array, ...expected.getAttribute("uv").array,
-  ]);
+  expect(merged.geometry.getAttribute("position").count).toBeLessThan(expected.getAttribute("position").count * 2);
+  const expanded = merged.geometry.toNonIndexed();
+  for (const attribute of ["position", "normal", "uv"]) {
+    expect(Array.from(expanded.getAttribute(attribute).array)).toEqual([
+      ...expected.getAttribute(attribute).array, ...expected.getAttribute(attribute).array,
+    ]);
+  }
   expect((merged.material as MeshToonMaterial).map).toBe(map);
   cleanup();
-  expected.dispose(); geometry.dispose(); material.dispose(); map.dispose();
+  expanded.dispose(); expected.dispose(); geometry.dispose(); material.dispose(); map.dispose();
 });
