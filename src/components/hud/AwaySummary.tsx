@@ -10,23 +10,24 @@ import type { AwayReport } from "@/lib/economy/away";
  * it is client state only, because the next settle moves last_tick_at
  * forward and the report will not repeat.
  */
-export function AwaySummary({ report }: { report: AwayReport }) {
+export function AwaySummary({ report, alerting = false }: { report: AwayReport; alerting?: boolean }) {
   const [open, setOpen] = useState(true);
   if (!open) return null;
 
+  // Below the 56 px TopBar, or below the AlertBanner too when one is up.
   return (
-    <div className="pointer-events-auto absolute inset-x-0 top-24 z-20 flex justify-center px-4">
-      <section className="route-enter w-full max-w-md border border-[#BD93F9]/60 bg-[#0B0713]/95 p-4 font-mono text-sm text-[#E6DFC8] shadow-[0_0_30px_rgba(189, 147, 249,0.12)]">
-        <p className="mb-2 text-[10px] uppercase tracking-[0.25em] text-[#BD93F9]/60">
+    <div data-hud className={`pointer-events-auto absolute inset-x-0 ${alerting ? "top-[116px]" : "top-[72px]"} z-20 flex justify-center px-4`}>
+      <section className="route-enter w-full max-w-md border border-hud-violet/60 bg-hud-bg/95 p-4 font-mono text-sm text-hud-bone">
+        <p className="mb-2 text-[10px] uppercase tracking-[0.25em] text-hud-bone/60">
           main-branch:~$ cat since_last_login.log
         </p>
-        <h2 className="mb-3 text-[#BD93F9]">{report.headline}</h2>
-        <ul className="space-y-1 text-[#E6DFC8]/85">
+        <h2 className="mb-3 text-hud-violet">{report.headline}</h2>
+        <ul className="space-y-1 text-hud-bone/85">
           {report.lines.map((line) => (
             <li key={line}>&gt; {line}</li>
           ))}
           {report.warnings.map((line) => (
-            <li key={line} className="text-[#A14545]">
+            <li key={line} className="text-hud-red-text">
               &gt; {line}
             </li>
           ))}
@@ -34,7 +35,7 @@ export function AwaySummary({ report }: { report: AwayReport }) {
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="mt-4 border border-[#BD93F9] px-3 py-1 text-[#BD93F9] transition hover:bg-[#BD93F9]/10"
+          className="mt-4 border border-hud-violet px-3 py-1 text-hud-violet hover:bg-hud-violet/10"
         >
           back to work
         </button>

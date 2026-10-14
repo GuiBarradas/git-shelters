@@ -2,19 +2,11 @@
 
 import { useId } from "react";
 
-import { forecast, FORECAST_HOURS, type ForecastWarning } from "@/lib/economy/forecast";
+import { forecast, FORECAST_HOURS } from "@/lib/economy/forecast";
 import { RATES, type ResourceState, type Workforce } from "@/lib/economy/tick";
 
+import { FORECAST_WARNINGS as WARNINGS } from "./forecastCopy";
 import { useDisclosure } from "./useDisclosure";
-
-/** Staffing gaps are things to do (amber); full racks are just facts. */
-const WARNINGS: Record<ForecastWarning, { text: string; tone: string }> = {
-  cache_full: { text: "Cache reaches capacity. Extra meals will not be stored.", tone: "text-hud-bone/70" },
-  payload_full: { text: "Payload reaches capacity. Extra rounds will not be stored.", tone: "text-hud-bone/70" },
-  no_cooks: { text: "Cache Storage has no Cook. Assign a Fork inside the room.", tone: "text-hud-amber" },
-  no_engineers: { text: "Power Plant has no Engineer. Assign a Fork inside the room.", tone: "text-hud-amber" },
-  no_tinkerers: { text: "Workshop has no Tinkerer. Assign a Fork inside the room.", tone: "text-hud-amber" },
-};
 
 const delta = (value: number) => (value > 0 ? `+${value}` : value < 0 ? `−${-value}` : "±0");
 
