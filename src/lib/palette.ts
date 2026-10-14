@@ -55,6 +55,14 @@ export const mapTones = {
   mast: "#3a3445",
   /** The faint brown ember of a bunker idle for over a week (a lit oldWoodBrown). */
   ember: "#6b4630",
+  /** Region props: Static antennas and CRT shells, Cluster racks, Mainframe beige, Edge obelisks. */
+  antenna: "#4a4458",
+  crt: "#2e2a35",
+  rack: "#2a3442",
+  /** A paler concreteTan for the Mainframe cabinets. */
+  beige: "#b3a888",
+  /** A shaded boneWhite: the Edge obelisks. */
+  obelisk: "#cfc8b2",
   clusterBlue: "#8fb3d9",
   beaconRed: "#e05a5a",
 } as const;
