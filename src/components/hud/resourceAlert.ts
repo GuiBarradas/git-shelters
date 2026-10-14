@@ -1,4 +1,5 @@
 import { ratesPerHour, type ResourceState, type Workforce } from "@/lib/economy/tick";
+import { JOB_BY_ROOM } from "@/lib/forks/jobs";
 import { GROUND_SLOTS, hasElevator, LOWER_SLOTS, ROOM_CATALOG, type Room, type Slot } from "@/lib/rooms/catalog";
 
 /**
@@ -52,6 +53,34 @@ export function resourceAlert({ resources, work, rooms, forks, bytes }: {
     ratePerHour: kind === "blackout" ? rates.uptime : rates.cache,
     build,
   };
+}
+
+/** Producer rooms in the order a gap hurts most: no power stops the other two. */
+const STAFFING_ORDER = ["power_plant", "cache_storage", "workshop"] as const;
+export type StaffingTarget = { slot: Slot; kind: (typeof STAFFING_ORDER)[number]; role: string };
+
+/**
+ * The one room that should get a worker next, shared by the onboarding
+ * card and the scene's "+ ASSIGN" chip so they never disagree. While an
+ * alert is up only its own room counts, and only if nobody works there.
+ * Otherwise an idle Fork (no room) is needed, and power comes first.
+ */
+export function staffingTarget({ alert, rooms, forks }: {
+  alert: ResourceAlert | null;
+  rooms: Room[];
+  forks: ReadonlyArray<{ roomSlot: number | null }>;
+}): StaffingTarget | null {
+  if (alert) {
+    return alert.room && !alert.room.staffed
+      ? { slot: alert.room.slot, kind: alert.roomKind, role: JOB_BY_ROOM[alert.roomKind].title }
+      : null;
+  }
+  if (!forks.some((f) => !f.roomSlot)) return null;
+  for (const kind of STAFFING_ORDER) {
+    const room = rooms.find((r) => r.kind === kind && !forks.some((f) => f.roomSlot === r.slot));
+    if (room) return { slot: room.slot, kind, role: JOB_BY_ROOM[kind].title };
+  }
+  return null;
 }
 
 /** A build the player can start right now: a free slot and enough Bytes. */

@@ -89,6 +89,23 @@ it("cancels an unfinished zoom on history back and releases the scene outside ga
   expect(screen.queryByTestId("canvas")).toBeNull();
 });
 
+it("keeps the renderer while the HUD inset and staffing chip change across navigation", () => {
+  const Hud = ({ slot = null, top, blocker }: { slot?: number | null; top: number; blocker: BunkerSceneProps["blocker"] }) =>
+    <RegisteredBunkerScene {...defaults} focusedSlot={slot} gameplay={slot === null}
+      hudInset={{ top, bottom: slot === null ? 152 : 0 }} blocker={blocker} />;
+  const view = render(<BunkerViewport><Hud top={56} blocker={{ slot: 1, role: "Cook" }} /></BunkerViewport>);
+  const canvas = screen.getByTestId("canvas");
+  // An alert appears: taller top inset, a different chip.
+  view.rerender(<BunkerViewport><Hud top={100} blocker={{ slot: 2, role: "Engineer" }} /></BunkerViewport>);
+  route.path = "/room/1";
+  view.rerender(<BunkerViewport><Hud slot={1} top={100} blocker={null} /></BunkerViewport>);
+  expect(canvas).toHaveAttribute("data-slot", "1");
+  route.path = "/";
+  view.rerender(<BunkerViewport><Hud top={56} blocker={null} /></BunkerViewport>);
+  expect(screen.getByTestId("canvas")).toBe(canvas);
+  expect(canvas).toHaveAttribute("data-slot", "corridor");
+});
+
 it("clears old room data on errors/404s and can retry", () => {
   const view = render(<BunkerViewport><Page slot={1} /></BunkerViewport>);
   view.rerender(<BunkerViewport><ClearBunkerScene /></BunkerViewport>);

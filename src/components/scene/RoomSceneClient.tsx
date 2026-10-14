@@ -8,7 +8,7 @@ import { FORK_TRAITS, type Fork as ForkData } from "@/lib/forks/catalog";
 import { type EventEcho, JOB_LINES, pickLine } from "@/lib/forks/mood";
 import type { Room, RoomKind } from "@/lib/rooms/catalog";
 
-import { SpeechBubble } from "./BunkerSceneClient";
+import { hudInset, SpeechBubble } from "./BunkerSceneClient";
 import { RegisteredBunkerScene, useBunkerFocus } from "./BunkerViewport";
 
 type Props = {
@@ -22,6 +22,8 @@ type Props = {
   panel?: ReactNode;
   forks?: ForkData[];
   powered?: boolean;
+  /** An AlertBanner sits under the TopBar: the close-up leaves 100 px at the top, not 56. */
+  alerting?: boolean;
 };
 
 /** Client boundary for the room interior; the page passes the terminal content as children. */
@@ -41,6 +43,7 @@ export function RoomSceneClient(props: Props) {
       <RegisteredBunkerScene
         {...props}
         focusedSlot={props.slot ?? 0}
+        hudInset={hudInset(!!props.alerting, false, true)}
         onSlotClick={() => {}}
         onForkClick={(f) => {
           setPokes((n) => n + 1);

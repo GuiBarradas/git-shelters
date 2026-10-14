@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildableSlot, resourceAlert } from "@/components/hud/resourceAlert";
+import { buildableSlot, resourceAlert, staffingTarget } from "@/components/hud/resourceAlert";
 import { workforce } from "@/lib/economy/resources";
 import { RATES } from "@/lib/economy/tick";
 import type { Fork } from "@/lib/forks/catalog";
@@ -64,5 +64,33 @@ describe("resource alert", () => {
     expect(short?.build).toMatchObject({ slot: 1, missing: ROOM_CATALOG.cache_storage.cost - 20 });
     expect(buildableSlot(short)).toBeNull();
     expect(buildableSlot(alertFor({ cache: 0, uptime: 50 }, [], [], null))).toBeNull();
+  });
+});
+
+describe("staffing target", () => {
+  const target = (resources: { cache: number; uptime: number }, rooms: Room[], forks: Fork[]) =>
+    staffingTarget({ alert: alertFor(resources, rooms, forks), rooms, forks });
+  const producers: Room[] = [{ slot: 1, kind: "workshop" }, { slot: 2, kind: "cache_storage" }, { slot: 3, kind: "power_plant" }];
+
+  it("puts power first, then the kitchen, then the bench, by role", () => {
+    expect(target({ cache: 50, uptime: 50 }, producers, [fork(null)])).toEqual({ slot: 3, kind: "power_plant", role: "Engineer" });
+    expect(target({ cache: 50, uptime: 50 }, producers, [fork(null), fork(3)])).toEqual({ slot: 2, kind: "cache_storage", role: "Cook" });
+    expect(target({ cache: 50, uptime: 50 }, producers, [fork(null), fork(3), fork(2)])).toEqual({ slot: 1, kind: "workshop", role: "Tinkerer" });
+  });
+
+  it("asks for nobody without an idle Fork when nothing is broken", () => {
+    expect(target({ cache: 50, uptime: 50 }, producers, [fork(1)])).toBeNull();
+  });
+
+  it("follows the alert's own room, even if the idle-Fork order would pick another", () => {
+    // Empty pantry with power fine: the kitchen, not the unstaffed Power Plant.
+    const rooms: Room[] = [{ slot: 1, kind: "cache_storage" }, { slot: 2, kind: "power_plant" }];
+    expect(target({ cache: 0, uptime: 50 }, rooms, [fork(null)])).toEqual({ slot: 1, kind: "cache_storage", role: "Cook" });
+  });
+
+  it("shows no chip while an alert's room is staffed or missing", () => {
+    const rooms: Room[] = [{ slot: 1, kind: "cache_storage" }, { slot: 2, kind: "power_plant" }];
+    expect(target({ cache: 50, uptime: 0 }, rooms, [fork(2), fork(null)])).toBeNull();
+    expect(target({ cache: 50, uptime: 0 }, [{ slot: 1, kind: "cache_storage" }], [fork(null)])).toBeNull();
   });
 });

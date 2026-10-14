@@ -106,6 +106,7 @@ export default async function RoomPage({ params }: Props) {
         panel={panel}
         forks={allForks}
         powered={resources.uptime > 0}
+        alerting={!!alert}
       />
       <TopBar login={githubLogin} bytes={me?.bytes ?? null} resources={resources} work={work} lastSyncedAt={sync?.last_synced_at ?? null} alerting={!!alert} />
       {alert && <AlertBanner alert={alert} currentSlot={slotNumber} />}
