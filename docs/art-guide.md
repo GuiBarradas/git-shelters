@@ -34,6 +34,8 @@ The tokens live in `src/lib/palette.ts` and `src/app/globals.css`. Use them by n
 | `glowYellow` | `#FFD66B` | the idle Main Branch lamp, a helmet |
 | `coalBlack` | `#0F0F0F` | black objects |
 
+The 404 Lands map adds `mapTones` in the same file: darkened tones of these tokens for the plateaus and props, plus two recorded exceptions. `clusterBlue` (`#8fb3d9`) is a light tone of `steelBlue` for the Cluster's LEDs: §9 asks for cold blue and LEDs may never be green. `beaconRed` (`#e05a5a`) is a lit `fadedRed` for the Outage beacons.
+
 Rules: no green anywhere. Amber is the only warm accent in the interface. Text on the background is `boneWhite` for prose and `phosphorViolet` for anything the game says.
 
 ## 3. Light
@@ -209,11 +211,25 @@ The 404 Lands are seven regions. Only The Outage is open in the alpha; the other
 | The Sandbox | nothing behaves twice | walls that shift colour, controlled glitch |
 | The Edge | where the maps stop | clean sci-fi minimalism, frontier |
 
+### The 404 Lands map
+
+`/map` is a night diorama of the seven regions (React Three Fiber, `src/components/map/`), with the SVG map (`WorldMap.tsx`) as the fallback when WebGL is missing or the context is lost. Heights, top and side tones and prop recipes live in `src/lib/regions/look.ts`; every prop, ring and light is seeded, so the map is the same on every machine. Three rules give it its identity:
+
+- **In The Outage, every warm light is a Maintainer.** A bunker's beam and pool grow with its credited activity (the same `activityFromCreditAt` as the bunker lamps). After a week without credit it is a brown ember; with no credit at all (unknown, not idle) it shows a bare hatch and no age. The visitor's own bunker is amber with a tall beam, a sonar ring and the map's only `PointLight`. The tooltip says "active today", never "pushed": a backfill credits too.
+- **A locked region is seen through bad signal.** `SignalFogEffect` rebuilds each pixel's terrain from depth and fogs it by a 500×300 region mask: blur, desaturation, a violet lift, lights bleeding through, static, scanline and drifting cloud cards. Open regions and a margin around them are cleared in the mask, so filtering never fogs them (unit-tested pixel by pixel). Hover thins a region's fog to peek.
+- **Each region has a light signature**: red beacons and sirens (Outage), white CRT flicker and ghost broadcasts (Static), failing violet in the mounds (Heap), cold and violet LEDs (Cluster), slow violet screens (Mainframe), a colour cycle (Sandbox), one survey light (Edge).
+
+Additive lights write no depth, so a beam in front of a locked region would be fogged with the ground behind it. Beams, packets and every light over open ground live on layer 1: the fog effect draws them over a copy of the terrain depth and adds them after the fog. A light inside a locked region stays on layer 0 so it blurs with its region. The map's fog is the one unconditional postprocessing pass in the game: **Low keeps a simplified fog without blur** (grading, static and cards), Medium blurs at half resolution, High adds a slight colour split inside the fog. Everything repeated is instanced; there is no shadow map, DPR is capped at 1.5 and the loop stops while the tab is hidden. Reduced motion slows the scene clock to 0.35× and turns off the camera drift.
+
+Use `/map?review=1` (development, or a production build with `SCENE_REVIEW_BUILD=1`) for 30 synthetic Repos covering every activity bucket; it reads no database row and labels itself as fake. Screenshots: `docs/screenshots/map-3d/` (1440×900 and 390×844: normal, peeking a locked region, find my Repo, fog off, WebGL disabled).
+
+**Measured 2026-10-14:** Intel Iris Xe, ANGLE D3D11, production build, `/map?review=1` (30 Repos), 1920×1080 internal resolution, 600 frames after a 20-second warm-up, quality preset through `INSPECT_QUALITY`. Low: **37 draw calls, 20.22 ms mean, 16.80 ms median, 33.60 ms p95** (78 frames over 33 ms); a second Low run measured 20.94 ms mean with the same median and p95 (91 frames over 33 ms). Medium: **43 draws, 24.28 ms mean, 17.10 ms median, 33.70 ms p95** (104 frames over 33 ms). The draw budget (≤ 60 with 30 bunkers) is met; the median frame is at 60 fps but **a steady 60 fps on Low is not**: about one frame in seven takes two vsyncs. Physical phones are unmeasured.
+
 ## 10. Do and do not
 
 **Do**: reuse a palette token; add clutter; light with a warm lamp; test a pose with a screenshot; keep stations off the read-out; name a prop for what it is in the world.
 
-**Do not**: import a model or add per-prop textures; use green; light a room violet; put a prop inside the wall; add an unconditional postprocessing pass or per-room shadow map; reference any other game's assets, names or trade dress; add a face, a logo or a text mesh.
+**Do not**: import a model or add per-prop textures; use green; light a room violet; put a prop inside the wall; add an unconditional postprocessing pass (the map's signal fog is the recorded exception, §9) or per-room shadow map; reference any other game's assets, names or trade dress; add a face, a logo or a text mesh.
 
 ## 11. Checklist for a visual PR
 
