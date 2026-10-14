@@ -4,11 +4,31 @@
   --background: #0b0713;
   --foreground: #e6dfc8;
   --accent: #bd93f9;
+
+  /* HUD tokens: components use these, never inline hex. */
+  --hud-bg: #0b0713; /* bunkerBlack */
+  --hud-plum: #2d2235; /* inactivePlum: empty segments */
+  --hud-violet: #bd93f9; /* phosphorViolet */
+  --hud-violet-dim: #8d46a3; /* violetDim: locked, dividers; not for small text */
+  --hud-amber: #e67e22; /* actions */
+  --hud-bone: #e6dfc8; /* values and prose */
+  --hud-red: #a14545; /* fadedRed: danger borders */
+  --hud-red-text: #c95f5f; /* fadedRed lifted for text, ~5:1 contrast */
+  --hud-alert-bg: #1c0e16; /* alert banner background */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-hud-bg: var(--hud-bg);
+  --color-hud-plum: var(--hud-plum);
+  --color-hud-violet: var(--hud-violet);
+  --color-hud-violet-dim: var(--hud-violet-dim);
+  --color-hud-amber: var(--hud-amber);
+  --color-hud-bone: var(--hud-bone);
+  --color-hud-red: var(--hud-red);
+  --color-hud-red-text: var(--hud-red-text);
+  --color-hud-alert-bg: var(--hud-alert-bg);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
