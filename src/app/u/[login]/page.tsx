@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { loadPublicVisuals } from "@/lib/visuals/server";
 import { notFound } from "next/navigation";
 
@@ -11,7 +12,12 @@ type Props = { params: Promise<{ login: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { login } = await params;
   const profile = await getPublicProfile(login);
-  return { title: profile ? `${profile.login}'s Repo · Git Shelters` : "404 Lands · Git Shelters" };
+  if (!profile) return { title: "404 Lands · Git Shelters" };
+  const requestHeaders = await headers();
+  const host = requestHeaders.get("host") ?? "localhost:3000";
+  const protocol = host.startsWith("localhost") ? "http" : "https";
+  const image = { url: `${protocol}://${host}/api/u/${encodeURIComponent(profile.login)}/card`, width: 1200, height: 630, alt: `${profile.login}'s GitShelters bunker` };
+  return { title: `${profile.login}'s Repo · Git Shelters`, openGraph: { images: [image] }, twitter: { card: "summary_large_image", images: [image.url] } };
 }
 
 /**

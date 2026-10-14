@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
 
 import type { GeneratedBunker } from "@/lib/visuals/types";
+import { BunkerShare } from "./procedural/BunkerShare";
 import { useQuality } from "./SceneQuality";
 import { buildRoom, type BuildState } from "@/app/rooms/actions";
 import { FirstSteps, type FirstStepsState } from "@/components/hud/FirstSteps";
@@ -103,6 +104,7 @@ export function BunkerSceneClient({
 
   return (
     <>
+      {visuals && bytes !== null && !demo && <BunkerShare bunker={visuals} forks={forks} />}
       <BunkerScene
         visuals={visuals}
         buildPreview={menuSlot !== null && previewKind && bytes !== null ? {slot: menuSlot, kind: previewKind, missingBytes: Math.max(0, ROOM_CATALOG[previewKind].cost - bytes)} : null}

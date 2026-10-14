@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/database.types";
+import { removePreview } from "@/lib/visuals/share-card";
 
 /**
  * LGPD account operations (ADR 0007). Both run with the service-role
@@ -112,6 +113,8 @@ export async function exportAccount(admin: Admin, userId: string): Promise<Accou
  */
 export async function deleteAccount(admin: Admin, userId: string): Promise<void> {
   await audit(admin, userId, "account.delete");
+  // Storage objects do not cascade from auth.users; drop the scene preview first.
+  await removePreview(admin, userId);
   const { error } = await admin.auth.admin.deleteUser(userId);
   if (error) throw error;
 }
