@@ -75,11 +75,15 @@ export function activityLabel(a: number | null): string | null {
   return `active ${days} days ago`;
 }
 
-/** The glowing core over each hatch: amber for the visitor, lamp by activity, an ember when idle, none when unknown. */
+/**
+ * The glowing core over each hatch: amber for the visitor, lamp by activity,
+ * an ember when idle. Unknown activity gets a steady violet standby LED: it
+ * says a bunker is there (a bare hatch vanishes at night), never how recent.
+ */
 export function bunkerGlows(bunkers: readonly MapBunker[]): Glow[] {
   return bunkers.flatMap(({ pin, at: [x, y, z], mine, phase }): Glow[] => {
     if (mine) return [{ at: [x, y + 0.55, z], color: palette.amber, size: 3.2, mode: "own", phase }];
-    if (pin.activity === null) return [];
+    if (pin.activity === null) return [{ at: [x, y + 0.35, z], color: palette.phosphorViolet, size: 1, mode: "steady", phase }];
     if (pin.activity > 0) return [{ at: [x, y + 0.5, z], color: palette.lampWarm, size: 1.2 + 1.8 * pin.activity, mode: "breathe", phase }];
     return [{ at: [x, y + 0.35, z], color: mapTones.ember, size: 0.9, mode: "slow", phase }];
   });

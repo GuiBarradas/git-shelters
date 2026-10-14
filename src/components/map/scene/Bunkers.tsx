@@ -87,7 +87,7 @@ const additive = { transparent: true, depthWrite: false, blending: AdditiveBlend
  * pool of light, and an upload beam whose height follows the activity.
  * The visitor's own bunker is amber, with a tall beam and the map's only
  * real light. Cores are drawn by Glows. Unknown activity (null) shows a
- * bare hatch: no light, no age.
+ * hatch with a violet standby LED: no warm light, no age.
  */
 export function Bunkers({ bunkers }: { bunkers: readonly MapBunker[] }) {
   const parts = useMemo(() => {

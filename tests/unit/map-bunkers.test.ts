@@ -31,11 +31,11 @@ describe("map bunker light", () => {
     }
   });
 
-  it("burns a lamp for activity, an ember after a week, and nothing when unknown", () => {
+  it("burns a lamp for activity, an ember after a week, and only a standby LED when unknown", () => {
     const [lit, idle, unknown, own] = mapBunkers([pin("lit", 0.7), pin("idle", 0), pin("unknown", null), pin("Me", null)], "me");
     expect(bunkerGlows([lit!])).toMatchObject([{ color: palette.lampWarm, mode: "breathe" }]);
     expect(bunkerGlows([idle!])).toMatchObject([{ color: mapTones.ember, mode: "slow" }]);
-    expect(bunkerGlows([unknown!])).toEqual([]);
+    expect(bunkerGlows([unknown!])).toMatchObject([{ color: palette.phosphorViolet, mode: "steady" }]);
     expect(own!.mine).toBe(true);
     expect(bunkerGlows([own!])).toMatchObject([{ color: palette.amber, mode: "own" }]);
   });

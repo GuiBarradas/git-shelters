@@ -67,7 +67,10 @@ function BunkerTip({ tip, pinned, review, onClose }: { tip: MapBunker; pinned: b
       <p className="text-hud-bone/70">
         {pin.bytes.toLocaleString("en-US")} B · {pin.rooms} {pin.rooms === 1 ? "room" : "rooms"} · {pin.badges} {pin.badges === 1 ? "badge" : "badges"}
       </p>
-      {review ? <p className="mt-1 text-hud-bone/50">synthetic · no profile</p> : (
+      {review ? <p className="mt-1 text-hud-bone/50">synthetic · no profile</p> : !pinned ? (
+        // A hover card follows the pointer and can't be reached; the click on the bunker opens the profile.
+        <p className="mt-1 text-hud-violet">click to open profile</p>
+      ) : (
         <Link href={`/u/${pin.login}`} prefetch={false} className="mt-1 inline-block text-hud-violet hover:text-hud-bone">open profile →</Link>
       )}
     </div>
@@ -176,6 +179,7 @@ export function MapOverlay({
           <ul className="mb-2 hidden space-y-1 text-hud-bone/80 sm:block">
             <li className="flex items-center gap-2"><span className="size-2.5 bg-hud-amber" />your Repo</li>
             <li className="flex items-center gap-2"><span className="size-2.5 bg-hud-lamp" />a Repo · brighter = more recent activity</li>
+            <li className="flex items-center gap-2"><span className="size-2.5 rounded-full bg-hud-violet" />a Repo with no synced activity yet</li>
             <li className="flex items-center gap-2"><span className="size-2.5 bg-hud-beacon" />Outage emergency beacon</li>
             <li className="flex items-center gap-2"><span className="size-2.5 border border-hud-violet/60 bg-hud-violet/25" />no signal · hover to peek</li>
           </ul>

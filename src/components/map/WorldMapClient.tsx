@@ -23,18 +23,30 @@ const noSubscribe = () => () => {};
 
 /**
  * The 404 Lands: the 3D diorama where WebGL works, the SVG map otherwise.
- * The SVG stays up until the canvas has drawn its first frame, and comes
- * back for good if the context is lost or the renderer fails.
+ * While the canvas boots (and before hydration, when WebGL is not known
+ * yet) a dark "tuning in" screen holds the place, so the SVG never flashes
+ * before the diorama. The SVG comes back for good if the context is lost
+ * or the renderer fails.
  */
 export function WorldMapClient({ pins, me, review }: { pins: MapPin[]; me: string | null; review: boolean }) {
-  const webgl = useSyncExternalStore(noSubscribe, () => "WebGLRenderingContext" in window, () => false);
+  const webgl = useSyncExternalStore<boolean | null>(noSubscribe, () => "WebGLRenderingContext" in window, () => null);
   const [state, setState] = useState<"booting" | "ready" | "failed">("booting");
   const mine = me ? (pins.find((p) => p.login.toLowerCase() === me.toLowerCase()) ?? null) : null;
-  const live = webgl && state !== "failed";
+  const live = webgl === true && state !== "failed";
+  const svg = webgl === false || state === "failed";
 
   return (
     <main data-map className="relative h-dvh w-full overflow-hidden font-mono text-sm">
-      {state !== "ready" && (
+      {!svg && state !== "ready" && (
+        <div className="absolute inset-0 flex flex-col">
+          <div className="px-4 py-6"><MapTitle review={review} count={pins.length} /></div>
+          <p role="status" className="flex-1 content-center text-center text-xs uppercase tracking-[0.22em] text-hud-bone/60 motion-safe:animate-pulse">
+            Tuning in to the 404 Lands…
+          </p>
+          <div className="flex flex-col sm:items-center sm:pb-3"><GameDock active="map" /></div>
+        </div>
+      )}
+      {svg && (
         <div className="absolute inset-0 flex flex-col">
           <div className="flex-1 overflow-y-auto px-4 py-6">
             <div className="mx-auto mb-4 max-w-5xl"><MapTitle review={review} count={pins.length} /></div>
