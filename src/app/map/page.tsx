@@ -1,18 +1,27 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
-import { WorldMap } from "@/components/map/WorldMap";
+import { WorldMapClient } from "@/components/map/WorldMapClient";
 import { getWorldMap } from "@/lib/api/world-map";
+import { reviewPins } from "@/lib/regions/review";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "The 404 Lands · Git Shelters" };
 
+/** Synthetic map data is a dev and review-build tool; production ignores ?review. */
+const reviewAllowed = () => process.env.NODE_ENV === "development" || process.env.SCENE_REVIEW_BUILD === "1";
+
 /**
- * The world map: every bunker as a dot in its region, each one a door to
- * its public profile. Public like the profiles are; a signed-in visitor
- * sees their own dot pulse.
+ * The world map: every bunker in its region, each one a door to its
+ * public profile. Public like the profiles are; a signed-in visitor can
+ * fly to their own Repo.
  */
-export default async function MapPage() {
+export default async function MapPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  if ((await searchParams).review === "1" && reviewAllowed()) {
+    // Fixture branch: no database or auth read at all. The first fake Repo plays "you".
+    const pins = reviewPins();
+    return <WorldMapClient pins={pins} me={pins[0]!.login} review />;
+  }
+
   const supabase = await createClient();
   const [
     pins,
@@ -23,18 +32,5 @@ export default async function MapPage() {
 
   const me = typeof user?.user_metadata?.user_name === "string" ? user.user_metadata.user_name : null;
 
-  return (
-    <main className="min-h-dvh px-4 py-6 font-mono text-sm">
-      <div className="mx-auto mb-4 flex max-w-5xl flex-wrap items-baseline justify-between gap-2">
-        <div>
-          <h1 className="text-[#BD93F9]">The 404 Lands</h1>
-          <p className="text-[#E6DFC8]/60">Every Repo that still answers. One region has signal; the rest is static, for now.</p>
-        </div>
-        <Link href="/" className="text-[#BD93F9] hover:text-[#E6DFC8]">
-          &larr; {me ? "your Repo" : "home"}
-        </Link>
-      </div>
-      <WorldMap pins={pins} me={me} />
-    </main>
-  );
+  return <WorldMapClient pins={pins} me={me} review={false} />;
 }
