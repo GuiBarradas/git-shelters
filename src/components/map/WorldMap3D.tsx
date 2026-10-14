@@ -14,13 +14,16 @@ import { regionHeight, toWorld } from "@/lib/regions/look";
 import { MapOverlay } from "./MapOverlay";
 import { BunkerPicker, ScreenAnchor } from "./scene/BunkerPicker";
 import { Bunkers } from "./scene/Bunkers";
-import { bunkerGlows, mapBunkers, type MapBunker } from "./scene/bunker";
+import { bunkerGlows, mapBunkers, type MapBunker, ownSonar } from "./scene/bunker";
 import { mapTime, REDUCED_MOTION_SPEED } from "./scene/clock";
 import { FOV, type Vec3 } from "./scene/framing";
 import { Glows } from "./scene/Glows";
 import { MapCameraRig, type MapRigHandle } from "./scene/MapCameraRig";
-import { inOpenRegion, mapProps } from "./scene/props";
+import { talkers } from "./scene/packet";
+import { Packets } from "./scene/Packets";
+import { dust, inOpenRegion, mapProps } from "./scene/props";
 import { RegionProps } from "./scene/RegionProps";
+import { Rings } from "./scene/Rings";
 import { Regions } from "./scene/Regions";
 import { SignalFog } from "./scene/SignalFog";
 import { SHARP_LAYER } from "./scene/SignalFogEffect";
@@ -112,9 +115,11 @@ export default function WorldMap3D({ pins, me, review, hidden, onReady, onLost }
   const props = useMemo(() => mapProps(bunkers.filter((b) => b.pin.region === "the_outage").map((b) => [b.at[0], b.at[2]])), [bunkers]);
   // Lights over open ground stay sharp in front of the fog; lights inside locked regions blur with them.
   const glows = useMemo(() => {
-    const all = [...bunkerGlows(bunkers), ...props.glows];
+    const all = [...bunkerGlows(bunkers), ...props.glows, ...dust()];
     return { sharp: all.filter((g) => inOpenRegion(g.at)), fogged: all.filter((g) => !inOpenRegion(g.at)) };
   }, [bunkers, props]);
+  const rings = useMemo(() => [...ownSonar(bunkers), ...props.rings], [bunkers, props]);
+  const answering = useMemo(() => talkers(bunkers), [bunkers]);
   const ownBunker = bunkers.find((b) => b.mine) ?? null;
   const mine = ownBunker?.pin ?? null;
   const own = ownBunker?.at ?? null;
@@ -158,6 +163,8 @@ export default function WorldMap3D({ pins, me, review, hidden, onReady, onLost }
         <Regions onSelect={selectRegion} onPeek={setPeek} />
         <RegionProps props={props} />
         <Bunkers bunkers={bunkers} />
+        <Rings rings={rings} />
+        <Packets talkers={answering} />
         <Glows glows={glows.sharp} cycle={CYCLE} layer={SHARP_LAYER} />
         <Glows glows={glows.fogged} cycle={CYCLE} />
         <SignalFog on={fog} quality={quality} peek={peek} reducedMotion={reducedMotion} />
