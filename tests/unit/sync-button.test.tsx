@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getBackfillStatus, syncBytes } from "@/app/sync/actions";
-import { SyncButton } from "@/components/auth/SyncButton";
+import { elapsedLabel, SyncButton } from "@/components/auth/SyncButton";
 
 const { router } = vi.hoisted(() => ({ router: { refresh: vi.fn() } }));
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
@@ -12,6 +12,15 @@ vi.stubGlobal("React", React);
 
 beforeEach(() => vi.clearAllMocks());
 afterEach(() => { cleanup(); vi.useRealTimers(); });
+
+it("formats the sync age", () => {
+  const t = Date.parse("2026-10-14T12:00:00Z");
+  expect(elapsedLabel(t, t + 30_000)).toBe("now");
+  expect(elapsedLabel(t, t + 14 * 60_000)).toBe("14m");
+  expect(elapsedLabel(t, t + 3 * 3_600_000)).toBe("3h");
+  expect(elapsedLabel(t, t + 50 * 3_600_000)).toBe("2d");
+  expect(elapsedLabel(t, t - 60_000)).toBe("now");
+});
 
 describe("sync feedback", () => {
   it("keeps a failed import retryable and shows the confirmed result", async () => {
@@ -30,6 +39,26 @@ describe("sync feedback", () => {
     fireEvent.click(screen.getByRole("button", { name: "Sync" }));
     expect(await screen.findByRole("button", { name: "Retry sync" })).toBeEnabled();
     expect(screen.getByRole("status")).toHaveTextContent("Sync failed. Try again.");
+  });
+
+  it("shows the age of the stored last sync, and nothing when it is unknown", async () => {
+    // The label ticks per whole minute; pin the clock to one so the age is exact.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(Date.parse("2026-10-14T12:30:00Z"));
+    vi.mocked(getBackfillStatus).mockResolvedValue("done");
+    const view = render(<SyncButton lastSyncedAt="2026-10-14T12:15:30Z" />);
+    expect(await screen.findByText("14m")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sync" })).toBeEnabled();
+    view.rerender(<SyncButton lastSyncedAt={null} />);
+    expect(screen.queryByText(/^\d+[mhd]$|^now$/)).toBeNull();
+  });
+
+  it("counts from a successful sync on this visit", async () => {
+    vi.mocked(getBackfillStatus).mockResolvedValue("done");
+    vi.mocked(syncBytes).mockResolvedValue({ tone: "ok", message: "up to date", at: Date.now() });
+    render(<SyncButton />);
+    fireEvent.click(screen.getByRole("button", { name: "Sync" }));
+    expect(await screen.findByText("now")).toBeInTheDocument();
   });
 
   it("checks an import until completion, refreshes the balance, then stops", async () => {
