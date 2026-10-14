@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
 
+import type { GeneratedBunker } from "@/lib/visuals/types";
 import { useQuality } from "./SceneQuality";
 import { buildRoom, type BuildState } from "@/app/rooms/actions";
 import { FirstSteps, type FirstStepsState } from "@/components/hud/FirstSteps";
@@ -27,6 +28,7 @@ export function SceneBooting() {
 
 type BunkerSceneClientProps = {
   rooms: Room[];
+  visuals?: GeneratedBunker | null;
   forks?: ForkData[];
   /** Current balance; null when anonymous. Anonymous players cannot build. */
   bytes: number | null;
@@ -56,6 +58,7 @@ export function BunkerSceneClient({
   powered = true,
   echo = null,
   onboarding,
+  visuals,
 }: BunkerSceneClientProps) {
   const router = useRouter();
   const quality = useQuality();
@@ -101,6 +104,7 @@ export function BunkerSceneClient({
   return (
     <>
       <BunkerScene
+        visuals={visuals}
         buildPreview={menuSlot !== null && previewKind && bytes !== null ? {slot: menuSlot, kind: previewKind, missingBytes: Math.max(0, ROOM_CATALOG[previewKind].cost - bytes)} : null}
         rooms={rooms}
         forks={forks}

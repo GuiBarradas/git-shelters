@@ -23,12 +23,15 @@ import {
 import { DioramaCamera } from "./DioramaCamera";
 import { QualityControl, SceneEffects, useQuality } from "./SceneQuality";
 import { SceneInstances } from "./SceneInstances";
+import type { GeneratedBunker } from "@/lib/visuals/types";
+import { OptionalBunkerVisuals, ProceduralRoom, proceduralLayout } from "./procedural/ProceduralRoom";
 import { Fork } from "./Fork";
 import { RoomOccupants } from "./rooms/Details";
 import { BuiltRoom, CELL, EmptyCell, MainBranchRoom, roomLayout } from "./rooms";
 
 type BunkerSceneProps = {
   rooms: Room[];
+  visuals?: GeneratedBunker | null;
   forks?: ForkData[];
   onForkClick?: (fork: ForkData) => void;
   /** The bunker pushed code today. */
@@ -97,6 +100,7 @@ export default function BunkerScene({
   demo = false,
   powered = true,
   buildPreview,
+  visuals,
 }: BunkerSceneProps) {
   const quality = useQuality();
   const [focus, setFocus] = useState<[number, number, number] | null>(null);
@@ -109,6 +113,7 @@ export default function BunkerScene({
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     transition.current = setTimeout(() => { transition.current = null; onSlotClick(slot, true, locked); }, reduced ? 0 : 550);
   };
+  const mainVisual = visuals?.rooms.find(r => r.slot === 0);
   const bySlot = new Map(rooms.map((room) => [room.slot, room]));
   const [hovered, setHovered] = useState<number | null>(null);
   // ponytail: quality only steps down this visit; add recovery if long sessions need it.
@@ -161,7 +166,7 @@ export default function BunkerScene({
       <hemisphereLight args={["#978dbb", "#30232f", powered ? 0.42 : 0.18]} />
       <directionalLight position={[-3, 8, 10]} color={palette.lampWarm} intensity={powered ? 0.65 : 0.18} />
 
-      <SceneInstances simpleLighting={quality === "low"}>
+      <OptionalBunkerVisuals bunker={visuals}><SceneInstances simpleLighting={quality === "low"}>
       {/* the earth the bunker is dug into */}
       <mesh position={[0, LOWER_Y - 2.2, -1]}>
         <boxGeometry args={[ROW_WIDTH * 3, 4, CELL.d + 6]} />
@@ -173,9 +178,9 @@ export default function BunkerScene({
       </mesh>
 
       <group position={[slotX(0), 0, 0]}>
-        <RoomOccupants.Provider value={forksIn(0).length}><MainBranchRoom active={activeToday} pending={eventPending} powered={powered} /></RoomOccupants.Provider>
+        <RoomOccupants.Provider value={forksIn(0).length}>{mainVisual ? <ProceduralRoom room={mainVisual} powered={powered} /> : <MainBranchRoom active={activeToday} pending={eventPending} powered={powered} />}</RoomOccupants.Provider>
         {forksIn(0).map((f, i) => (
-          <Fork key={f.id} fork={f} powered={powered} stationIndex={i} layout={roomLayout(null)} onClick={onForkClick} onHover={forkHover} />
+          <Fork key={f.id} fork={f} powered={powered} stationIndex={i} layout={mainVisual ? proceduralLayout(mainVisual) : roomLayout(null)} onClick={onForkClick} onHover={forkHover} />
         ))}
         <CellHitbox
           onClick={demo ? undefined : () => enter(0, true)}
@@ -191,17 +196,18 @@ export default function BunkerScene({
 
       {[...GROUND_SLOTS, ...LOWER_SLOTS].map((slot) => {
         const room = bySlot.get(slot);
+        const visualRoom = visuals?.rooms.find(r => r.slot === slot);
         const locked = slot >= 5 && !elevator;
         return (
           <group key={slot} position={[slotX(slot), slotY(slot), 0]}>
             {room ? (
-              <RoomOccupants.Provider value={forksIn(slot).length}><BuiltRoom kind={room.kind} powered={powered} /></RoomOccupants.Provider>
+              <RoomOccupants.Provider value={forksIn(slot).length}>{visualRoom ? <ProceduralRoom room={visualRoom} powered={powered} /> : <BuiltRoom kind={room.kind} powered={powered} />}</RoomOccupants.Provider>
             ) : (
               <EmptyCell highlight={(hovered === slot || buildPreview?.slot === slot) && !demo && !locked} locked={locked} preview={buildPreview?.slot === slot ? buildPreview : undefined} />
             )}
             {room &&
               forksIn(slot).map((f, i) => (
-                <Fork key={f.id} fork={f} powered={powered} stationIndex={i} layout={roomLayout(room.kind)} onClick={onForkClick} onHover={forkHover} />
+                <Fork key={f.id} fork={f} powered={powered} stationIndex={i} layout={visualRoom ? proceduralLayout(visualRoom) : roomLayout(room.kind)} onClick={onForkClick} onHover={forkHover} />
               ))}
             <CellHitbox
               onClick={demo || locked ? undefined : () => enter(slot, Boolean(room), locked)}
@@ -210,7 +216,7 @@ export default function BunkerScene({
           </group>
         );
       })}
-      </SceneInstances>
+      </SceneInstances></OptionalBunkerVisuals>
       <SceneEffects quality={quality} />
     </Canvas>
     </>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { loadPublicVisuals } from "@/lib/visuals/server";
 import { notFound } from "next/navigation";
 
 import { BunkerSceneClient } from "@/components/scene/BunkerSceneClient";
@@ -22,11 +23,12 @@ export default async function ProfilePage({ params }: Props) {
   const profile = await getPublicProfile(login);
   if (!profile) notFound();
 
+  const visuals = await loadPublicVisuals(login);
   const memberSince = new Date(profile.memberSince).toISOString().slice(0, 10);
 
   return (
     <main className="relative w-full h-dvh">
-      <BunkerSceneClient rooms={profile.rooms} bytes={null} activeToday={false} />
+      <BunkerSceneClient visuals={visuals} rooms={profile.rooms} bytes={null} activeToday={false} />
       <div className="pointer-events-none absolute top-4 left-4 z-10 font-mono text-sm text-[#BD93F9]">
         <h1 className="text-base">{profile.login}&apos;s Repo</h1>
         <p className="text-[#E6DFC8]/70">

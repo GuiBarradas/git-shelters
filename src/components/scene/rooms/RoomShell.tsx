@@ -6,6 +6,7 @@ import { palette } from "@/lib/palette";
 import { LightPool, RoomLight, SoftBoxGeometry, StaticBatch, RoomOccupants } from "./Details";
 
 import { ContactShade } from "./ContactShade";
+import { VisualContext, VisualMaterial } from "../procedural/VisualContext";
 import { SurfaceDetail } from "./SurfaceDetail";
 
 export const CELL = { w: 4, h: 3, d: 3 } as const;
@@ -33,33 +34,36 @@ inset.holes.push(insetOpening);
 const insetGeometry = new ExtrudeGeometry(inset, { depth:0.18, bevelEnabled:true, bevelThickness:0.035, bevelSize:0.035, bevelSegments:1, curveSegments:6 });
 
 /** Rounded pressure hull; front lane and panel anchors retain their footprint. */
-export function RoomShell({ children, light = palette.lampWarm, lightIntensity = 6, tone = "#514551", dim = false, powered = true }: {
-  children?: ReactNode; light?: string; lightIntensity?: number; tone?: string; dim?: boolean; powered?: boolean;
+export function RoomShell({ children, light = palette.lampWarm, lightIntensity = 6, tone = "#514551", dim = false, powered = true, fixtures = true }: {
+  children?: ReactNode; light?: string; lightIntensity?: number; tone?: string; dim?: boolean; powered?: boolean; fixtures?: boolean;
 }) {
+  const identity = useContext(VisualContext);
+  const colors = identity?.palette;
+  const lamp = colors?.warmLight ?? light;
   const occupied = useContext(RoomOccupants) > 0;
   const strength = powered ? (occupied ? 1 : 0.65) : 0.12;
-  return <StaticBatch>
-    <mesh position={[0, -0.13, 0]}><SoftBoxGeometry args={[4.12, 0.26, 3.04]} /><dioramaMaterial power={powered ? 1 : 0.06} color={dim ? "#514858" : "#535361"} /></mesh>
-    <mesh position={[0, 1.5, -1.375]}><boxGeometry args={[4, 3, 0.25, 8, 6, 1]} /><dioramaMaterial power={powered ? 1 : 0.06} color={dim ? "#504556" : tone} /></mesh>
+  return <><StaticBatch>
+    <mesh position={[0, -0.13, 0]}><SoftBoxGeometry args={[4.12, 0.26, 3.04]} /><VisualMaterial power={powered ? 1 : 0.06} color={dim ? "#514858" : (colors?.floor ?? "#535361")} /></mesh>
+    <mesh position={[0, 1.5, -1.375]}><boxGeometry args={[4, 3, 0.25, 8, 6, 1]} /><VisualMaterial power={powered ? 1 : 0.06} color={dim ? "#504556" : (colors?.wall ?? tone)} /></mesh>
     {!dim && <>
-      <mesh position={[0, 0.42, -1.22]}><SoftBoxGeometry args={[3.94, 0.8, 0.1]} /><dioramaMaterial power={powered ? 1 : 0.06} color="#383744" /></mesh>
-      <mesh position={[0, 0.86, -1.14]}><boxGeometry args={[3.94, 0.045, 0.045]} /><dioramaMaterial power={powered ? 1 : 0.06} color={palette.concreteTan} /></mesh>
+      <mesh position={[0, 0.42, -1.22]}><SoftBoxGeometry args={[3.94, 0.8, 0.1]} /><VisualMaterial power={powered ? 1 : 0.06} color={colors?.inset ?? "#383744"} /></mesh>
+      <mesh position={[0, 0.86, -1.14]}><boxGeometry args={[3.94, 0.045, 0.045]} /><VisualMaterial power={powered ? 1 : 0.06} color={palette.concreteTan} /></mesh>
     </>}
-    <mesh position={[0, 3.1, 0]}><SoftBoxGeometry args={[4.25, 0.22, 3]} /><dioramaMaterial power={powered ? 1 : 0.06} color={dim ? "#2c2934" : "#5b5260"} /></mesh>
-    {[-1, 1].map(side => <mesh key={side} position={[side * 2.07, 1.5, 0]}><boxGeometry args={[0.16, 3, 3, 1, 6, 6]} /><dioramaMaterial power={powered ? 1 : 0.06} color={dim ? "#4b4050" : "#4c4354"} /></mesh>)}
-    <mesh geometry={rimGeometry} dispose={null} position={[0, 0, 1.20]}><dioramaMaterial concrete={1} power={powered ? 1 : 0.06} color={dim ? "#88717f" : "#b29298"} /></mesh>
-    <mesh geometry={insetGeometry} dispose={null} position={[0,0,1.02]}><dioramaMaterial concrete={1} power={powered ? 1 : 0.06} color="#6a545d" /></mesh>
+    <mesh position={[0, 3.1, 0]}><SoftBoxGeometry args={[4.25, 0.22, 3]} /><VisualMaterial power={powered ? 1 : 0.06} color={dim ? "#2c2934" : (colors?.wall ?? "#5b5260")} /></mesh>
+    {[-1, 1].map(side => <mesh key={side} position={[side * 2.07, 1.5, 0]}><boxGeometry args={[0.16, 3, 3, 1, 6, 6]} /><VisualMaterial power={powered ? 1 : 0.06} color={dim ? "#4b4050" : (colors?.wall ?? "#4c4354")} /></mesh>)}
+    <mesh geometry={rimGeometry} dispose={null} position={[0, 0, 1.20]}><VisualMaterial concrete={1} power={powered ? 1 : 0.06} color={dim ? "#88717f" : (colors?.concrete ?? "#b29298")} /></mesh>
+    <mesh geometry={insetGeometry} dispose={null} position={[0,0,1.02]}><VisualMaterial concrete={1} power={powered ? 1 : 0.06} color={colors?.inset ?? "#6a545d"} /></mesh>
     {!dim && <>
-      <mesh position={[0, 2.88, -0.35]}><SoftBoxGeometry args={[1.45, 0.13, 0.5]} /><dioramaMaterial power={powered ? 1 : 0.06} color={palette.oldWoodBrown} /></mesh>
-      <mesh position={[0, 2.79, -0.35]}><SoftBoxGeometry args={[1.25, 0.045, 0.36]} /><meshBasicMaterial color={powered ? palette.lampWarm : palette.oldWoodBrown} /></mesh>
-      <SurfaceDetail powered={powered} tile={1} position={[0, 1.5, -1.235]} size={[3.7, 2.7]} />
-      <SurfaceDetail powered={powered} tile={1} position={[0.2, 0.018, 0.65]} size={[2.8, 1.1]} floor />
-      <RoomLight position={[0, 2.4, 0.6]} color={light} intensity={lightIntensity * strength * 0.4} distance={5} decay={2} />
-      <LightPool position={[0, 1.8, -1.24]} scale={[1.94, 1.3, 1]} wall color={light} strength={0.08 * strength} />
-      <LightPool position={[0, 0.012, 0.1]} scale={[1.95, 1.35, 1]} color={light} strength={0.05 * strength} />
+      {fixtures && <><mesh position={[0, 2.88, -0.35]}><SoftBoxGeometry args={[1.45, 0.13, 0.5]} /><VisualMaterial power={powered ? 1 : 0.06} color={palette.oldWoodBrown} /></mesh>
+      <mesh position={[0, 2.79, -0.35]}><SoftBoxGeometry args={[1.25, 0.045, 0.36]} /><meshBasicMaterial color={powered ? lamp : palette.oldWoodBrown} /></mesh></>}
+      {fixtures && <SurfaceDetail powered={powered} tile={1} position={[0, 1.5, -1.235]} size={[3.7, 2.7]} />}
+      {fixtures && <SurfaceDetail powered={powered} tile={1} position={[0.2, 0.018, 0.65]} size={[2.8, 1.1]} floor />}
+      <RoomLight position={[0, 2.4, 0.6]} color={lamp} intensity={lightIntensity * strength * 0.4} distance={5} decay={2} />
+      <LightPool position={[0, 1.8, -1.24]} scale={[1.94, 1.3, 1]} wall color={lamp} strength={0.08 * strength} />
+      <LightPool position={[0, 0.012, 0.1]} scale={[1.95, 1.35, 1]} color={lamp} strength={0.05 * strength} />
       <mesh position={[1.98, 2.05, 1.48]}><boxGeometry args={[0.035, 0.45, 0.03]} /><meshBasicMaterial color={powered ? (occupied ? palette.phosphorViolet : palette.violetDim) : palette.amber} /></mesh>
     </>}
     {!dim && <ContactShade room />}
-    {children}
-  </StaticBatch>;
+    {fixtures && children}
+  </StaticBatch>{!fixtures && <StaticBatch>{children}</StaticBatch>}</>;
 }

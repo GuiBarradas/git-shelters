@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState, type ReactNode } from "react";
 
+import type { GeneratedBunker } from "@/lib/visuals/types";
 import { FORK_TRAITS, type Fork as ForkData } from "@/lib/forks/catalog";
 import { type EventEcho, JOB_LINES, MOOD_LABEL, pickLine } from "@/lib/forks/mood";
 import type { RoomKind } from "@/lib/rooms/catalog";
@@ -13,6 +14,8 @@ const RoomScene = dynamic(() => import("./RoomScene"), { ssr: false, loading: ()
 
 type Props = {
   kind: RoomKind | null;
+  visuals?: GeneratedBunker | null;
+  slot?: number;
   activeToday: boolean;
   eventPending: boolean;
   echo?: EventEcho | null;

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { loadUserVisuals } from "@/lib/visuals/server";
 import { notFound, redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
@@ -66,6 +67,7 @@ export default async function RoomPage({ params }: Props) {
   const kind: RoomKind | null = isMain ? null : (rooms.find((r) => r.slot === slotNumber)?.kind ?? null);
   if (!isMain && kind === null) notFound();
 
+  const visuals = await loadUserVisuals(supabase, user.id, rooms);
   const resources = await settleResources(supabase, admin, user.id, crew.forks, rooms);
   const echo = eventEcho(dailyEvent);
   const moodCtx = { echo, starving: resources.cache === 0 };
@@ -88,6 +90,8 @@ export default async function RoomPage({ params }: Props) {
     <main className="relative w-full h-dvh">
       <SessionBeacon />
       <RoomSceneClient
+        visuals={visuals}
+        slot={slotNumber}
         kind={kind}
         activeToday={activeToday}
         eventPending={echo === "pending"}

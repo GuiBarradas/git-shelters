@@ -1,11 +1,14 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useContext, useMemo, useRef } from "react";
 import type { Group } from "three";
 
 import { forkLook, mulberry32, type Fork as ForkData } from "@/lib/forks/catalog";
 import { MOOD_MOTION } from "@/lib/forks/mood";
+import { generateResidentAppearance } from "@/lib/visuals/generate";
+import { VisualContext } from "./procedural/VisualContext";
+import type { ResidentAppearance } from "@/lib/visuals/types";
 import { palette } from "@/lib/palette";
 import { LIVE, SoftBoxGeometry, StaticBatch } from "./rooms/Details";
 import { ContactShade } from "./rooms/ContactShade";
@@ -37,6 +40,7 @@ export type RoomLayout = {
 
 type Props = {
   fork: ForkData;
+  appearance?: ResidentAppearance;
   layout: RoomLayout;
   powered?: boolean;
   /** One worker starts at each station; extras use the free walk lane. */
@@ -61,8 +65,12 @@ type Phase = "pace" | "approach" | "enter" | "act" | "exit" | "leave";
  * a survivor is recognisable by how it moves, and the loop never touches
  * React state.
  */
-export function Fork({ fork, layout, powered = true, stationIndex = 0, onClick, onHover }: Props) {
-  const look = useMemo(() => forkLook(fork.seed), [fork.seed]);
+export function Fork({ fork, appearance, layout, powered = true, stationIndex = 0, onClick, onHover }: Props) {
+  const identity = useContext(VisualContext);
+  const generated = useMemo(() => identity ? generateResidentAppearance(identity.githubId, fork.id) : undefined, [identity, fork.id]);
+  appearance = appearance ?? generated;
+  const baseLook = useMemo(() => forkLook(fork.seed), [fork.seed]);
+  const look = appearance ? { ...baseLook, ...appearance, helmet: null } : baseLook;
   const rand = useMemo(() => mulberry32(fork.seed ^ 0x2545f491), [fork.seed]);
 
   const root = useRef<Group>(null);
@@ -334,13 +342,16 @@ export function Fork({ fork, layout, powered = true, stationIndex = 0, onClick, 
         {!look.helmet && <>
           <mesh position={[0, v * 1.34, -v * 0.14]}>
             <SoftBoxGeometry args={[v * 2.34, v * 2.18, v * 2.16]} />
-            <dioramaMaterial power={powered ? 1 : 0.06} color="#4a2b1d" />
+            <dioramaMaterial power={powered ? 1 : 0.06} color={appearance?.hair ?? "#4a2b1d"} />
           </mesh>
-          <mesh position={[-v * 0.35, v * 1.93, v * 0.83]} rotation={[0, 0, -0.12]}>
+          <mesh position={[v * (appearance?.hairStyle === "parted" ? 0.35 : -0.35), v * 1.93, v * 0.83]} rotation={[0, 0, appearance?.hairStyle === "parted" ? 0.12 : -0.12]} scale={appearance?.hairStyle === "crop" ? [1,0.6,0.7] : 1}>
             <SoftBoxGeometry args={[v * 1.55, v * 0.65, v * 0.55]} />
-            <dioramaMaterial power={powered ? 1 : 0.06} color="#4a2b1d" />
+            <dioramaMaterial power={powered ? 1 : 0.06} color={appearance?.hair ?? "#4a2b1d"} />
           </mesh>
         </>}
+        {appearance?.accessory === "headlamp" && <mesh position={[0,v*1.85,v*1.05]}><SoftBoxGeometry args={[v*0.65,v*0.45,v*0.25]} /><dioramaMaterial color="#ddc598" emissive="#ffb570" emissiveIntensity={0.8} /></mesh>}
+        {appearance?.accessory === "goggles" && [-0.5,0.5].map(x => <mesh key={x} position={[v*x,v*0.9,v*1.08]}><SoftBoxGeometry args={[v*0.78,v*0.55,v*0.2]} /><dioramaMaterial color="#534359" metalness={0.25} /></mesh>)}
+        {appearance?.accessory === "scarf" && <mesh position={[0,-v*0.12,v*0.13]}><SoftBoxGeometry args={[v*1.6,v*0.45,v*1.5]} /><dioramaMaterial color={appearance.shirt} /></mesh>}
         {look.helmet && (
           <>
             <mesh position={[0, v * 2.05, -v * 0.03]}>

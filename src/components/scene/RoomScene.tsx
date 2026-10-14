@@ -11,6 +11,8 @@ import type { RoomKind } from "@/lib/rooms/catalog";
 import { DioramaCamera } from "./DioramaCamera";
 import { QualityControl, SceneEffects, useQuality } from "./SceneQuality";
 import { SceneInstances } from "./SceneInstances";
+import type { GeneratedBunker } from "@/lib/visuals/types";
+import { OptionalBunkerVisuals, ProceduralRoom, proceduralLayout, proceduralPanel } from "./procedural/ProceduralRoom";
 import { Fork } from "./Fork";
 import { CloseUpLighting, RoomOccupants } from "./rooms/Details";
 import { BuiltRoom, CELL, MainBranchRoom, panelAnchor, roomLayout } from "./rooms";
@@ -23,6 +25,8 @@ const PANEL_PX = 300;
 type RoomSceneProps = {
   /** null = the Main Branch. */
   kind: RoomKind | null;
+  visuals?: GeneratedBunker | null;
+  slot?: number;
   activeToday: boolean;
   eventPending: boolean;
   /** Rendered on the room's read-out surface: terminal, clipboard or gauge. */
@@ -42,9 +46,12 @@ export default function RoomScene({
   onForkClick,
   onForkHover,
   powered = true,
+  visuals,
+  slot = 0,
 }: RoomSceneProps) {
   const quality = useQuality();
-  const anchor = panelAnchor(kind);
+  const visualRoom = visuals?.rooms.find(r => r.slot === slot);
+  const anchor = visualRoom ? proceduralPanel(visualRoom) : panelAnchor(kind);
   return (
     <>
     <QualityControl value={quality} />
@@ -57,10 +64,10 @@ export default function RoomScene({
       <hemisphereLight args={["#b1a2d1", "#5b3d36", powered ? 0.5 : 0.2]} />
       <directionalLight position={[6, 10, 8]} color={palette.boneWhite} intensity={powered ? 1.1 : 0.2} />
 
-      <SceneInstances>
+      <OptionalBunkerVisuals bunker={visuals}><SceneInstances>
       <CloseUpLighting.Provider value={true}>
         <RoomOccupants.Provider value={forks.length}>
-          {kind === null ? (
+          {visualRoom ? <ProceduralRoom room={visualRoom} powered={powered} /> : kind === null ? (
             <MainBranchRoom active={activeToday} pending={eventPending} powered={powered} />
           ) : (
             <BuiltRoom kind={kind} powered={powered} />
@@ -68,9 +75,9 @@ export default function RoomScene({
         </RoomOccupants.Provider>
       </CloseUpLighting.Provider>
       {forks.map((f, i) => (
-        <Fork key={f.id} fork={f} powered={powered} stationIndex={i} layout={roomLayout(kind)} onClick={onForkClick} onHover={onForkHover} />
+        <Fork key={f.id} fork={f} powered={powered} stationIndex={i} layout={visualRoom ? proceduralLayout(visualRoom) : roomLayout(kind)} onClick={onForkClick} onHover={onForkHover} />
       ))}
-      </SceneInstances>
+      </SceneInstances></OptionalBunkerVisuals>
       {panel && (
         // CSS3D panel glued to the room's read-out surface (monitor, clipboard, gauge).
         <Html

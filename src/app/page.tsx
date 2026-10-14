@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { loadUserVisuals } from "@/lib/visuals/server";
 import { after } from "next/server";
 
 import { SessionBeacon } from "@/components/analytics/SessionBeacon";
@@ -73,6 +74,7 @@ export default async function Home({ searchParams }: HomeProps) {
   });
   const me = await fetchMe(supabase, user.id);
   const bytes = me?.bytes ?? null;
+  const visuals = await loadUserVisuals(supabase, user.id, rooms);
 
   // Catch-up: what the crew produced and ate since the last visit.
   const resources = await settleResources(supabase, admin, user.id, crew.forks, rooms);
@@ -103,6 +105,7 @@ export default async function Home({ searchParams }: HomeProps) {
     <main className="relative w-full h-dvh">
       <SessionBeacon />
       <BunkerSceneClient
+        visuals={visuals}
         rooms={rooms}
         forks={forks}
         bytes={bytes}
