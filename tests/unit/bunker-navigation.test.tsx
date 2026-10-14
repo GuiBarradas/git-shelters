@@ -106,6 +106,16 @@ it("keeps the renderer while the HUD inset and staffing chip change across navig
   expect(canvas).toHaveAttribute("data-slot", "corridor");
 });
 
+it("puts the HUD before the scene layer in the DOM so Tab reaches the bar first, with one canvas", () => {
+  render(<BunkerViewport><button>hud</button><Page /></BunkerViewport>);
+  const canvas = screen.getByTestId("canvas");
+  expect(screen.getAllByTestId("canvas")).toHaveLength(1);
+  expect(screen.getByText("hud").compareDocumentPosition(canvas) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  // The scene's own controls (the staffing chip) still come after, under the HUD's z-index.
+  expect(screen.getByText("hud").closest(".bunker-hud")).toHaveClass("z-10");
+  expect(screen.getByTestId("bunker-viewport")).toHaveClass("z-0");
+});
+
 it("clears old room data on errors/404s and can retry", () => {
   const view = render(<BunkerViewport><Page slot={1} /></BunkerViewport>);
   view.rerender(<BunkerViewport><ClearBunkerScene /></BunkerViewport>);

@@ -7,7 +7,9 @@ import { ResourceGauge } from "@/components/hud/ResourceGauge";
 vi.stubGlobal("React", React);
 afterEach(cleanup);
 
-const lit = () => screen.getByTestId("segments").querySelectorAll("[data-lit]").length;
+/** The desktop bar (16) or the phone strip's (10). */
+const bar = (count: 16 | 10 = 16) => document.querySelector(`[data-segments="${count}"]`)!;
+const lit = (count: 16 | 10 = 16) => bar(count).querySelectorAll("[data-lit]").length;
 
 describe("resource gauge", () => {
   it("exposes a readable meter with the signed hourly rate", () => {
@@ -16,9 +18,21 @@ describe("resource gauge", () => {
     expect(meter).toHaveAttribute("aria-valuenow", "60");
     expect(meter).toHaveAttribute("aria-valuemin", "0");
     expect(meter).toHaveAttribute("aria-valuemax", "100");
-    expect(screen.getByTestId("segments").children).toHaveLength(16);
+    expect(bar().children).toHaveLength(16);
     expect(lit()).toBe(10);
     expect(screen.getByText("+17%/h")).toBeInTheDocument();
+  });
+
+  it("draws a 10-segment phone bar beside the 16-segment one, both hidden from the one meter", () => {
+    render(<ResourceGauge kind="cache" value={60} cap={160} ratePerHour={2} />);
+    expect(screen.getAllByRole("meter")).toHaveLength(1);
+    expect(bar(16)).toHaveAttribute("aria-hidden", "true");
+    expect(bar(16)).toHaveClass("hidden", "lg:flex");
+    expect(bar(10)).toHaveAttribute("aria-hidden", "true");
+    expect(bar(10)).toHaveClass("lg:hidden");
+    expect(bar(10).children).toHaveLength(10);
+    expect(lit(16)).toBe(6);
+    expect(lit(10)).toBe(4);
   });
 
   it("says FULL at the cap and lights every segment", () => {
@@ -42,7 +56,7 @@ describe("resource gauge", () => {
     rerender(<ResourceGauge kind="cache" value={0} cap={160} ratePerHour={-4} />);
     expect(screen.getByRole("meter", { name: "Cache 0 of 160, falling 4 per hour" })).toBeInTheDocument();
     expect(lit()).toBe(0);
-    for (const segment of screen.getByTestId("segments").children) expect(segment).toHaveClass("border-hud-red");
+    for (const segment of [...bar(16).children, ...bar(10).children]) expect(segment).toHaveClass("border-hud-red");
   });
 
   it("shows no rate when none is given", () => {

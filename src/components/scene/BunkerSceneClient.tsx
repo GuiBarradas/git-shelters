@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useActionState, useEffect, useState, type ReactNode } from "react";
 
 import type { GeneratedBunker } from "@/lib/visuals/types";
 import { useQuality } from "./SceneQuality";
@@ -10,7 +10,10 @@ import { AlertBanner } from "@/components/hud/AlertBanner";
 import { FirstSteps, type FirstStepsState } from "@/components/hud/FirstSteps";
 import { GameDock } from "@/components/hud/GameDock";
 import { buildableSlot, type ResourceAlert, type StaffingTarget } from "@/components/hud/resourceAlert";
-import type { HudInset } from "./DioramaCamera";
+import { LowerBand } from "@/components/hud/LowerBand";
+import { RoomPager } from "@/components/hud/RoomPager";
+import { useHudInset, usePhone } from "./hudInset";
+import { setPage, useOverviewPage } from "./pager";
 import { FORK_TRAITS, type Fork as ForkData } from "@/lib/forks/catalog";
 import { type EventEcho, JOB_LINES, pickLine } from "@/lib/forks/mood";
 import { GROUND_SLOTS, isLowerSlot, ROOM_CATALOG, type Room, type RoomKind, type Slot } from "@/lib/rooms/catalog";
@@ -43,17 +46,9 @@ type BunkerSceneClientProps = {
   band?: { crewLog: ReactNode; packet: ReactNode };
   /** The room that should get a worker next (shared with onboarding); drawn as the scene's chip. */
   staffing?: StaffingTarget | null;
+  /** A notice under the AlertBanner (the AwaySummary), placed after it so Tab follows the screen. */
+  notice?: ReactNode;
 };
-
-// The lower band only sits in a row from `lg` up; below that the mobile pass will set its own inset.
-const LG = "(min-width: 1024px)";
-const subscribeLg = (cb: () => void) => { const m = window.matchMedia(LG); m.addEventListener("change", cb); return () => m.removeEventListener("change", cb); };
-const isLg = () => window.matchMedia(LG).matches;
-
-/** TopBar (56 px, 100 with the AlertBanner) and, on the overview, the 128 px band plus its 24 px margin. */
-export function hudInset(alerting: boolean, band: boolean, wide: boolean): HudInset {
-  return { top: alerting ? 100 : 56, bottom: band && wide ? 152 : 0 };
-}
 
 /**
  * Owns the client state the bunker needs: which empty slot the player
@@ -75,10 +70,16 @@ export function BunkerSceneClient({
   openBuild = false,
   band,
   staffing = null,
+  notice,
 }: BunkerSceneClientProps) {
   const router = useRouter();
   const quality = useQuality();
-  const wide = useSyncExternalStore(subscribeLg, isLg, () => true);
+  const [inset, bandRef] = useHudInset(!!alert);
+  const phone = usePhone();
+  const page = useOverviewPage();
+  const pager = band && !demo && phone ? { page, onPage: setPage } : null;
+  // Notices sit just above the lower band (or the screen edge without one).
+  const above = (gap: number, bare: number) => (band ? inset.bottom + gap : bare);
   const fixSlot = bytes !== null && !demo ? buildableSlot(alert) : null;
   const [previewKind, setPreviewKind] = useState<RoomKind | null>(openBuild && fixSlot !== null && alert ? alert.roomKind : null);
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(openBuild ? fixSlot : null);
@@ -134,9 +135,10 @@ export function BunkerSceneClient({
         demo={demo}
         powered={powered}
         // Only the signed-in overview reserves HUD space and gets the card and chip; landing and public stay as they were.
-        hudInset={band ? hudInset(!!alert, true, wide) : undefined}
+        hudInset={band ? inset : undefined}
         gameplay={!!band}
         blocker={band && staffing ? { slot: staffing.slot, role: staffing.role } : null}
+        pager={pager}
       />
       {/* Low quality uses a CSS vignette; the other presets already have a post pass. */}
       <div
@@ -153,9 +155,10 @@ export function BunkerSceneClient({
           }}
         />
       )}
-      {speech && <SpeechBubble name={speech.name} line={speech.line} lifted={!!band} />}
+      {notice}
+      {speech && <SpeechBubble name={speech.name} line={speech.line} bottom={above(16, 24)} />}
       {blurb && menuSlot === null && !speech && (
-        <p className={`pointer-events-none absolute ${band ? "bottom-[168px]" : "bottom-6"} left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border border-[#BD93F9]/40 bg-[#0B0713]/90 px-3 py-1 font-mono text-xs text-[#E6DFC8]`}>
+        <p style={{ bottom: above(16, 24) }} className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border border-[#BD93F9]/40 bg-[#0B0713]/90 px-3 py-1 font-mono text-xs text-[#E6DFC8]">
           {blurb}
           {!demo && <span className="text-[#E6DFC8]/50"> · click to enter</span>}
         </p>
@@ -170,31 +173,31 @@ export function BunkerSceneClient({
           building={building}
           firstRoom={rooms.length === 0}
           error={build.tone === "warn" ? build.message : null}
-          bottom={band ? "bottom-[168px]" : "bottom-14"}
+          bottom={above(16, 56)}
+          top={inset.top}
         />
       )}
       {band && !demo && (
-        // Lower band: log (or onboarding) left, dock centred, packet right. Stacks below lg until the mobile pass.
-        <div data-hud className="pointer-events-none absolute inset-x-4 bottom-4 z-10 flex flex-col gap-2 lg:inset-x-6 lg:bottom-6 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:items-end">
-          <div className="lg:justify-self-start">
-            {menuSlot === null && (onboarding ? (
-              <FirstSteps {...onboarding} built={rooms.length > 0} bytes={bytes} fallback={band.crewLog} onBuild={() => {
-                const slot = GROUND_SLOTS.find((s) => !rooms.some((r) => r.slot === s));
-                if (slot !== undefined) onSlotClick(slot, false);
-              }} />
-            ) : band.crewLog)}
-          </div>
-          <div className="self-center lg:self-end">
-            <GameDock share={visuals && bytes !== null ? { bunker: visuals, forks } : null} />
-          </div>
-          <div className="lg:justify-self-end">{band.packet}</div>
-        </div>
+        <LowerBand
+          bandRef={bandRef}
+          pager={pager && <RoomPager page={pager.page} onPage={pager.onPage} />}
+          logHidden={menuSlot !== null}
+          log={onboarding ? (
+            <FirstSteps {...onboarding} built={rooms.length > 0} bytes={bytes} fallback={band.crewLog} onBuild={() => {
+              const slot = GROUND_SLOTS.find((s) => !rooms.some((r) => r.slot === s));
+              if (slot !== undefined) onSlotClick(slot, false);
+            }} />
+          ) : band.crewLog}
+          packet={band.packet}
+          dock={<GameDock share={visuals && bytes !== null ? { bunker: visuals, forks } : null} />}
+        />
       )}
       {build.tone !== "idle" && !building && (
         <output
           key={build.at}
           aria-live="polite"
-          className={`hud-fade pointer-events-none absolute ${band ? "bottom-[208px]" : "bottom-20"} left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border bg-[#0B0713]/95 px-3 py-1 font-mono text-xs ${
+          style={{ bottom: above(56, 80) }}
+          className={`hud-fade pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border bg-[#0B0713]/95 px-3 py-1 font-mono text-xs ${
             build.tone === "ok" ? "border-[#BD93F9]/60 text-[#BD93F9]" : "border-[#A14545]/60 text-[#A14545]"
           }`}
         >
@@ -205,10 +208,10 @@ export function BunkerSceneClient({
   );
 }
 
-/** What a survivor says when poked; fades on its own. */
-export function SpeechBubble({ name, line, lifted = false }: { name: string; line: string; lifted?: boolean }) {
+/** What a survivor says when poked; fades on its own. `bottom` in px clears the lower band. */
+export function SpeechBubble({ name, line, bottom = 24 }: { name: string; line: string; bottom?: number }) {
   return (
-    <p className={`pointer-events-none absolute ${lifted ? "bottom-[168px]" : "bottom-6"} left-1/2 z-10 -translate-x-1/2 max-w-md border border-[#E6DFC8]/40 bg-[#0B0713]/95 px-4 py-2 text-center font-mono text-sm text-[#E6DFC8]`}>
+    <p style={{ bottom }} className="pointer-events-none absolute left-1/2 z-10 w-max max-w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 border border-[#E6DFC8]/40 bg-[#0B0713]/95 px-4 py-2 text-center font-mono text-sm text-[#E6DFC8]">
       <span className="text-[#BD93F9]">{name}:</span> &ldquo;{line}&rdquo;
     </p>
   );
@@ -226,6 +229,7 @@ function BuildMenu({
   error,
   firstRoom,
   bottom,
+  top,
 }: {
   onPreview: (kind: RoomKind) => void;
   slot: Slot;
@@ -235,11 +239,13 @@ function BuildMenu({
   building: boolean;
   error: string | null;
   firstRoom: boolean;
-  /** Tailwind bottom offset: above the lower band on the overview. */
-  bottom: string;
+  /** px from the bottom edge: above the lower band on the overview. */
+  bottom: number;
+  /** px the TopBar (and banner) take; the menu never grows under them. */
+  top: number;
 }) {
   return (
-    <div className={`pointer-events-auto absolute ${bottom} left-1/2 z-20 max-h-[60dvh] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 overflow-y-auto border border-[#BD93F9] bg-[#0B0713]/95 p-4 font-mono text-sm text-[#BD93F9]`}>
+    <div style={{ bottom, maxHeight: `min(60dvh, calc(100dvh - ${top + bottom + 16}px))` }} className={`pointer-events-auto absolute left-1/2 z-20 w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 overflow-y-auto border border-[#BD93F9] bg-[#0B0713]/95 p-4 font-mono text-sm text-[#BD93F9]`}>
       <div className="mb-3 flex items-center justify-between gap-6">
         <span>
           SLOT {slot} — BUILD{isLowerSlot(slot) ? " · LOWER FLOOR" : ""}

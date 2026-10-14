@@ -23,6 +23,7 @@ import {
 } from "@/lib/rooms/catalog";
 
 import { DioramaCamera, type HudInset } from "./DioramaCamera";
+import { clampPage, PAGES, swipeStep } from "./pager";
 import { OverlayProbe, RoomOverlay } from "./RoomOverlay";
 import { QualityControl, SceneEffects, useQuality } from "./SceneQuality";
 import { SceneInstances } from "./SceneInstances";
@@ -58,6 +59,8 @@ export type BunkerSceneProps = {
   gameplay?: boolean;
   /** The room that should get a worker next (staffingTarget); shown as an amber chip. */
   blocker?: { slot: number; role: string } | null;
+  /** Phone overview: frame two columns of {@link PAGES} and swipe between them. */
+  pager?: { page: number; onPage: (page: number) => void } | null;
 };
 
 /** Distance between cell centres (pillars sit in the gap). */
@@ -83,6 +86,8 @@ function CellHitbox({ onClick, onHover }: { onClick?: () => void; onHover: (h: b
         onClick
           ? (e) => {
               e.stopPropagation();
+              // A swipe that ends on a room is not a tap on it.
+              if (e.delta > 8) return;
               onClick();
             }
           : undefined
@@ -120,6 +125,7 @@ export default function BunkerScene({
   hudInset,
   gameplay = false,
   blocker = null,
+  pager = null,
 }: BunkerSceneProps) {
   const quality = useQuality();
   const [entered, setEntered] = useState<number | null>(null);
@@ -177,6 +183,10 @@ export default function BunkerScene({
   const elevator = hasElevator(rooms);
   const selectedVisual = visuals?.rooms.find(room => room.slot === focusedSlot);
   const anchor = selectedVisual ? proceduralPanel(selectedVisual) : panelAnchor(rooms.find(room => room.slot === focusedSlot)?.kind ?? null);
+  const columns = pager ? PAGES[clampPage(pager.page)]! : null;
+  // One primary pointer from down to up on the canvas itself; a second finger cancels.
+  const swipe = useRef<{ x: number; y: number } | null>(null);
+  const swipeable = focusedSlot === null && interactive ? pager : null;
 
   return (
     <>
@@ -184,7 +194,18 @@ export default function BunkerScene({
     <Canvas
       dpr={Math.min(dpr, quality === "low" ? 1 : 1.25)}
       gl={{ antialias: false, powerPreference: "high-performance" }}
-      style={{ background: "radial-gradient(ellipse at 50% 45%, #211529, #0c0911 75%)" }}
+      style={{ background: "radial-gradient(ellipse at 50% 45%, #211529, #0c0911 75%)", touchAction: swipeable ? "none" : undefined }}
+      onPointerDown={swipeable ? (e) => {
+        swipe.current = e.isPrimary && !(e.target as Element).closest("[data-hud]") ? { x: e.clientX, y: e.clientY } : null;
+      } : undefined}
+      onPointerUp={swipeable ? (e) => {
+        const start = swipe.current;
+        swipe.current = null;
+        if (!start || !e.isPrimary) return;
+        const step = swipeStep(e.clientX - start.x, e.clientY - start.y);
+        if (step) swipeable.onPage(clampPage(swipeable.page + step));
+      } : undefined}
+      onPointerCancel={swipeable ? () => { swipe.current = null; } : undefined}
     >
       <PerformanceMonitor
         ms={500}
@@ -193,7 +214,11 @@ export default function BunkerScene({
         bounds={() => [60, 65]}
         onDecline={() => setDpr(value => Math.max(0.75, value - 0.1))}
       />
-      <DioramaCamera width={ROW_WIDTH} height={demo ? 12 : 9.5} center={[0,lookY,0]} focus={focus} controls={demo} inset={hudInset} />
+      <DioramaCamera
+        width={columns ? PITCH * 2 : ROW_WIDTH}
+        height={demo ? 12 : 9.5}
+        center={[columns ? (slotX(columns[0]) + slotX(columns[1])) / 2 : 0, lookY, 0]}
+        focus={focus} controls={demo} inset={hudInset} />
       {(hoverStatus || blocked) && <OverlayProbe
         inset={hudInset ?? NO_INSET}
         hoverAt={hoverSlot === null ? null : cellAt(hoverSlot)}

@@ -4,8 +4,9 @@ import { ROOM_CATALOG } from "@/lib/rooms/catalog";
 
 import { buildableSlot, type ResourceAlert } from "./resourceAlert";
 
+// Full banner height on phones: a 44 px target.
 const CTA =
-  "flex h-8 shrink-0 items-center gap-2 bg-hud-amber px-4 text-[11px] uppercase tracking-[0.22em] text-hud-bg hover:bg-hud-amber/90 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-hud-amber";
+  "flex shrink-0 self-stretch sm:h-8 sm:self-center items-center gap-2 bg-hud-amber px-4 text-[11px] uppercase tracking-[0.22em] text-hud-bg hover:bg-hud-amber/90 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-hud-amber";
 /** One banner per page, so a fixed id is safe (and keeps this a server-renderable component). */
 const MISSING_ID = "alert-build-missing";
 
@@ -22,7 +23,7 @@ function staffedAdvice(alert: ResourceAlert): string {
 }
 
 /**
- * The 44 px strip under the TopBar while something is broken. One line on
+ * The 44 px strip under the TopBar (both rows of it below lg) while something is broken. One line on
  * what stopped, one amber action that fixes it. In the overview `onBuild`
  * opens the build menu on the free slot; elsewhere the action links there.
  * Inside the room that fixes it (`currentSlot`) there is nowhere to go.
@@ -45,7 +46,7 @@ export function AlertBanner({ alert, onBuild, currentSlot }: { alert: ResourceAl
     <div
       role="alert"
       data-hud
-      className="pointer-events-auto absolute inset-x-0 top-14 z-20 flex h-11 items-center gap-4 border-b border-hud-red bg-hud-alert-bg px-4 font-mono text-xs"
+      className="pointer-events-auto absolute inset-x-0 top-[108px] z-20 flex h-11 items-center gap-3 border-b sm:gap-4 lg:top-14 border-hud-red bg-hud-alert-bg px-4 font-mono text-xs"
     >
       <span className="shrink-0 text-[11px] uppercase tracking-[0.22em] text-hud-red-text">
         {blackout ? "Blackout" : "Empty pantry"}

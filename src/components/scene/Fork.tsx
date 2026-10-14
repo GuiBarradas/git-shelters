@@ -263,6 +263,8 @@ export function Fork({ fork, appearance, layout, powered = true, stationIndex = 
       ref={root}
       onClick={(e) => {
         stop(e);
+        // A swipe that ends on a Fork is not a poke.
+        if (e.delta > 8) return;
         onClick?.(fork);
       }}
       onPointerOver={(e) => {

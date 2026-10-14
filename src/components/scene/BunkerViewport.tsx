@@ -49,6 +49,9 @@ export function PersistentViewport({ children }: { children: ReactNode }) {
   }, [focus]);
   return <Registration value={publish}><Focus value={focus}><HasScene value={scene !== null}>
     <div className="relative h-dvh w-full">
+      {/* HUD first in the DOM so Tab reaches the bar and panels before the
+          scene's own controls (the staffing chip); z-index keeps it on top. */}
+      <div className="bunker-hud pointer-events-none relative z-10 h-full">{children}</div>
       <div className="absolute inset-0 z-0" data-testid="bunker-viewport">
         {scene && <BunkerScene {...scene} focusedSlot={focusedSlot}
           panel={pending ? undefined : scene.panel}
@@ -59,7 +62,6 @@ export function PersistentViewport({ children }: { children: ReactNode }) {
             scene.onSlotClick(slot, built, locked);
           }} />}
       </div>
-      <div className="bunker-hud pointer-events-none relative z-10 h-full">{children}</div>
     </div>
   </HasScene></Focus></Registration>;
 }

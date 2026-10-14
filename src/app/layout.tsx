@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import Link from "next/link";
@@ -28,6 +28,13 @@ export const metadata: Metadata = {
   title: "Git Shelters",
   description:
     "Idle/base-builder where your real GitHub activity feeds a post-apocalyptic bunker.",
+};
+
+/** Next's defaults, plus edge-to-edge on notched phones: the dock pads itself with env(safe-area-inset-bottom). */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

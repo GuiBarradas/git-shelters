@@ -14,10 +14,10 @@ export function AwaySummary({ report, alerting = false }: { report: AwayReport; 
   const [open, setOpen] = useState(true);
   if (!open) return null;
 
-  // Below the 56 px TopBar, or below the AlertBanner too when one is up.
+  // Below the TopBar (56 px from lg, 108 below), and the AlertBanner too when one is up.
   return (
-    <div data-hud className={`pointer-events-auto absolute inset-x-0 ${alerting ? "top-[116px]" : "top-[72px]"} z-20 flex justify-center px-4`}>
-      <section className="route-enter w-full max-w-md border border-hud-violet/60 bg-hud-bg/95 p-4 font-mono text-sm text-hud-bone">
+    <div data-hud className={`pointer-events-auto absolute inset-x-0 ${alerting ? "top-[160px] lg:top-[116px]" : "top-[116px] lg:top-[72px]"} z-20 flex justify-center px-4`}>
+      <section className="route-enter max-h-[calc(100dvh-180px)] w-full max-w-md overflow-y-auto border border-hud-violet/60 bg-hud-bg/95 p-4 font-mono text-sm text-hud-bone">
         <p className="mb-2 text-[10px] uppercase tracking-[0.25em] text-hud-bone/60">
           main-branch:~$ cat since_last_login.log
         </p>

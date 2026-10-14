@@ -1,8 +1,9 @@
 import React from "react";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { CrewLog, crewTip } from "@/components/hud/CrewLog";
+import { CrewLog } from "@/components/hud/CrewLog";
+import { crewTip } from "@/components/hud/crewTip";
 import { resourceAlert } from "@/components/hud/resourceAlert";
 import { workforce } from "@/lib/economy/resources";
 import { RECRUIT_COST } from "@/lib/forks/catalog";
@@ -41,6 +42,22 @@ describe("crew log", () => {
     expect(screen.getByRole("region", { name: "Crew log" })).toHaveTextContent("1 Fork · 0 idle");
     expect(screen.getAllByRole("listitem")).toHaveLength(1);
     expect(screen.getByText("0 idle")).not.toHaveClass("text-hud-amber");
+  });
+
+  it("collapses to one mood line on small screens that expands over the scene and closes on Escape", () => {
+    render(<CrewLog mood="happy" lastPushAt={null} echo="pending" forks={[fork(null)]} tip={null} />);
+    const toggle = screen.getByRole("button", { name: "> crew mood: happy — no pushes seen yet" });
+    const panel = document.getElementById(toggle.getAttribute("aria-controls")!)!;
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(panel).toHaveClass("max-xl:hidden", "max-xl:absolute", "max-xl:bottom-full");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(panel).not.toHaveClass("max-xl:hidden");
+    // The mood line lives in the toggle there; only the other lines overlay.
+    expect(within(panel).getAllByRole("listitem")[0]).toHaveClass("max-xl:hidden");
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(toggle).toHaveFocus();
   });
 });
 

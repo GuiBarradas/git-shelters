@@ -95,6 +95,8 @@ export default async function RoomPage({ params }: Props) {
   return (
     <main className="relative w-full h-dvh">
       <SessionBeacon />
+      {/* First in the DOM: Tab follows the screen top to bottom. */}
+      <TopBar login={githubLogin} bytes={me?.bytes ?? null} resources={resources} work={work} lastSyncedAt={sync?.last_synced_at ?? null} alerting={!!alert} />
       <RoomSceneClient
         rooms={rooms}
         visuals={visuals}
@@ -108,9 +110,8 @@ export default async function RoomPage({ params }: Props) {
         powered={resources.uptime > 0}
         alerting={!!alert}
       />
-      <TopBar login={githubLogin} bytes={me?.bytes ?? null} resources={resources} work={work} lastSyncedAt={sync?.last_synced_at ?? null} alerting={!!alert} />
       {alert && <AlertBanner alert={alert} currentSlot={slotNumber} />}
-      <div className={`pointer-events-none absolute ${alert ? "top-[116px]" : "top-[72px]"} left-4 z-10 font-mono text-sm`}>
+      <div className={`pointer-events-none absolute ${alert ? "top-[168px] lg:top-[116px]" : "top-[124px] lg:top-[72px]"} left-4 z-10 font-mono text-sm`}>
         <h1 className="text-[#BD93F9]">{title}</h1>
         <p className="text-[#E6DFC8]/60">{blurb}</p>
         <BackToCorridor />
