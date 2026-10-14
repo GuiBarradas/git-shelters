@@ -20,7 +20,7 @@ export function MapTitle({ review, count }: { review: boolean; count: number }) 
   return (
     <div>
       <h1 className="font-pixel text-lg tracking-[0.12em] text-hud-violet">THE 404 LANDS</h1>
-      <p className="max-w-md text-xs text-hud-bone/60">Every Repo that still answers. One region has signal; the rest is static, for now.</p>
+      <p className="hidden max-w-md text-xs text-hud-bone/60 sm:block">Every Repo that still answers. One region has signal; the rest is static, for now.</p>
       {review && (
         <p className="mt-1 inline-block border border-hud-amber px-2 py-0.5 text-[10px] uppercase tracking-[0.22em] text-hud-amber">
           Synthetic review data · {count} fake Repos, not players
@@ -150,7 +150,7 @@ export function MapOverlay({
             </button>
           )}
           <label className={`${CONTROL} flex items-center gap-2`}>
-            Visual
+            <span className="hidden sm:inline">Visual</span>
             <select aria-label="Visual quality" value={quality} onChange={(e) => setQuality(e.target.value as Quality)} className="bg-hud-bg text-hud-bone">
               <option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option>
             </select>

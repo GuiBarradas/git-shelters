@@ -1,4 +1,5 @@
 // Usage: node scripts/inspect-scene.mjs <url> <screenshot.png>
+// INSPECT_QUALITY=low|medium|high presets the visual quality for pages without a quality query (the map).
 // Explicit D3D11 on Windows; always report the adapter, never assume hardware acceleration.
 import { chromium } from '@playwright/test';
 const browser = await chromium.launch({ channel: 'chromium', args: process.platform === 'win32' ? ['--enable-gpu', '--use-angle=d3d11'] : [] });
@@ -6,6 +7,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
+  if (process.env.INSPECT_QUALITY) await page.addInitScript(q => localStorage.setItem('shelter-quality', q), process.env.INSPECT_QUALITY);
   await page.addInitScript(() => {
     window.__draws = 0;
     for (const type of [WebGLRenderingContext, WebGL2RenderingContext]) {
