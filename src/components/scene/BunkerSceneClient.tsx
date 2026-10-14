@@ -7,7 +7,9 @@ import type { GeneratedBunker } from "@/lib/visuals/types";
 import { BunkerShare } from "./procedural/BunkerShare";
 import { useQuality } from "./SceneQuality";
 import { buildRoom, type BuildState } from "@/app/rooms/actions";
+import { AlertBanner } from "@/components/hud/AlertBanner";
 import { FirstSteps, type FirstStepsState } from "@/components/hud/FirstSteps";
+import { buildableSlot, type ResourceAlert } from "@/components/hud/resourceAlert";
 import { FORK_TRAITS, type Fork as ForkData } from "@/lib/forks/catalog";
 import { type EventEcho, JOB_LINES, pickLine } from "@/lib/forks/mood";
 import { GROUND_SLOTS, isLowerSlot, ROOM_CATALOG, type Room, type RoomKind, type Slot } from "@/lib/rooms/catalog";
@@ -28,6 +30,10 @@ type BunkerSceneClientProps = {
   demo?: boolean;
   powered?: boolean;
   onboarding?: FirstStepsState;
+  /** What is blocking the economy; shows the AlertBanner under the TopBar. */
+  alert?: ResourceAlert | null;
+  /** Arrived from a banner elsewhere (`/?build=`): open the build menu on the alert's free slot. */
+  openBuild?: boolean;
 };
 
 /**
@@ -46,11 +52,14 @@ export function BunkerSceneClient({
   echo = null,
   onboarding,
   visuals,
+  alert = null,
+  openBuild = false,
 }: BunkerSceneClientProps) {
   const router = useRouter();
   const quality = useQuality();
-  const [previewKind, setPreviewKind] = useState<RoomKind | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
+  const fixSlot = bytes !== null && !demo ? buildableSlot(alert) : null;
+  const [previewKind, setPreviewKind] = useState<RoomKind | null>(openBuild && fixSlot !== null && alert ? alert.roomKind : null);
+  const [selectedSlot, setSelectedSlot] = useState<Slot | null>(openBuild ? fixSlot : null);
   const [blurb, setBlurb] = useState<string | null>(null);
   const [speech, setSpeech] = useState<{ name: string; line: string } | null>(null);
   const [pokes, setPokes] = useState(0);
@@ -110,6 +119,15 @@ export function BunkerSceneClient({
         className="pointer-events-none absolute inset-0"
         style={{ background: quality === "low" ? "radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.25) 100%)" : undefined }}
       />
+      {alert && !demo && (
+        <AlertBanner
+          alert={alert}
+          onBuild={fixSlot === null ? undefined : () => {
+            onSlotClick(fixSlot, false);
+            setPreviewKind(alert.roomKind);
+          }}
+        />
+      )}
       {speech && <SpeechBubble name={speech.name} line={speech.line} />}
       {blurb && menuSlot === null && !speech && (
         <p className="pointer-events-none absolute bottom-6 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border border-[#BD93F9]/40 bg-[#0B0713]/90 px-3 py-1 font-mono text-xs text-[#E6DFC8]">

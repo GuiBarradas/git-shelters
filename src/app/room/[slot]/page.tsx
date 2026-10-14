@@ -7,7 +7,8 @@ import { recruitFork } from "@/app/forks/actions";
 import { SessionBeacon } from "@/components/analytics/SessionBeacon";
 import { DailyEventCard } from "@/components/events/DailyEventCard";
 import { CrewPanel } from "@/components/rooms/CrewPanel";
-import { ReturnPlan } from "@/components/hud/ReturnPlan";
+import { AlertBanner } from "@/components/hud/AlertBanner";
+import { resourceAlert } from "@/components/hud/resourceAlert";
 import { TopBar } from "@/components/hud/TopBar";
 import { NextPacket } from "@/components/events/NextPacket";
 import { nextPacketAt } from "@/lib/events/schedule";
@@ -80,6 +81,7 @@ export default async function RoomPage({ params }: Props) {
   const beds = bedCount(rooms);
   const noBed = allForks.length >= beds;
   const work = workforce(allForks, rooms);
+  const alert = resourceAlert({ resources, work, rooms, forks: allForks, bytes: me?.bytes ?? null });
 
   const panel = isMain
     ? dailyEvent
@@ -105,8 +107,9 @@ export default async function RoomPage({ params }: Props) {
         forks={allForks}
         powered={resources.uptime > 0}
       />
-      <TopBar login={githubLogin} bytes={me?.bytes ?? null} resources={resources} work={work} lastSyncedAt={sync?.last_synced_at ?? null} />
-      <div className="pointer-events-none absolute top-[72px] left-4 z-10 font-mono text-sm">
+      <TopBar login={githubLogin} bytes={me?.bytes ?? null} resources={resources} work={work} lastSyncedAt={sync?.last_synced_at ?? null} alerting={!!alert} />
+      {alert && <AlertBanner alert={alert} currentSlot={slotNumber} />}
+      <div className={`pointer-events-none absolute ${alert ? "top-[116px]" : "top-[72px]"} left-4 z-10 font-mono text-sm`}>
         <h1 className="text-[#BD93F9]">{title}</h1>
         <p className="text-[#E6DFC8]/60">{blurb}</p>
         <BackToCorridor />
@@ -130,7 +133,6 @@ export default async function RoomPage({ params }: Props) {
       </div>
       <div className="absolute bottom-14 right-4 left-4 z-10 space-y-2 sm:left-auto sm:w-80">
         {isMain && dailyEvent?.resolved && <div className="border border-[#BD93F9]/40 bg-[#0B0713]/95 p-3 font-mono text-xs"><NextPacket observedAt={observedAt} availableAt={nextPacketAt(observedAt)} /></div>}
-        <ReturnPlan resources={resources} work={work} rooms={rooms} bytes={bytes} resolved={!!dailyEvent?.resolved} observedAt={observedAt} />
       </div>
     </main>
   );

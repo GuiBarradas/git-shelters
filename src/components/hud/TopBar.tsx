@@ -5,6 +5,7 @@ import { SyncButton } from "@/components/auth/SyncButton";
 import { cacheCap, payloadCap, RATES, ratesPerHour, type ResourceState, type Workforce } from "@/lib/economy/tick";
 
 import { AccountMenu } from "./AccountMenu";
+import { ForecastDrawer } from "./ForecastDrawer";
 import { ResourceGauge } from "./ResourceGauge";
 
 type Props = {
@@ -15,15 +16,18 @@ type Props = {
   work: Workforce;
   /** github_sync_state.last_synced_at; null hides the elapsed label. */
   lastSyncedAt: string | null;
+  /** An AlertBanner sits under the bar; pop-outs open below it. */
+  alerting?: boolean;
 };
 
-/** The 56 px status bar: who and where on the left, the three gauges, then Bytes, sound, sync and account. */
-export function TopBar({ login, bytes, resources, work, lastSyncedAt }: Props) {
+/** The 56 px status bar: who and where on the left, the gauges and forecast, then Bytes, sound, sync and account. */
+export function TopBar({ login, bytes, resources, work, lastSyncedAt, alerting = false }: Props) {
   const rates = ratesPerHour(work, resources.uptime > 0);
   return (
     <header
       data-topbar
-      className="pointer-events-auto absolute inset-x-0 top-0 z-20 flex h-14 items-center gap-4 border-b border-hud-violet/40 bg-hud-bg/95 px-4 font-mono"
+      data-hud
+      className="pointer-events-auto absolute inset-x-0 top-0 z-30 flex h-14 items-center gap-4 border-b border-hud-violet/40 bg-hud-bg/95 px-4 font-mono"
     >
       <div className="flex shrink-0 items-center gap-3">
         <Image src="/brand/mascot-pixel.png" alt="" width={28} height={28} unoptimized className="pixel h-7 w-7" />
@@ -42,6 +46,8 @@ export function TopBar({ login, bytes, resources, work, lastSyncedAt }: Props) {
           <ResourceGauge kind="payload" value={resources.payload} cap={payloadCap(work.workshops)} ratePerHour={rates.payload} />
         )}
       </div>
+      {/* Outside the scrolling gauge row, so the drawer is not clipped. */}
+      <ForecastDrawer resources={resources} work={work} alerting={alerting} />
 
       <div className="flex shrink-0 items-center gap-2">
         <AudioToggle variant="icon" />
@@ -53,7 +59,7 @@ export function TopBar({ login, bytes, resources, work, lastSyncedAt }: Props) {
           </div>
         )}
         <SyncButton lastSyncedAt={lastSyncedAt} />
-        <AccountMenu login={login} />
+        <AccountMenu login={login} alerting={alerting} />
       </div>
     </header>
   );
