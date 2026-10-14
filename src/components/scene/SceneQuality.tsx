@@ -25,12 +25,12 @@ export function QualityControl({ value }: { value: Quality }) {
     </select>
   </label>;
 }
-export function SceneEffects({ quality, closeUp = false }: { quality: Quality; closeUp?: boolean }) {
+export function SceneEffects({ quality, closeUp = false, focusTarget = [0, 1.25, -0.4] }: { quality: Quality; closeUp?: boolean; focusTarget?: [number, number, number] }) {
   if (quality === "low") return null;
   return <EffectComposer multisampling={0} enableNormalPass={false}>
     {quality === "high" && closeUp ? <N8AO aoRadius={0.22} distanceFalloff={0.5} intensity={1.3} halfRes /> : <></>}
     <Bloom luminanceThreshold={1.15} luminanceSmoothing={0.15} intensity={0.3} mipmapBlur />
-    {quality === "high" && closeUp ? <DepthOfField target={[0, 1.25, -0.4]} worldFocusRange={3.5} bokehScale={0.65} height={360} /> : <></>}
+    {quality === "high" && closeUp ? <DepthOfField target={focusTarget} worldFocusRange={3.5} bokehScale={0.65} height={360} /> : <></>}
     <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
     <Vignette eskil={false} offset={0.22} darkness={0.3} />
     <Noise opacity={0.012} blendFunction={BlendFunction.SOFT_LIGHT} />

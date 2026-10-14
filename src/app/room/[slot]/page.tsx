@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { loadUserVisuals } from "@/lib/visuals/server";
 import { notFound, redirect } from "next/navigation";
 import type { ReactNode } from "react";
@@ -12,7 +11,7 @@ import { ReturnPlan } from "@/components/hud/ReturnPlan";
 import { NextPacket } from "@/components/events/NextPacket";
 import { nextPacketAt } from "@/lib/events/schedule";
 import { BenchPanel, BunkPanel, LedgerPanel, LiftPanel, UptimePanel } from "@/components/rooms/RoomPanels";
-import { RoomSceneClient } from "@/components/scene/RoomSceneClient";
+import { BackToCorridor, RoomSceneClient } from "@/components/scene/RoomSceneClient";
 import { daysBetween } from "@/lib/analytics/track";
 import { settleResources, workforce } from "@/lib/economy/resources";
 import { cacheCap, payloadCap, type TickResult } from "@/lib/economy/tick";
@@ -90,6 +89,7 @@ export default async function RoomPage({ params }: Props) {
     <main className="relative w-full h-dvh">
       <SessionBeacon />
       <RoomSceneClient
+        rooms={rooms}
         visuals={visuals}
         slot={slotNumber}
         kind={kind}
@@ -97,15 +97,13 @@ export default async function RoomPage({ params }: Props) {
         eventPending={echo === "pending"}
         echo={echo}
         panel={panel}
-        forks={forks}
+        forks={allForks}
         powered={resources.uptime > 0}
       />
       <div className="pointer-events-none absolute top-4 left-4 z-10 font-mono text-sm">
         <h1 className="text-[#BD93F9]">{title}</h1>
         <p className="text-[#E6DFC8]/60">{blurb}</p>
-        <Link href="/" className="pointer-events-auto mt-2 inline-block text-[#BD93F9] hover:text-[#E6DFC8]">
-          &larr; back to the corridor
-        </Link>
+        <BackToCorridor />
         {isMain && (
           <form action={recruitFork} className="pointer-events-auto mt-4">
             <button

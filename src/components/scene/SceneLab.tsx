@@ -5,7 +5,7 @@ import { Html, PerformanceMonitor } from "@react-three/drei";
 import { DioramaCamera } from "./DioramaCamera";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
-import BunkerScene from "./BunkerScene";
+import { PersistentViewport, RegisteredBunkerScene } from "./BunkerViewport";
 import { BuiltRoom, EmptyCell, MainBranchRoom, roomLayout } from "./rooms";
 import { SceneInstances } from "./SceneInstances";
 import { generateBunker } from "@/lib/visuals/generate";
@@ -48,11 +48,14 @@ function Scene() {
     </SceneInstances>
   </Canvas>;
   const sampleRooms = [{slot:1,kind:"cache_storage"},{slot:2,kind:"power_plant"},{slot:3,kind:"dorm"},{slot:4,kind:"elevator"},{slot:5,kind:"workshop"}] as const;
-  if (query.has("overview") && entered === null) return <>
-    <BunkerScene visuals={visuals} rooms={[...sampleRooms]} forks={[person(1), {...person(2),roomSlot:1}]} activeToday powered={powered} onSlotClick={(slot,built) => { setAction(`${slot}:${built}`); if (built) setEntered(slot); }} />
+  if (query.has("overview")) return <PersistentViewport>
+    <RegisteredBunkerScene visuals={visuals} rooms={[...sampleRooms]} forks={[person(1), {...person(2),roomSlot:1}]} activeToday powered={powered}
+      focusedSlot={entered} panel={entered === null ? undefined : <div style={{ color: "#ede2ff", padding: 10, fontFamily: "monospace" }}>System online</div>}
+      onSlotClick={(slot,built) => { setAction(`${slot}:${built}`); if (built) setEntered(slot); }} />
+    {entered !== null && <button className="absolute top-4 left-4 text-[#BD93F9]" onClick={() => setEntered(null)}>← back to the corridor</button>}
     <output data-testid="scene-action" className="absolute bottom-4 left-4 text-white">{action}</output>
-  </>;
-  const selected = entered === null ? query.get("room") : entered === 0 ? "main" : sampleRooms.find(room => room.slot === entered)?.kind;
+  </PersistentViewport>;
+  const selected = query.get("room");
   if (selected && selected !== "empty") return <RoomScene visuals={visuals} slot={entered ?? kinds.indexOf(selected === "main" ? null : selected as RoomKind)} kind={selected === "main" ? null : selected as RoomKind} activeToday eventPending={false} powered={powered} forks={query.has("empty") ? [] : [person(0)]} panel={<div style={{ color:"#ede2ff", padding:10, fontFamily:"monospace" }}>MAIN BRANCH<br/>System online</div>} />;
   return <><QualityControl value={quality} /><Canvas dpr={dpr} gl={{ antialias:false, powerPreference:"high-performance" }} style={{background:"radial-gradient(ellipse, #211529, #0c0911 75%)"}}>
     <PerformanceMonitor ms={500} iterations={4} threshold={0.5} bounds={() => [60,65]} onDecline={() => setDpr(value => Math.max(0.75,value - 0.1))} />

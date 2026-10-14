@@ -1,19 +1,19 @@
 "use client";
 
-import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 
 import type { GeneratedBunker } from "@/lib/visuals/types";
 import { FORK_TRAITS, type Fork as ForkData } from "@/lib/forks/catalog";
-import { type EventEcho, JOB_LINES, MOOD_LABEL, pickLine } from "@/lib/forks/mood";
-import type { RoomKind } from "@/lib/rooms/catalog";
+import { type EventEcho, JOB_LINES, pickLine } from "@/lib/forks/mood";
+import type { Room, RoomKind } from "@/lib/rooms/catalog";
 
-import { SceneBooting, SpeechBubble } from "./BunkerSceneClient";
-
-const RoomScene = dynamic(() => import("./RoomScene"), { ssr: false, loading: () => <SceneBooting /> });
+import { SpeechBubble } from "./BunkerSceneClient";
+import { RegisteredBunkerScene, useBunkerFocus } from "./BunkerViewport";
 
 type Props = {
   kind: RoomKind | null;
+  rooms: Room[];
   visuals?: GeneratedBunker | null;
   slot?: number;
   activeToday: boolean;
@@ -27,7 +27,7 @@ type Props = {
 /** Client boundary for the room interior; the page passes the terminal content as children. */
 export function RoomSceneClient(props: Props) {
   const [speech, setSpeech] = useState<{ name: string; line: string } | null>(null);
-  const [hovered, setHovered] = useState<ForkData | null>(null);
+  const [hovered, setHovered] = useState<string | null>(null);
   const [pokes, setPokes] = useState(0);
 
   useEffect(() => {
@@ -38,8 +38,10 @@ export function RoomSceneClient(props: Props) {
 
   return (
     <>
-      <RoomScene
+      <RegisteredBunkerScene
         {...props}
+        focusedSlot={props.slot ?? 0}
+        onSlotClick={() => {}}
         onForkClick={(f) => {
           setPokes((n) => n + 1);
           setSpeech({
@@ -47,13 +49,13 @@ export function RoomSceneClient(props: Props) {
             line: pickLine(f.seed, pokes, f.mood, FORK_TRAITS[f.trait].lines, props.echo ?? null, JOB_LINES[props.kind ?? "off_shift"]),
           });
         }}
-        onForkHover={setHovered}
+        onHoverBlurb={setHovered}
       />
       {speech ? (
         <SpeechBubble name={speech.name} line={speech.line} />
       ) : hovered ? (
         <p className="pointer-events-none absolute bottom-6 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border border-[#BD93F9]/40 bg-[#0B0713]/90 px-3 py-1 font-mono text-xs text-[#E6DFC8]">
-          {hovered.name} · {FORK_TRAITS[hovered.trait].name} · {MOOD_LABEL[hovered.mood]}
+          {hovered}
           <span className="text-[#E6DFC8]/50"> · click to talk</span>
         </p>
       ) : null}
@@ -64,4 +66,13 @@ export function RoomSceneClient(props: Props) {
       />
     </>
   );
+}
+
+export function BackToCorridor() {
+  const focus = useBunkerFocus();
+  return <Link href="/" prefetch={false}
+    onNavigate={() => focus?.(null)}
+    className="pointer-events-auto mt-2 inline-block text-[#BD93F9] hover:text-[#E6DFC8]">
+    &larr; back to the corridor
+  </Link>;
 }

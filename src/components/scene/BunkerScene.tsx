@@ -1,8 +1,8 @@
 "use client";
 
-import { OrbitControls, PerformanceMonitor } from "@react-three/drei";
+import { Html, OrbitControls, PerformanceMonitor } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { FORK_TRAITS, type Fork as ForkData } from "@/lib/forks/catalog";
 import { MOOD_LABEL } from "@/lib/forks/mood";
@@ -24,12 +24,12 @@ import { DioramaCamera } from "./DioramaCamera";
 import { QualityControl, SceneEffects, useQuality } from "./SceneQuality";
 import { SceneInstances } from "./SceneInstances";
 import type { GeneratedBunker } from "@/lib/visuals/types";
-import { OptionalBunkerVisuals, ProceduralRoom, proceduralLayout } from "./procedural/ProceduralRoom";
+import { OptionalBunkerVisuals, ProceduralRoom, proceduralLayout, proceduralPanel } from "./procedural/ProceduralRoom";
 import { Fork } from "./Fork";
-import { RoomOccupants } from "./rooms/Details";
-import { BuiltRoom, CELL, EmptyCell, MainBranchRoom, roomLayout } from "./rooms";
+import { CloseUpLighting, RoomOccupants } from "./rooms/Details";
+import { BuiltRoom, CELL, EmptyCell, MainBranchRoom, panelAnchor, roomLayout } from "./rooms";
 
-type BunkerSceneProps = {
+export type BunkerSceneProps = {
   rooms: Room[];
   visuals?: GeneratedBunker | null;
   forks?: ForkData[];
@@ -46,6 +46,9 @@ type BunkerSceneProps = {
   /** False in a blackout: every lamp dies down. */
   powered?: boolean;
   buildPreview?: { slot: Slot; kind: RoomKind; missingBytes: number } | null;
+  focusedSlot?: number | null;
+  panel?: ReactNode;
+  interactive?: boolean;
 };
 
 /** Distance between cell centres (pillars sit in the gap). */
@@ -101,17 +104,22 @@ export default function BunkerScene({
   powered = true,
   buildPreview,
   visuals,
+  focusedSlot: controlledFocus,
+  panel,
+  interactive = true,
 }: BunkerSceneProps) {
   const quality = useQuality();
-  const [focus, setFocus] = useState<[number, number, number] | null>(null);
-  const transition = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (transition.current) clearTimeout(transition.current); }, []);
+  const [entered, setEntered] = useState<number | null>(null);
+  const focusedSlot = controlledFocus === undefined ? entered : controlledFocus;
+  useEffect(() => {
+    document.body.style.cursor = "auto";
+    return () => { document.body.style.cursor = "auto"; };
+  }, [focusedSlot]);
+  const focus: [number, number, number] | null = focusedSlot === null ? null : [slotX(focusedSlot), slotY(focusedSlot) + CELL.h / 2, 0];
   const enter = (slot: 0 | Slot, built: boolean, locked = false) => {
-    if (transition.current) return;
-    if (!built) { setFocus(null); onSlotClick(slot, false, locked); return; }
-    setFocus([slotX(slot), slotY(slot) + CELL.h / 2, 0]);
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    transition.current = setTimeout(() => { transition.current = null; onSlotClick(slot, true, locked); }, reduced ? 0 : 550);
+    if (!interactive) return;
+    if (built) setEntered(slot);
+    onSlotClick(slot, built, locked);
   };
   const mainVisual = visuals?.rooms.find(r => r.slot === 0);
   const bySlot = new Map(rooms.map((room) => [room.slot, room]));
@@ -131,6 +139,8 @@ export default function BunkerScene({
   // Two floors: aim between them, a little high so the ground floor leads.
   const lookY = demo ? CELL.h / 2 + 1.8 : CELL.h / 2 + LOWER_Y / 2 + 0.4;
   const elevator = hasElevator(rooms);
+  const selectedVisual = visuals?.rooms.find(room => room.slot === focusedSlot);
+  const anchor = selectedVisual ? proceduralPanel(selectedVisual) : panelAnchor(rooms.find(room => room.slot === focusedSlot)?.kind ?? null);
 
   return (
     <>
@@ -178,14 +188,16 @@ export default function BunkerScene({
       </mesh>
 
       <group position={[slotX(0), 0, 0]}>
+        <CloseUpLighting.Provider value={focusedSlot === 0}>
         <RoomOccupants.Provider value={forksIn(0).length}>{mainVisual ? <ProceduralRoom room={mainVisual} powered={powered} /> : <MainBranchRoom active={activeToday} pending={eventPending} powered={powered} />}</RoomOccupants.Provider>
+        </CloseUpLighting.Provider>
         {forksIn(0).map((f, i) => (
-          <Fork key={f.id} fork={f} powered={powered} stationIndex={i} layout={mainVisual ? proceduralLayout(mainVisual) : roomLayout(null)} onClick={onForkClick} onHover={forkHover} />
+          <Fork key={f.id} fork={f} powered={powered} stationIndex={i} layout={mainVisual ? proceduralLayout(mainVisual) : roomLayout(null)} onClick={interactive && (focusedSlot === null || focusedSlot === 0) ? onForkClick : undefined} onHover={interactive && (focusedSlot === null || focusedSlot === 0) ? forkHover : undefined} />
         ))}
-        <CellHitbox
-          onClick={demo ? undefined : () => enter(0, true)}
+        {focusedSlot === null && <CellHitbox
+          onClick={demo || !interactive ? undefined : () => enter(0, true)}
           onHover={hover(0, MAIN_BRANCH_BLURB)}
-        />
+        />}
       </group>
 
       {/* the slab between floors */}
@@ -200,24 +212,31 @@ export default function BunkerScene({
         const locked = slot >= 5 && !elevator;
         return (
           <group key={slot} position={[slotX(slot), slotY(slot), 0]}>
+            <CloseUpLighting.Provider value={focusedSlot === slot}>
             {room ? (
               <RoomOccupants.Provider value={forksIn(slot).length}>{visualRoom ? <ProceduralRoom room={visualRoom} powered={powered} /> : <BuiltRoom kind={room.kind} powered={powered} />}</RoomOccupants.Provider>
             ) : (
               <EmptyCell highlight={(hovered === slot || buildPreview?.slot === slot) && !demo && !locked} locked={locked} preview={buildPreview?.slot === slot ? buildPreview : undefined} />
             )}
+            </CloseUpLighting.Provider>
             {room &&
               forksIn(slot).map((f, i) => (
-                <Fork key={f.id} fork={f} powered={powered} stationIndex={i} layout={visualRoom ? proceduralLayout(visualRoom) : roomLayout(room.kind)} onClick={onForkClick} onHover={forkHover} />
+                <Fork key={f.id} fork={f} powered={powered} stationIndex={i} layout={visualRoom ? proceduralLayout(visualRoom) : roomLayout(room.kind)} onClick={interactive && (focusedSlot === null || focusedSlot === slot) ? onForkClick : undefined} onHover={interactive && (focusedSlot === null || focusedSlot === slot) ? forkHover : undefined} />
               ))}
-            <CellHitbox
-              onClick={demo || locked ? undefined : () => enter(slot, Boolean(room), locked)}
+            {focusedSlot === null && <CellHitbox
+              onClick={demo || locked || !interactive ? undefined : () => enter(slot, Boolean(room), locked)}
               onHover={hover(slot, room ? ROOM_CATALOG[room.kind].blurb : locked ? LOCKED_SLOT_BLURB : EMPTY_SLOT_BLURB)}
-            />
+            />}
           </group>
         );
       })}
       </SceneInstances></OptionalBunkerVisuals>
-      <SceneEffects quality={quality} />
+      {panel && focusedSlot !== null && <Html transform
+        position={[slotX(focusedSlot) + anchor.position[0], slotY(focusedSlot) + anchor.position[1], anchor.position[2] + 0.012]}
+        scale={40 / 300} style={{ width: anchor.width * 300, height: anchor.height * 300 }}>
+        {panel}
+      </Html>}
+      <SceneEffects quality={quality} closeUp={focusedSlot !== null} focusTarget={focus ? [focus[0], focus[1] - 0.25, -0.4] : undefined} />
     </Canvas>
     </>
   );

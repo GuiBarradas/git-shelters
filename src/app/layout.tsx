@@ -5,6 +5,7 @@ import "./globals.css";
 
 import { AudioProvider } from "@/components/audio/AudioProvider";
 import { AudioToggle } from "@/components/audio/AudioToggle";
+import { BunkerViewport } from "@/components/scene/BunkerViewport";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,7 +35,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-[#0B0713] text-[#E6DFC8]">
         <AudioProvider>
-          {children}
+          <BunkerViewport>{children}</BunkerViewport>
           <footer className="pointer-events-auto fixed bottom-2 right-4 z-10 font-mono text-[10px] uppercase tracking-widest text-[#E6DFC8]/40">
             <Link href="/legal/privacy" className="hover:text-[#E6DFC8]">Privacy</Link>
             {" · "}

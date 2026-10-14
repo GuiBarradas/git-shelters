@@ -2,6 +2,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
+import { ClearBunkerScene } from "@/components/scene/BunkerViewport";
 
 /**
  * Route-level error boundary.
@@ -24,6 +25,7 @@ export default function Error({
 
   return (
     <main className="flex-1 w-full h-dvh flex items-center justify-center p-8">
+      <ClearBunkerScene />
       <div className="max-w-md w-full space-y-6 border border-[#E6DFC8]/20 p-6">
         <div className="text-xs uppercase tracking-widest text-[#E6DFC8]/60">
           {"// system :: error"}

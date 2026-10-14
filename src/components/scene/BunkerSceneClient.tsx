@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
 
@@ -12,20 +11,7 @@ import { FirstSteps, type FirstStepsState } from "@/components/hud/FirstSteps";
 import { FORK_TRAITS, type Fork as ForkData } from "@/lib/forks/catalog";
 import { type EventEcho, JOB_LINES, pickLine } from "@/lib/forks/mood";
 import { GROUND_SLOTS, isLowerSlot, ROOM_CATALOG, type Room, type RoomKind, type Slot } from "@/lib/rooms/catalog";
-
-const BunkerScene = dynamic(() => import("./BunkerScene"), {
-  ssr: false,
-  loading: () => <SceneBooting />,
-});
-
-/** Shown while the renderer chunk downloads; the page is never a black hole. */
-export function SceneBooting() {
-  return (
-    <p className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-mono text-sm text-[#BD93F9]/70">
-      &gt; booting renderer<span className="blink">_</span>
-    </p>
-  );
-}
+import { RegisteredBunkerScene as BunkerScene } from "./BunkerViewport";
 
 type BunkerSceneClientProps = {
   rooms: Room[];
@@ -195,7 +181,7 @@ function BuildMenu({
   firstRoom: boolean;
 }) {
   return (
-    <div className="absolute bottom-14 left-1/2 z-20 max-h-[60dvh] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 overflow-y-auto border border-[#BD93F9] bg-[#0B0713]/95 p-4 font-mono text-sm text-[#BD93F9]">
+    <div className="pointer-events-auto absolute bottom-14 left-1/2 z-20 max-h-[60dvh] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 overflow-y-auto border border-[#BD93F9] bg-[#0B0713]/95 p-4 font-mono text-sm text-[#BD93F9]">
       <div className="mb-3 flex items-center justify-between gap-6">
         <span>
           SLOT {slot} — BUILD{isLowerSlot(slot) ? " · LOWER FLOOR" : ""}

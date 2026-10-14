@@ -76,6 +76,13 @@ body,
 .route-enter {
   animation: route-enter 260ms ease-out both;
 }
+/* The persistent renderer owns the background; only HUD controls intercept input. */
+.bunker-hud :is(a, button, input, select, textarea, summary, dialog) {
+  pointer-events: auto;
+}
+.bunker-hud > .route-enter {
+  animation: none;
+}
 @media (prefers-reduced-motion: reduce) {
   .route-enter {
     animation: none;

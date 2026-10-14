@@ -1,8 +1,14 @@
+"use client";
+
+import { useHasBunkerScene } from "@/components/scene/BunkerViewport";
+
 /**
  * Shown by the App Router while a route's server work is in flight, so a
  * click never lands on a frozen page. In-world: a terminal waking up.
  */
 export default function Loading() {
+  // The live bunker remains visible while only the room's server panel is loading.
+  if (useHasBunkerScene()) return null;
   return (
     <main className="flex h-dvh w-full items-center justify-center">
       <p className="font-mono text-sm text-[#BD93F9]/80">

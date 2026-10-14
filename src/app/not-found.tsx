@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ClearBunkerScene } from "@/components/scene/BunkerViewport";
 
 /**
  * App-wide 404. Rendered by notFound() (unknown or deleted profile) and by
@@ -7,6 +8,7 @@ import Link from "next/link";
 export default function NotFound() {
   return (
     <main className="flex-1 w-full h-dvh flex items-center justify-center p-8">
+      <ClearBunkerScene />
       <div className="max-w-md w-full space-y-6 border border-[#E6DFC8]/20 p-6">
         <div className="text-xs uppercase tracking-widest text-[#E6DFC8]/60">
           {"// gitnet :: no route"}
