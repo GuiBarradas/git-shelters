@@ -9,6 +9,7 @@ import { createThrowawayUser, type ThrowawayUser } from "./fixture";
  * ADR 0001: end-to-end leak check against the real dev Supabase. The unit
  * test guards the mapper; this one guards the query + mapper together for
  * the fixture user, plus the not-found and input-validation paths.
+ * World map pins are covered read-only in world-map-readonly.test.ts.
  */
 
 const FORBIDDEN = ["email", "github_id", "deleted_at", "last_seen_at", "user_id"];
