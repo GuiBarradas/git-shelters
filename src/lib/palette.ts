@@ -24,5 +24,35 @@ export const palette = {
   glowYellow: "#FFD66B",
 } as const;
 
+/**
+ * Darkened tones of the palette for the 404 Lands plateaus (map brief),
+ * plus the two recorded exceptions: the Cluster's cold blue (a light tone
+ * of steelBlue) and the lit beacon red (a tone of fadedRed).
+ */
+export const mapTones = {
+  /** The night sky behind the diorama. */
+  mapSky: "#0c0911",
+  mapFloor: "#100b16",
+  /** Hemisphere sky of the night fill (a lifted inactivePlum); the ground side is bunkerBlack. */
+  nightSky: "#3b2f5c",
+  /** The high moon that lights the plateau walls (a pale phosphorViolet). */
+  moon: "#9d8fd6",
+  outageTop: "#1d1724",
+  outageSide: "#110c17",
+  staticTop: "#3a3445",
+  staticSide: "#211c29",
+  heapTop: "#2e2420",
+  heapSide: "#1b1412",
+  clusterTop: "#1f2733",
+  clusterSide: "#131921",
+  mainframeTop: "#3a3428",
+  mainframeSide: "#231e17",
+  sandboxSide: "#1a1420",
+  edgeTop: "#4a4652",
+  edgeSide: "#2b2832",
+  clusterBlue: "#8fb3d9",
+  beaconRed: "#e05a5a",
+} as const;
+
 export type PaletteColorName = keyof typeof palette;
 export type PaletteColor = (typeof palette)[PaletteColorName];
