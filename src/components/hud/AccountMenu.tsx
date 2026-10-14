@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef } from "react";
 
 import { signOut } from "@/app/auth/actions";
 import { setQuality, useQuality, type Quality } from "@/components/scene/quality";
+
+import { useDisclosure } from "./useDisclosure";
 
 const QUALITIES: Quality[] = ["low", "medium", "high"];
 const ROW = "flex items-center gap-3 px-4 py-2.5 text-sm text-hud-bone hover:bg-hud-violet/10";
@@ -30,31 +32,14 @@ const initials = (login: string) => (login.match(/[A-Z]/g)?.slice(0, 2).join("")
  * legal and logout. A disclosure, not an ARIA menu: Tab moves through it,
  * Esc or a click outside closes it and hands focus back to the avatar.
  */
-export function AccountMenu({ login }: { login: string | null }) {
-  const [open, setOpen] = useState(false);
+export function AccountMenu({ login, alerting = false }: { login: string | null; alerting?: boolean }) {
+  const { open, setOpen, root, trigger } = useDisclosure();
   const quality = useQuality();
-  const root = useRef<HTMLDivElement>(null);
-  const trigger = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const id = useId();
 
   useEffect(() => {
-    if (!open) return;
-    panel.current?.querySelector<HTMLElement>("a, button, input")?.focus();
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      setOpen(false);
-      trigger.current?.focus();
-    };
-    const onPointer = (event: PointerEvent) => {
-      if (!root.current?.contains(event.target as Node)) setOpen(false);
-    };
-    document.addEventListener("keydown", onKey);
-    document.addEventListener("pointerdown", onPointer);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.removeEventListener("pointerdown", onPointer);
-    };
+    if (open) panel.current?.querySelector<HTMLElement>("a, button, input")?.focus();
   }, [open]);
 
   const tag = login ? initials(login) : "··";
@@ -82,7 +67,7 @@ export function AccountMenu({ login }: { login: string | null }) {
           id={id}
           role="region"
           aria-label="Account"
-          className="absolute right-0 top-full z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] border border-hud-violet bg-hud-bg/95 font-mono"
+          className={`absolute right-0 top-full z-30 ${alerting ? "mt-[52px]" : "mt-2"} w-80 max-w-[calc(100vw-2rem)] border border-hud-violet bg-hud-bg/95 font-mono`}
         >
           <div className="flex items-center gap-3 border-b border-hud-violet/40 p-4">
             <span className="flex h-10 w-10 items-center justify-center bg-hud-plum text-hud-bone">{tag}</span>

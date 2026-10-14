@@ -5,6 +5,7 @@ import { after } from "next/server";
 import { SessionBeacon } from "@/components/analytics/SessionBeacon";
 import { AwaySummary } from "@/components/hud/AwaySummary";
 import { BadgeToast } from "@/components/hud/BadgeToast";
+import { resourceAlert } from "@/components/hud/resourceAlert";
 import { ReturnPlan } from "@/components/hud/ReturnPlan";
 import { TopBar } from "@/components/hud/TopBar";
 import { NextPacket } from "@/components/events/NextPacket";
@@ -24,16 +25,21 @@ import { isRoomKind, isSlot, ROOM_CATALOG, type Room } from "@/lib/rooms/catalog
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
-type HomeProps = { searchParams: Promise<{ intro?: string }> };
+type HomeProps = { searchParams: Promise<{ intro?: string; build?: string }> };
 
-/** `/?intro=1` replays the intro and credits for anyone signed in. */
+/**
+ * `/?intro=1` replays the intro and credits for anyone signed in.
+ * `/?build=<kind>` comes from a room's AlertBanner: it opens the build menu
+ * on a free slot, only when the alert still asks for that room and it is affordable.
+ */
 export default async function Home({ searchParams }: HomeProps) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return <Landing />;
-  const replayIntro = (await searchParams).intro === "1";
+  const params = await searchParams;
+  const replayIntro = params.intro === "1";
 
   const admin = createAdminClient();
 
@@ -90,6 +96,7 @@ export default async function Home({ searchParams }: HomeProps) {
   const unstaffedRoom = crew.forks.some(f => !f.roomSlot) ? rooms.find(r =>
     (r.kind === "cache_storage" || r.kind === "power_plant" || r.kind === "workshop") && !crew.forks.some(f => f.roomSlot === r.slot)
   ) : undefined;
+  const alert = resourceAlert({ resources, work, rooms, forks: crew.forks, bytes });
   const report = awayReport({
     hours: resources.hours,
     before: resources.before,
@@ -119,14 +126,14 @@ export default async function Home({ searchParams }: HomeProps) {
           eventAvailable: dailyEvent !== null,
           staffingRoom: unstaffedRoom ? { slot: unstaffedRoom.slot, name: ROOM_CATALOG[unstaffedRoom.kind].name } : undefined,
         }}
+        alert={alert}
+        openBuild={!!alert && params.build === alert.roomKind}
       />
-      <TopBar login={githubLogin} bytes={bytes} resources={resources} work={work} lastSyncedAt={lastSyncedAt} />
+      <TopBar login={githubLogin} bytes={bytes} resources={resources} work={work} lastSyncedAt={lastSyncedAt} alerting={!!alert} />
       {report && <AwaySummary report={report} />}
       <BadgeToast badges={freshBadges} />
       {me !== null && (me.intro_seen_at === null || replayIntro) && <Intro login={githubLogin} />}
-      <div className="pointer-events-none absolute top-[72px] left-6 z-10 space-y-1 font-mono text-xs">
-        {resources.uptime === 0 && <p className="text-[#A14545]">&gt; blackout. Put an engineer on the Power Plant.</p>}
-        {resources.cache === 0 && <p className="text-[#A14545]">&gt; the pantry is empty. Nobody is cooking.</p>}
+      <div className={`pointer-events-none absolute ${alert ? "top-[116px]" : "top-[72px]"} left-6 z-10 space-y-1 font-mono text-xs`}>
         {dailyEvent && !dailyEvent.resolved && (
           <p className="text-[#BD93F9]/80">&gt; incoming packet on the Main Branch terminal</p>
         )}
@@ -137,7 +144,7 @@ export default async function Home({ searchParams }: HomeProps) {
             &gt; the 404 Lands: world map
           </Link>
         </p>
-        <ReturnPlan resources={resources} work={work} rooms={rooms} bytes={bytes} resolved={!!dailyEvent?.resolved} observedAt={observedAt} />
+        <ReturnPlan work={work} rooms={rooms} bytes={bytes} />
       </div>
     </main>
   );
