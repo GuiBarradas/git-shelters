@@ -1,12 +1,15 @@
 "use client";
 
 import { Grid, Line } from "@react-three/drei";
-import { useEffect, useMemo } from "react";
+import { useFrame } from "@react-three/fiber";
+import { useEffect, useMemo, useRef } from "react";
+import { type MeshLambertMaterial, SRGBColorSpace } from "three";
 
 import { mapTones, palette } from "@/lib/palette";
 import { REGIONS, type Region } from "@/lib/regions/catalog";
 import { REGION_LOOK, toWorld, WORLD_DEPTH, WORLD_WIDTH } from "@/lib/regions/look";
 
+import { mapTime } from "./clock";
 import { plateauGeometry } from "./plateau";
 
 /** One plateau and its rim: solid when open, dashed when locked. */
@@ -14,6 +17,13 @@ function Plateau({ region, onSelect }: { region: Region; onSelect: (region: Regi
   const geometry = useMemo(() => plateauGeometry(region), [region]);
   useEffect(() => () => geometry.dispose(), [geometry]);
   const look = REGION_LOOK[region.id]!;
+  const topMaterial = useRef<MeshLambertMaterial>(null);
+  // The Sandbox top never holds one tone: it drifts in hue and light around the plum.
+  useFrame(() => {
+    if (!look.animated || !topMaterial.current) return;
+    const t = mapTime.value;
+    topMaterial.current.color.setHSL(0.75 + 0.05 * Math.sin(t * 0.2), 0.22, 0.13 + 0.03 * Math.sin(t * 0.33), SRGBColorSpace);
+  });
   const rim = useMemo(() => {
     const pts = region.shape.map((p) => {
       const [x, z] = toWorld(p);
@@ -34,7 +44,7 @@ function Plateau({ region, onSelect }: { region: Region; onSelect: (region: Regi
         onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = "pointer"; }}
         onPointerOut={() => { document.body.style.cursor = "auto"; }}
       >
-        <meshLambertMaterial attach="material-0" color={look.top} />
+        <meshLambertMaterial ref={topMaterial} attach="material-0" color={look.top} />
         <meshLambertMaterial attach="material-1" color={look.side} />
       </mesh>
       {region.open ? (
