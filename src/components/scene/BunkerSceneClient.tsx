@@ -48,6 +48,8 @@ type BunkerSceneClientProps = {
   staffing?: StaffingTarget | null;
   /** A notice under the AlertBanner (the AwaySummary), placed after it so Tab follows the screen. */
   notice?: ReactNode;
+  /** Walk into a built room; defaults to the /room/<slot> route. The scene lab's HUD fixture stays local. */
+  onNavigate?: (slot: number) => void;
 };
 
 /**
@@ -71,6 +73,7 @@ export function BunkerSceneClient({
   band,
   staffing = null,
   notice,
+  onNavigate,
 }: BunkerSceneClientProps) {
   const router = useRouter();
   const quality = useQuality();
@@ -112,7 +115,8 @@ export function BunkerSceneClient({
 
   const onSlotClick = (slot: 0 | Slot, built: boolean, locked = false) => {
     if (built) {
-      router.push(`/room/${slot}`);
+      if (onNavigate) onNavigate(slot);
+      else router.push(`/room/${slot}`);
     } else if (canBuild && slot !== 0 && !locked) {
       setPreviewKind(null);
       setSelectedSlot(slot);

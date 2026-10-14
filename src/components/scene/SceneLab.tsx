@@ -11,6 +11,7 @@ import { SceneInstances } from "./SceneInstances";
 import { generateBunker } from "@/lib/visuals/generate";
 import { OptionalBunkerVisuals, ProceduralRoom, proceduralLayout } from "./procedural/ProceduralRoom";
 import { Fork } from "./Fork";
+import { HudLab } from "./HudLab";
 import { QualityControl, SceneEffects, useQuality } from "./SceneQuality";
 import { RoomOccupants } from "./rooms/Details";
 import type { RoomKind } from "@/lib/rooms/catalog";
@@ -33,6 +34,9 @@ function Scene() {
     try { localStorage.setItem("shelter-quality", requested); } catch { return; }
     window.dispatchEvent(new Event("shelter-quality"));
   }, [requested]);
+  // Synthetic HUD states for visual QA (HudLab): no database, every write blocked.
+  const hud = query.get("hud");
+  if (hud === "normal" || hud === "blackout") return <HudLab fixture={hud} at={query.get("at")} seed={Number.isSafeInteger(numericSeed) && numericSeed > 0 ? numericSeed : 1709} />;
   const person = (i: number) => ({ id: `preview-${i}`, name: "Preview", trait: "junior" as const, mood: "content" as const, seed: i * 131, roomSlot: 0 });
   if (query.has("forks")) return <Canvas dpr={1} gl={{antialias:true}} style={{background:"#19141f"}}>
     <DioramaCamera width={7.4} height={4.4} center={[0,-0.25,0]} />

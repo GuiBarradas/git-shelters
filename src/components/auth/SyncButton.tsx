@@ -8,9 +8,20 @@ import { popoutGap } from "@/components/hud/useDisclosure";
 
 const IDLE: SyncState = { tone: "idle", message: "", at: 0 };
 
-/** Wall clock in whole minutes; null on the server so the elapsed label never mismatches hydration. */
-const subscribeMinute = (cb: () => void) => { const id = setInterval(cb, 60_000); return () => clearInterval(id); };
-const minuteNow = () => Math.floor(Date.now() / 60_000) * 60_000;
+/**
+ * Wall clock read on subscribe and once a minute, so the snapshot stays
+ * stable between ticks. The read itself is not rounded: flooring it to
+ * the minute undercounted ("13m" for 14m 12s, "1h" for exactly 2h at
+ * :48 s). Null on the server so the label never mismatches hydration.
+ */
+let clock = Date.now();
+const subscribeMinute = (cb: () => void) => {
+  const tick = () => { clock = Date.now(); cb(); };
+  clock = Date.now();
+  const id = setInterval(tick, 60_000);
+  return () => clearInterval(id);
+};
+const minuteNow = () => clock;
 
 /** "now", "14m", "3h", "2d": how long since the last sync. */
 export function elapsedLabel(fromMs: number, nowMs: number): string {

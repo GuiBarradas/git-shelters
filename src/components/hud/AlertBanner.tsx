@@ -62,7 +62,7 @@ export function AlertBanner({ alert, onBuild, currentSlot }: { alert: ResourceAl
         )}
       </p>
       {alert.room ? (
-        alert.room.slot !== currentSlot && <Link href={`/room/${alert.room.slot}`} className={CTA}>
+        alert.room.slot !== currentSlot && <Link href={`/room/${alert.room.slot}`} prefetch={false} className={CTA}>
           {alert.room.staffed ? "Check" : "Go to"} {room} <span aria-hidden>→</span>
         </Link>
       ) : slot !== null && onBuild ? (
@@ -70,7 +70,7 @@ export function AlertBanner({ alert, onBuild, currentSlot }: { alert: ResourceAl
           Build {room} · {cost} B
         </button>
       ) : slot !== null ? (
-        <Link href={`/?build=${alert.roomKind}`} className={CTA}>
+        <Link href={`/?build=${alert.roomKind}`} prefetch={false} className={CTA}>
           Build {room} · {cost} B <span aria-hidden>→</span>
         </Link>
       ) : short !== null ? (

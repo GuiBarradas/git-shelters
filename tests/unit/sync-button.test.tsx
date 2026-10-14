@@ -53,6 +53,17 @@ describe("sync feedback", () => {
     expect(screen.queryByText(/^\d+[mhd]$|^now$/)).toBeNull();
   });
 
+  it("does not lose a minute to the seconds of the clock", async () => {
+    // The HUD fixture's case: synced exactly 14 min and 2 h before a clock at :48 s.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(Date.parse("2026-10-14T02:22:48Z"));
+    vi.mocked(getBackfillStatus).mockResolvedValue("done");
+    const view = render(<SyncButton lastSyncedAt="2026-10-14T02:08:48Z" />);
+    expect(await screen.findByText("14m")).toBeInTheDocument();
+    view.rerender(<SyncButton lastSyncedAt="2026-10-14T00:22:48Z" />);
+    expect(await screen.findByText("2h")).toBeInTheDocument();
+  });
+
   it("counts from a successful sync on this visit", async () => {
     vi.mocked(getBackfillStatus).mockResolvedValue("done");
     vi.mocked(syncBytes).mockResolvedValue({ tone: "ok", message: "up to date", at: Date.now() });

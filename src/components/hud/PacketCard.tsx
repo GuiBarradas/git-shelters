@@ -26,6 +26,7 @@ export function PacketCard({ packet, observedAt }: { packet: "pending" | "resolv
       <p className="mt-2 hidden text-hud-bone xl:block">Today&apos;s decision is on the Main Branch terminal.</p>
       <Link
         href="/room/0"
+        prefetch={false}
         // Beside the label on phones; a full row of its own in the narrow sm..xl column, wrapping rather than clipping.
         className="flex min-h-11 min-w-0 items-center justify-center gap-2 bg-hud-amber px-4 py-2 text-center text-[11px] uppercase tracking-[0.22em] text-hud-bg hover:bg-hud-amber/90 sm:max-xl:basis-full sm:max-xl:tracking-[0.12em] xl:mt-auto xl:h-9 xl:min-h-0 xl:py-0"
       >
