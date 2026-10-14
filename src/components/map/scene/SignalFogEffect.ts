@@ -80,7 +80,7 @@ export type FogQuality = "low" | "medium" | "high";
 export class SignalFogEffect extends Effect {
   private readonly scene: Scene;
   private readonly camera: Camera;
-  private readonly blur = new KawaseBlurPass({ kernelSize: KernelSize.MEDIUM, resolutionScale: 0.5 });
+  private readonly blur = new KawaseBlurPass({ kernelSize: KernelSize.LARGE, resolutionScale: 0.5 });
   private readonly blurTarget = new WebGLRenderTarget(1, 1, { type: HalfFloatType, depthBuffer: false });
   private readonly lights = new WebGLRenderTarget(1, 1, { type: HalfFloatType, depthTexture: new DepthTexture(1, 1, FloatType) });
   readonly mask: DataTexture;

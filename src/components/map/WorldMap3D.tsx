@@ -142,7 +142,9 @@ export default function WorldMap3D({ pins, me, review, hidden, onReady, onLost }
   return (
     <div className={`absolute inset-0 ${hidden ? "invisible" : ""}`}>
       {/* flat: no tone mapping, like the prototype; tones are matched by eye against it. */}
+      {/* The canvas says nothing to a screen reader; the overlay and its Repo list carry the map. */}
       <Canvas
+        aria-hidden
         flat
         frameloop={visible ? "always" : "never"}
         dpr={[1, quality === "low" ? 1 : 1.5]}

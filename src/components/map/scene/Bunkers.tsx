@@ -70,7 +70,9 @@ const BEAM_FRAGMENT = /* glsl */ `
   uniform float uTime; varying vec3 vC; varying float vY; varying float vP;
   ${SRGB_TO_LINEAR}
   void main() {
-    float fade = pow(1.0 - vY, 1.6);
+    // The prototype added its beams in sRGB; added in linear they read shorter and dimmer.
+    // A softer fade and a gain, tuned by eye against its screenshot, bring the height back.
+    float fade = pow(1.0 - vY, 1.2) * 1.6;
     float bands = 0.55 + 0.45 * sin(vY * 22.0 - uTime * 3.2 + vP);
     // The upload: a bright packet climbing the beam now and then.
     float pkt = smoothstep(0.92, 1.0, sin(vY * 7.0 - uTime * 1.9 + vP * 2.0));
