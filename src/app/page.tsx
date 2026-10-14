@@ -3,10 +3,10 @@ import { loadUserVisuals } from "@/lib/visuals/server";
 import { after } from "next/server";
 
 import { SessionBeacon } from "@/components/analytics/SessionBeacon";
-import { AuthBar } from "@/components/auth/AuthBar";
 import { AwaySummary } from "@/components/hud/AwaySummary";
 import { BadgeToast } from "@/components/hud/BadgeToast";
 import { ReturnPlan } from "@/components/hud/ReturnPlan";
+import { TopBar } from "@/components/hud/TopBar";
 import { NextPacket } from "@/components/events/NextPacket";
 import { nextPacketAt } from "@/lib/events/schedule";
 import { Intro } from "@/components/intro/Intro";
@@ -16,7 +16,6 @@ import { trackSessionStart } from "@/lib/analytics/track";
 import { awardBadges } from "@/lib/badges/award";
 import { awayReport } from "@/lib/economy/away";
 import { settleResources, workforce } from "@/lib/economy/resources";
-import { cacheCap, payloadCap } from "@/lib/economy/tick";
 import { fetchDailyEvent } from "@/lib/events/daily";
 import { loadCrew } from "@/lib/forks/load";
 import { describeCrew, eventEcho, settleMood } from "@/lib/forks/mood";
@@ -51,7 +50,7 @@ export default async function Home({ searchParams }: HomeProps) {
   // tagged source = 'github_sync' with created_at on today's UTC date.
   const observedAt = new Date().toISOString();
   const todayUtc = observedAt.slice(0, 10);
-  const [activeToday, rooms, dailyEvent, crew, commitsCounted, packets, firstEvent] = await Promise.all([
+  const [activeToday, rooms, dailyEvent, crew, commitsCounted, packets, firstEvent, lastSyncedAt] = await Promise.all([
     checkActivityToday(supabase, user.id, todayUtc),
     fetchRooms(supabase, user.id),
     fetchDailyEvent(supabase, user.id, todayUtc),
@@ -59,6 +58,7 @@ export default async function Home({ searchParams }: HomeProps) {
     countCommits(supabase, user.id),
     loadUnread(supabase, user.id),
     supabase.from("daily_event_outcomes").select("user_id").eq("user_id", user.id).limit(1),
+    fetchLastSyncedAt(admin, user.id),
   ]);
 
   // Badges are derived from the state above; a bonus lands in the ledger
@@ -120,26 +120,11 @@ export default async function Home({ searchParams }: HomeProps) {
           staffingRoom: unstaffedRoom ? { slot: unstaffedRoom.slot, name: ROOM_CATALOG[unstaffedRoom.kind].name } : undefined,
         }}
       />
-      <div className="pointer-events-none absolute top-4 right-4 z-10">
-        <AuthBar githubLogin={githubLogin} bytes={bytes} />
-      </div>
+      <TopBar login={githubLogin} bytes={bytes} resources={resources} work={work} lastSyncedAt={lastSyncedAt} />
       {report && <AwaySummary report={report} />}
       <BadgeToast badges={freshBadges} />
       {me !== null && (me.intro_seen_at === null || replayIntro) && <Intro login={githubLogin} />}
-      <div className="pointer-events-none absolute top-16 left-6 z-10 space-y-1 font-mono text-xs">
-        <p className="text-[#E6DFC8]/70">
-          <span className={resources.cache === 0 ? "text-[#A14545]" : ""}>
-            CACHE {resources.cache}/{cacheCap(rooms.filter((r) => r.kind === "cache_storage").length)}
-          </span>
-          {" · "}
-          <span className={resources.uptime === 0 ? "text-[#A14545]" : ""}>UPTIME {resources.uptime}%</span>
-          {work.workshops > 0 && (
-            <>
-              {" · "}
-              PAYLOAD {resources.payload}/{payloadCap(work.workshops)}
-            </>
-          )}
-        </p>
+      <div className="pointer-events-none absolute top-[72px] left-6 z-10 space-y-1 font-mono text-xs">
         {resources.uptime === 0 && <p className="text-[#A14545]">&gt; blackout. Put an engineer on the Power Plant.</p>}
         {resources.cache === 0 && <p className="text-[#A14545]">&gt; the pantry is empty. Nobody is cooking.</p>}
         {dailyEvent && !dailyEvent.resolved && (
@@ -150,10 +135,6 @@ export default async function Home({ searchParams }: HomeProps) {
         <p>
           <Link href="/map" className="pointer-events-auto text-[#BD93F9]/70 hover:text-[#BD93F9]">
             &gt; the 404 Lands: world map
-          </Link>
-          <span className="text-[#E6DFC8]/30"> · </span>
-          <Link href="/?intro=1" className="pointer-events-auto text-[#BD93F9]/70 hover:text-[#BD93F9]">
-            intro / credits
           </Link>
         </p>
         <ReturnPlan resources={resources} work={work} rooms={rooms} bytes={bytes} resolved={!!dailyEvent?.resolved} observedAt={observedAt} />
@@ -212,6 +193,16 @@ async function fetchMe(
 ): Promise<{ bytes: number; intro_seen_at: string | null } | null> {
   const { data } = await supabase.from("users").select("bytes, intro_seen_at").eq("id", userId).maybeSingle();
   return data ?? null;
+}
+
+/**
+ * When the sync last ran for this player, for the TopBar's "14m". The row
+ * is service-role only (no RLS policy for players), so the admin client
+ * reads exactly one column of the caller's own row. Null hides the label.
+ */
+async function fetchLastSyncedAt(admin: ReturnType<typeof createAdminClient>, userId: string): Promise<string | null> {
+  const { data } = await admin.from("github_sync_state").select("last_synced_at").eq("user_id", userId).maybeSingle();
+  return data?.last_synced_at ?? null;
 }
 
 /**

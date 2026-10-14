@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import Link from "next/link";
 import "./globals.css";
 
@@ -17,6 +18,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+/** Pixel face for the numbers that matter and the TopBar wordmark only (art guide §7). */
+const silkscreen = localFont({
+  src: "../../public/fonts/silkscreen/Silkscreen-Regular.ttf",
+  variable: "--font-silkscreen",
+});
+
 export const metadata: Metadata = {
   title: "Git Shelters",
   description:
@@ -31,12 +38,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${silkscreen.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[#0B0713] text-[#E6DFC8]">
         <AudioProvider>
           <BunkerViewport>{children}</BunkerViewport>
-          <footer className="pointer-events-auto fixed bottom-2 right-4 z-10 font-mono text-[10px] uppercase tracking-widest text-[#E6DFC8]/40">
+          <footer className="site-footer pointer-events-auto fixed bottom-2 right-4 z-10 font-mono text-[10px] uppercase tracking-widest text-[#E6DFC8]/40">
             <Link href="/legal/privacy" className="hover:text-[#E6DFC8]">Privacy</Link>
             {" · "}
             <Link href="/legal/terms" className="hover:text-[#E6DFC8]">Terms</Link>

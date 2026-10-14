@@ -31,6 +31,7 @@
   --color-hud-alert-bg: var(--hud-alert-bg);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-pixel: var(--font-silkscreen);
 }
 
 html,
@@ -73,6 +74,10 @@ body,
   a:hover {
     text-shadow: 0 0 8px color-mix(in srgb, var(--accent) 45%, transparent);
   }
+  /* The HUD bar and its menus are flat: no glow (art guide §7, no shadows). */
+  [data-topbar] :is(button, a):hover {
+    text-shadow: none;
+  }
   button:not(:disabled):active {
     transform: translateY(1px);
   }
@@ -102,6 +107,11 @@ body,
 }
 .bunker-hud > .route-enter {
   animation: none;
+}
+/* The TopBar carries sound, settings, legal and quality: the global footer
+   and the floating quality picker step aside wherever it is mounted. */
+body:has([data-topbar]) :is(.site-footer, .scene-quality) {
+  display: none;
 }
 @media (prefers-reduced-motion: reduce) {
   .route-enter {

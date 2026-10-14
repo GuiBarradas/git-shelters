@@ -8,6 +8,7 @@ import { SessionBeacon } from "@/components/analytics/SessionBeacon";
 import { DailyEventCard } from "@/components/events/DailyEventCard";
 import { CrewPanel } from "@/components/rooms/CrewPanel";
 import { ReturnPlan } from "@/components/hud/ReturnPlan";
+import { TopBar } from "@/components/hud/TopBar";
 import { NextPacket } from "@/components/events/NextPacket";
 import { nextPacketAt } from "@/lib/events/schedule";
 import { BenchPanel, BunkPanel, LedgerPanel, LiftPanel, UptimePanel } from "@/components/rooms/RoomPanels";
@@ -55,13 +56,16 @@ export default async function RoomPage({ params }: Props) {
   const admin = createAdminClient();
   const observedAt = new Date().toISOString();
   const today = todayUtc(new Date(observedAt));
-  const [rooms, crew, activeToday, dailyEvent, { data: me }] = await Promise.all([
+  const [rooms, crew, activeToday, dailyEvent, { data: me }, { data: sync }] = await Promise.all([
     fetchRooms(supabase, user.id),
     loadCrew(supabase, admin, user.id),
     pushedToday(supabase, user.id, today),
     fetchDailyEvent(supabase, user.id, today),
     supabase.from("users").select("bytes").eq("id", user.id).maybeSingle(),
+    // Service-role only table: one column of the caller's own row, for the TopBar's sync age.
+    admin.from("github_sync_state").select("last_synced_at").eq("user_id", user.id).maybeSingle(),
   ]);
+  const githubLogin = typeof user.user_metadata?.user_name === "string" ? user.user_metadata.user_name : null;
 
   const kind: RoomKind | null = isMain ? null : (rooms.find((r) => r.slot === slotNumber)?.kind ?? null);
   if (!isMain && kind === null) notFound();
@@ -75,6 +79,7 @@ export default async function RoomPage({ params }: Props) {
   const bytes = me?.bytes ?? 0;
   const beds = bedCount(rooms);
   const noBed = allForks.length >= beds;
+  const work = workforce(allForks, rooms);
 
   const panel = isMain
     ? dailyEvent
@@ -100,7 +105,8 @@ export default async function RoomPage({ params }: Props) {
         forks={allForks}
         powered={resources.uptime > 0}
       />
-      <div className="pointer-events-none absolute top-4 left-4 z-10 font-mono text-sm">
+      <TopBar login={githubLogin} bytes={me?.bytes ?? null} resources={resources} work={work} lastSyncedAt={sync?.last_synced_at ?? null} />
+      <div className="pointer-events-none absolute top-[72px] left-4 z-10 font-mono text-sm">
         <h1 className="text-[#BD93F9]">{title}</h1>
         <p className="text-[#E6DFC8]/60">{blurb}</p>
         <BackToCorridor />
@@ -124,7 +130,7 @@ export default async function RoomPage({ params }: Props) {
       </div>
       <div className="absolute bottom-14 right-4 left-4 z-10 space-y-2 sm:left-auto sm:w-80">
         {isMain && dailyEvent?.resolved && <div className="border border-[#BD93F9]/40 bg-[#0B0713]/95 p-3 font-mono text-xs"><NextPacket observedAt={observedAt} availableAt={nextPacketAt(observedAt)} /></div>}
-        <ReturnPlan resources={resources} work={workforce(allForks, rooms)} rooms={rooms} bytes={bytes} resolved={!!dailyEvent?.resolved} observedAt={observedAt} />
+        <ReturnPlan resources={resources} work={work} rooms={rooms} bytes={bytes} resolved={!!dailyEvent?.resolved} observedAt={observedAt} />
       </div>
     </main>
   );
