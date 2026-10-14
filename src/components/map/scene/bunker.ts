@@ -5,6 +5,7 @@ import { regionHeight, toWorld } from "@/lib/regions/look";
 
 import type { Vec3 } from "./framing";
 import type { Glow } from "./glow";
+import type { Ring } from "./props";
 
 /**
  * Where and how brightly each bunker burns on the map (map brief). Pure,
@@ -82,4 +83,10 @@ export function bunkerGlows(bunkers: readonly MapBunker[]): Glow[] {
     if (pin.activity > 0) return [{ at: [x, y + 0.5, z], color: palette.lampWarm, size: 1.2 + 1.8 * pin.activity, mode: "breathe", phase }];
     return [{ at: [x, y + 0.35, z], color: mapTones.ember, size: 0.9, mode: "slow", phase }];
   });
+}
+
+/** The visitor's sonar: an amber ping off their own bunker every 3.4 s. */
+export function ownSonar(bunkers: readonly MapBunker[]): Ring[] {
+  const own = bunkers.find((b) => b.mine);
+  return own ? [{ at: [own.at[0], own.at[1] + 0.05, own.at[2]], color: palette.amber, period: 3.4, radius: 10, phase: 0 }] : [];
 }

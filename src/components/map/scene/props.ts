@@ -22,7 +22,10 @@ export type Solid = { at: Vec3; scale: Vec3; rot: Vec3; color: string };
 export type Cube = { at: Vec3; size: number; phase: number; speed: number };
 export type Line = { from: Vec3; to: Vec3; color: string };
 
-export type MapProps = { boxes: Solid[]; cylinders: Solid[]; lines: Line[]; cubes: Cube[]; glows: Glow[] };
+/** A ring sweeping out over the ground: sonar, siren or ghost broadcast. */
+export type Ring = { at: Vec3; color: string; period: number; radius: number; phase: number };
+
+export type MapProps = { boxes: Solid[]; cylinders: Solid[]; lines: Line[]; cubes: Cube[]; glows: Glow[]; rings: Ring[] };
 
 const rngFor = (id: string) => mulberry32(hash32(id));
 const poly = (r: Region): XZ[] => r.shape.map((p) => toWorld(p));
@@ -99,7 +102,7 @@ function blend(a: string, b: string, t: number): string {
  * player is ever buried.
  */
 export function mapProps(bunkers: readonly XZ[]): MapProps {
-  const out: MapProps = { boxes: [], cylinders: [], lines: [], cubes: [], glows: [] };
+  const out: MapProps = { boxes: [], cylinders: [], lines: [], cubes: [], glows: [], rings: [] };
   const glow = (at: Vec3, color: string, size: number, mode: Glow["mode"], phase: number) => out.glows.push({ at, color, size, mode, phase });
 
   // The Outage: blackout, dead power lines with red beacons. The only warm light is the players'.
@@ -113,6 +116,8 @@ export function mapProps(bunkers: readonly XZ[]): MapProps {
       out.boxes.push({ at: [x, y + h[i]! / 2, z], scale: [0.22, h[i]!, 0.22], rot: [0, rand() * 3, (rand() - 0.5) * 0.08], color: mapTones.hatch });
       out.boxes.push({ at: [x, y + h[i]! * 0.86, z], scale: [2.2, 0.14, 0.14], rot: [0, rand() * 3, 0], color: mapTones.hatch });
       glow([x, y + h[i]! + 0.2, z], mapTones.beaconRed, 1.7, "blink", rand());
+      // One pylon in three still wails: a siren sweep on the ground.
+      if (i % 3 === 0) out.rings.push({ at: [x, y + 0.06, z], color: palette.fadedRed, period: 5.5 + rand() * 2, radius: 7, phase: rand() });
     });
     // Two sagging cables between neighbouring pylons.
     for (let i = 0; i + 1 < pylons.length; i++) {
@@ -148,6 +153,8 @@ export function mapProps(bunkers: readonly XZ[]): MapProps {
       const h = 4 + rand() * 5;
       out.cylinders.push({ at: [p[0], y + h / 2, p[1]], scale: [0.2, h, 0.2], rot: [0, 0, 0], color: mapTones.antenna });
       glow([p[0], y + h + 0.15, p[1]], palette.boneWhite, 1.6, "blink", rand());
+      // A ghost broadcast from one antenna in three.
+      if (i % 3 === 0) out.rings.push({ at: [p[0], y + 0.05, p[1]], color: palette.boneWhite, period: 6 + rand() * 3, radius: 8, phase: rand() });
     }
     for (let i = 0; i < 26; i++) {
       const [x, z] = sampleIn(shape, rand, 0.8, spots, 1.2);
@@ -263,4 +270,16 @@ export function fogCards(): FogCard[] {
       return { at: [x, top(r.id) + 0.8 + rand() * 2.4, z], size: 4.5 + rand() * 4, seed: rand() };
     });
   });
+}
+
+/** Dust motes drifting up over the whole table, lit violet and, now and then, lamp-warm. */
+export function dust(count = 420): Glow[] {
+  const rand = rngFor("dust");
+  return Array.from({ length: count }, (): Glow => ({
+    at: [-55 + rand() * 110, rand() * 14, -35 + rand() * 70],
+    color: rand() < 0.8 ? palette.phosphorViolet : palette.lampWarm,
+    size: 0.16 + rand() * 0.14,
+    mode: "dust",
+    phase: rand(),
+  }));
 }
