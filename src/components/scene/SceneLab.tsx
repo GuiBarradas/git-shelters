@@ -4,10 +4,12 @@ import { Canvas } from "@react-three/fiber";
 import { Html, PerformanceMonitor } from "@react-three/drei";
 import { DioramaCamera } from "./DioramaCamera";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import BunkerScene from "./BunkerScene";
 import { BuiltRoom, EmptyCell, MainBranchRoom, roomLayout } from "./rooms";
 import { SceneInstances } from "./SceneInstances";
+import { generateBunker } from "@/lib/visuals/generate";
+import { OptionalBunkerVisuals, ProceduralRoom, proceduralLayout } from "./procedural/ProceduralRoom";
 import { Fork } from "./Fork";
 import { QualityControl, SceneEffects, useQuality } from "./SceneQuality";
 import { RoomOccupants } from "./rooms/Details";
@@ -23,6 +25,8 @@ function Scene() {
   const count = query.get("rooms") === "30" ? 30 : 10;
   const powered = query.get("dark") !== "1";
   const quality = useQuality();
+  const numericSeed = Number(query.get("seed"));
+  const visuals = useMemo(() => Number.isSafeInteger(numericSeed) && numericSeed > 0 ? generateBunker(numericSeed, {recentActivity:1}, Array.from({length:count},(_,slot)=>({slot,kind:kinds[slot%6] ?? "main"}))) : null, [numericSeed,count]);
   const requested = query.get("quality");
   useEffect(() => {
     if (requested !== "low" && requested !== "medium" && requested !== "high") return;
@@ -45,24 +49,24 @@ function Scene() {
   </Canvas>;
   const sampleRooms = [{slot:1,kind:"cache_storage"},{slot:2,kind:"power_plant"},{slot:3,kind:"dorm"},{slot:4,kind:"elevator"},{slot:5,kind:"workshop"}] as const;
   if (query.has("overview") && entered === null) return <>
-    <BunkerScene rooms={[...sampleRooms]} forks={[person(1), {...person(2),roomSlot:1}]} activeToday powered={powered} onSlotClick={(slot,built) => { setAction(`${slot}:${built}`); if (built) setEntered(slot); }} />
+    <BunkerScene visuals={visuals} rooms={[...sampleRooms]} forks={[person(1), {...person(2),roomSlot:1}]} activeToday powered={powered} onSlotClick={(slot,built) => { setAction(`${slot}:${built}`); if (built) setEntered(slot); }} />
     <output data-testid="scene-action" className="absolute bottom-4 left-4 text-white">{action}</output>
   </>;
   const selected = entered === null ? query.get("room") : entered === 0 ? "main" : sampleRooms.find(room => room.slot === entered)?.kind;
-  if (selected && selected !== "empty") return <RoomScene kind={selected === "main" ? null : selected as RoomKind} activeToday eventPending={false} powered={powered} forks={query.has("empty") ? [] : [person(0)]} panel={<div style={{ color:"#ede2ff", padding:10, fontFamily:"monospace" }}>MAIN BRANCH<br/>System online</div>} />;
+  if (selected && selected !== "empty") return <RoomScene visuals={visuals} slot={entered ?? kinds.indexOf(selected === "main" ? null : selected as RoomKind)} kind={selected === "main" ? null : selected as RoomKind} activeToday eventPending={false} powered={powered} forks={query.has("empty") ? [] : [person(0)]} panel={<div style={{ color:"#ede2ff", padding:10, fontFamily:"monospace" }}>MAIN BRANCH<br/>System online</div>} />;
   return <><QualityControl value={quality} /><Canvas dpr={dpr} gl={{ antialias:false, powerPreference:"high-performance" }} style={{background:"radial-gradient(ellipse, #211529, #0c0911 75%)"}}>
     <PerformanceMonitor ms={500} iterations={4} threshold={0.5} bounds={() => [60,65]} onDecline={() => setDpr(value => Math.max(0.75,value - 0.1))} />
     <DioramaCamera width={selected === "empty" ? 5.2 : 24} height={selected === "empty" ? 4.1 : count / 5 * 4} center={[0,selected === "empty" ? 1.5 : 1.5 - (count / 5 - 1) * 2,0]} />
     <hemisphereLight args={["#978dbb","#30232f",powered ? 0.42 : 0.18]} /><directionalLight position={[-3,8,10]} intensity={powered ? 0.65 : 0.18} color="#ffe2b4" />
-    <SceneInstances simpleLighting={quality === "low"}>
+    <OptionalBunkerVisuals bunker={visuals}><SceneInstances simpleLighting={quality === "low"}>
     {selected === "empty" ? <EmptyCell highlight preview={{kind: "workshop", missingBytes: 80}} /> : Array.from({length:count},(_,i) => <group key={i} position={[(i%5-2)*4.55,-Math.floor(i/5)*4,0]}>
       <RoomOccupants.Provider value={i%5===0?2:1}>
-        {kinds[i%6] === null ? <MainBranchRoom powered={powered} active /> : <BuiltRoom kind={kinds[i%6]!} powered={powered} />}
+        {visuals?.rooms[i] ? <ProceduralRoom room={visuals.rooms[i]} powered={powered} /> : kinds[i%6] === null ? <MainBranchRoom powered={powered} active /> : <BuiltRoom kind={kinds[i%6]!} powered={powered} />}
       </RoomOccupants.Provider>
-      <Fork fork={person(i)} powered={powered} layout={roomLayout(kinds[i%6] ?? null)} />
-      {i%5 === 0 && <Fork fork={person(i+count)} powered={powered} stationIndex={1} layout={roomLayout(kinds[i%6] ?? null)} />}
+      <Fork fork={person(i)} powered={powered} layout={visuals?.rooms[i] ? proceduralLayout(visuals.rooms[i]) : roomLayout(kinds[i%6] ?? null)} />
+      {i%5 === 0 && <Fork fork={person(i+count)} powered={powered} stationIndex={1} layout={visuals?.rooms[i] ? proceduralLayout(visuals.rooms[i]) : roomLayout(kinds[i%6] ?? null)} />}
     </group>)}
-    </SceneInstances>
+    </SceneInstances></OptionalBunkerVisuals>
     <SceneEffects quality={quality} />
   </Canvas></>;
 }
