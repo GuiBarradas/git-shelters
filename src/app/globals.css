@@ -113,6 +113,12 @@ body,
 body:has([data-topbar]) :is(.site-footer, .scene-quality) {
   display: none;
 }
+/* On phones the map's full-width dock owns the bottom edge; the footer stays on wider screens. */
+@media (max-width: 639px) {
+  body:has([data-map]) .site-footer {
+    display: none;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .route-enter {
     animation: none;

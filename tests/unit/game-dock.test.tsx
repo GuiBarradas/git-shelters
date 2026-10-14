@@ -22,6 +22,14 @@ describe("game dock", () => {
     expect(screen.queryByText(/crew|badges/i)).toBeNull();
   });
 
+  it("marks the 404 Lands current on the map, with no share", () => {
+    render(<GameDock active="map" />);
+    expect(screen.getAllByRole("link").map((l) => l.getAttribute("href"))).toEqual(["/", "/map"]);
+    expect(screen.getByRole("link", { name: "404 Lands" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Bunker" })).not.toHaveAttribute("aria-current");
+    expect(screen.queryByRole("button", { name: "Share" })).toBeNull();
+  });
+
   it("omits Share when there are no visuals to render", () => {
     render(<GameDock share={null} />);
     expect(screen.queryByRole("button", { name: "Share" })).toBeNull();
