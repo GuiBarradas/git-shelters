@@ -4,8 +4,9 @@ import { signInWithGithub } from "@/app/auth/actions";
 import { BunkerSceneClient } from "@/components/scene/BunkerSceneClient";
 import type { Fork } from "@/lib/forks/catalog";
 import type { Room } from "@/lib/rooms/catalog";
+import { generateBunker } from "@/lib/visuals/generate";
 
-/** Prefab bunker every visitor sees: the three Public Alpha rooms, lights on. */
+/** Starter bunker every visitor sees, with the lights on. */
 const DEMO_ROOMS: Room[] = [
   { slot: 1, kind: "cache_storage" },
   { slot: 2, kind: "power_plant" },
@@ -13,7 +14,10 @@ const DEMO_ROOMS: Room[] = [
   { slot: 4, kind: "elevator" },
 ];
 
-/** One survivor pacing the demo so the place looks lived in. */
+// Fixed synthetic identity: the showcase uses the same visual pipeline as player bunkers.
+const DEMO_VISUALS = generateBunker(583231, { recentActivity: 1 }, [{ slot: 0, kind: "main" }, ...DEMO_ROOMS]);
+
+/** Residents at their stations make the demo look lived in. */
 const DEMO_FORKS: Fork[] = [
   { id: "demo-1", name: "Linus_77", trait: "caffeinated", mood: "content", roomSlot: 0, seed: 77 },
   { id: "demo-2", name: "Margie_NULL", trait: "senior", mood: "content", roomSlot: 1, seed: 1204 },
@@ -30,7 +34,7 @@ const SHOWCASE_LOGIN = "GuiBarradas";
 export function Landing() {
   return (
     <main className="relative w-full h-dvh">
-      <BunkerSceneClient rooms={DEMO_ROOMS} forks={DEMO_FORKS} bytes={null} activeToday demo />
+      <BunkerSceneClient rooms={DEMO_ROOMS} forks={DEMO_FORKS} visuals={DEMO_VISUALS} bytes={null} activeToday demo />
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center px-4 pt-10 sm:pt-16">
         <div className="max-w-xl space-y-4 text-center font-mono">
