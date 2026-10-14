@@ -10,6 +10,7 @@
 <p align="center">
   <a href="https://gitshelters.com">Play the alpha</a> ·
   <a href="https://gitshelters.com/map">The 404 Lands</a> ·
+  <a href="./DESIGN.md">Design &amp; roadmap</a> ·
   <a href="./docs/art-guide.md">Art guide</a> ·
   <a href="./CONTRIBUTING.md">Contributing</a> ·
   <a href="./docs/adr/">Decisions</a> ·
@@ -28,25 +29,48 @@
 
 There was the **Great Merge Conflict**: late one Tuesday, every public repository on the planet went into conflict at once. What is left of the internet is the **404 Lands**. The people who made it are **Maintainers**, holed up in their **Repos** with old batteries and a local clone of Wikipedia. You are one of them.
 
-- Every push you make on GitHub, in real life, becomes **Bytes** inside the bunker.
+- Your public GitHub pushes earn **Bytes** inside the bunker, with daily caps and anti-cheese checks.
 - Bytes build rooms. Rooms give your survivors, the **Forks**, work: a Cook in the Cache Storage, an Engineer on the Power Plant, a Tinkerer at the Workshop bench.
 - **Cache** (food) and **Uptime** (power) are simulated while you are away. No engineer, and the lights go out.
 - A **Daily Event** arrives on the Main Branch terminal every day. You decide; the crew reacts.
 - The Forks feel your commit log. Push today and they are happy. A week of silence and they get bitter, and they say so when you poke them.
 - Badges land on your public profile. Every bunker is a dot on the map of the 404 Lands.
+- A welcome packet and first-steps guide help you get started. Before you leave, check the next event and an eight-hour resource forecast.
+
+The Alpha has **10 slots across two floors**, including the Main Branch. Build a Cache Storage, Power Plant, Dorm, Elevator or Workshop; recruit additional Forks for **200 Bytes** each and assign them to work. Combat, expeditions and trading are still planned. See the [design and roadmap](./DESIGN.md) for the current scope.
+
+## Inside the bunker
+
+Warm lamps, violet terminals, worn concrete and residents at work: the bunker is a small diorama of life after the internet.
 
 <p align="center">
-  <img src="./docs/art/corridor.jpg" alt="The bunker in cross-section: two floors, five rooms, an elevator" width="800" />
+  <img src="./docs/screenshots/bunker.jpg" alt="Two-floor bunker with warm room lighting, a Fork at the terminal and purple construction holograms in empty slots" width="1000" />
 </p>
 
 <p align="center">
-  <img src="./docs/art/main-branch.jpg" alt="A Fork at the Main Branch terminal, reading the Daily Event" width="400" />
-  <img src="./docs/art/intro.jpg" alt="The intro: the mascot logging a Maintainer in" width="400" />
+  <img src="./docs/screenshots/main-branch.jpg" alt="Main Branch close-up with a violet CRT, desk props and a seated Fork" width="400" />
+  <img src="./docs/screenshots/cache-storage.jpg" alt="Cache Storage close-up with kitchen equipment, wall decorations and a walking Fork" width="400" />
+</p>
+
+*In-engine captures, October 2026. Scene Lab fixtures with synthetic residents, seed `583231`, High preset; these are demonstration scenes, not live player statistics.*
+
+- **A recognizable home.** The stable numeric GitHub **account ID** seeds the palette, concrete wear, furniture, resident appearance and occasional signature props. Renaming the account keeps its identity. Each player owns one bunker; Forks are its residents.
+- **Rooms with life.** Procedural posters, notes, rugs and screens join contextual work animations, blinking LEDs, steam and moving machinery.
+- **Continuous navigation.** Click a room to zoom in, then return to the corridor. The same renderer stays alive while the room's controls load.
+- **Adjustable visuals.** Low, Medium and High presets control postprocessing. High adds ambient occlusion and depth of field in close-ups.
+- **Shareable rooms.** Capture a room for a profile card with current Bytes balance, living Forks and built rooms. Uploads require the Storage migration described below.
+
+The [Seed Lab](https://gitshelters.com/seed-lab) previews **50 deterministic identities** at a time. Compare room types and palettes, inspect a room live, or download its JSON recipe.
+
+<p align="center">
+  <img src="./docs/screenshots/seed-lab.jpg" alt="Seed Lab showing a grid of distinct Main Branch rooms, their palettes and procedural prop counts" width="1000" />
 </p>
 
 ## How it is built
 
-Everything you see is procedural: three.js primitives, a toon shader, a fixed palette, and no external 3D model. The world is a cross-section of the bunker rendered with an orthographic camera; each room is a set of boxes, cylinders and lights, and each Fork is a handful of voxels driven by a tiny behaviour loop. The read-outs inside the rooms are plain HTML pinned to the scene.
+The 3D scene uses procedural geometry, bevelled concrete frames, Standard-derived materials and canvas texture atlases, with no external 3D models. A low-FOV perspective camera frames the bunker like a diorama. Static geometry is merged and repeated room details are instanced; local lighting gives amber lamps and violet screens their color. Read-outs remain plain HTML pinned to the scene.
+
+Visual recipes use **cyrb53 + mulberry32**, with independent random streams for each domain and snapshot tests for determinism. Visual identity changes presentation, not room costs, recruitment or the economy. Repository-language themes and real commit/README excerpts are supported generator inputs, but are not fetched for account bunkers.
 
 The game is deliberately server-authoritative and boring where it counts:
 
@@ -59,14 +83,14 @@ The game is deliberately server-authoritative and boring where it counts:
 | Layer | Tech |
 |---|---|
 | Runtime | Next.js 16 App Router · React 19 · TypeScript 5 (strict, `noUncheckedIndexedAccess`) |
-| 3D | three.js via `@react-three/fiber` and `@react-three/drei` |
-| UI | Tailwind v4 · one mono font · a CRT in CSS |
-| Backend | Supabase (Postgres, RLS, Auth) · Server Actions · a GitHub Actions cron |
+| 3D | Three.js r184 · React Three Fiber · Drei · pmndrs postprocessing |
+| UI | Tailwind v4 · HTML room panels · Silkscreen share cards |
+| Backend | Supabase (Postgres, RLS, Auth, Storage) · Server Actions · GitHub Actions sync |
 | Audio | Two `<audio>` elements and a preference in localStorage |
 | Tests | Vitest (unit and integration against a throwaway user) · Playwright |
 | Quality | ESLint with the React Compiler rules · Husky · lint-staged · Sentry |
 
-Runs on free tiers. Sixty frames per second on an Intel Iris Xe.
+**Performance is still Alpha work.** Start with Low on integrated GPUs. The 30-room / 36-resident stress fixture measured about **162–166 draw calls** on Iris Xe, but the **60 FPS target is not met** in the current procedural scene. That fixture exceeds the playable 10-slot bunker; physical mobile performance is still unverified. See the [art guide's measurements and limits](./docs/art-guide.md#12-procedural-bunker-identity).
 
 ## Running it
 
@@ -77,51 +101,74 @@ git clone https://github.com/GuiBarradas/git-shelters.git
 cd git-shelters
 pnpm install
 cp .env.local.example .env.local   # then fill it in
-pnpm db:push                 # applies supabase/migrations to your project
-pnpm db:types                # regenerates src/lib/supabase/database.types.ts
+pnpm exec supabase login
+pnpm exec supabase link --project-ref YOUR_PROJECT_REF
+pnpm db:push                      # applies migrations to your linked project
+pnpm db:types                     # regenerates the database types
 pnpm dev
 ```
+
+Use your own Supabase project. Open `http://localhost:3000` after configuring GitHub sign-in.
 
 | Variable | What for |
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the browser client |
 | `SUPABASE_SERVICE_ROLE_KEY` | server-only writes (ledger, sync, badges) |
-| `GITHUB_TOKEN` | a read-only token so the sync is not rate-limited |
+| `GITHUB_TOKEN` | optional public-data token for a higher GitHub API rate limit |
 | `CRON_SECRET` | shared secret for `/api/cron/sync` |
 | `SENTRY_*` | optional; errors go nowhere without them |
 
-GitHub OAuth is configured in the Supabase dashboard (Authentication → Providers → GitHub) with your app's callback URL.
+For [GitHub OAuth](https://supabase.com/docs/guides/auth/social-login/auth-github), set the GitHub app's callback to `https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback`, then enter its client ID and secret in Supabase's GitHub provider. Add `http://localhost:3000/auth/callback` to Supabase's allowed redirect URLs, plus your deployed app's callback URL when hosting it.
+
+Scheduled sync runs through [GitHub Actions](./.github/workflows/sync-cron.yml). Set repository secret `CRON_SECRET` to match the deployed app's environment variable, and repository variable `APP_URL` to its base URL. The workflow requests a run every 15 minutes; actual delivery can be delayed. Manual **Sync** remains available in the game.
+
+**Share-card setup:** apply [the bunker previews migration](./supabase/migrations/20261013234423_bunker_previews.sql) to create the private Storage bucket and policies. Without it, uploads are unavailable and public cards use a fallback. Applying it to production remains a deployment task.
 
 | Script | What it does |
 |---|---|
 | `pnpm dev` | dev server |
+| `pnpm build` · `pnpm start` | production build and server |
 | `pnpm test` | unit tests, no network |
 | `pnpm test:integration` | against your Supabase project, with throwaway users |
 | `pnpm test:e2e` | Playwright |
-| `pnpm lint` · `pnpm typecheck` | what the pre-commit hook runs |
+| `pnpm lint` · `pnpm typecheck` | full lint and type checks; pre-commit lints staged files and checks all types |
 | `pnpm db:new <name>` | a new migration file |
+
+Visual review routes:
+
+- `/seed-lab` — 50 account identities, room inspection and JSON export.
+- `/dev/scene-lab?overview=1&seed=583231` — bunker overview and room zoom.
+- `/dev/scene-lab?room=main&seed=583231&quality=high` — one room in detail.
+- `/dev/scene-lab?rooms=30&seed=583231&quality=low` — rendering stress fixture.
+
+Scene Lab is available in development; production review builds require `SCENE_REVIEW_BUILD=1`. These tools use synthetic data and do not create player progress.
 
 ## Where things live
 
 ```
 src/app/            routes, Server Actions, the cron and API handlers
 src/components/     scene/ (the bunker, rooms, Forks), hud/, intro/, audio/, map/
+                    scene/procedural/ (props, texture atlas, Seed Lab, captures)
 src/lib/            economy/ (tick, away report), forks/ (catalog, mood, jobs),
-                    badges/, regions/, github/ (sync), anti-cheese/, api/ (public reads)
+                    visuals/ (seeded recipes, slots, share cards), badges/,
+                    regions/, github/ (sync), anti-cheese/, api/ (public reads)
 supabase/migrations one file per change; SQL functions are the authority
 docs/adr/           why things are the way they are
 DESIGN.md           the public summary of the design
 docs/art-guide.md   how to draw a room that belongs in this bunker
+docs/screenshots/  current in-engine README captures
 devlog/             the story of the design, in the open
 ```
 
 ## Contributing
 
-Issues and pull requests are welcome, from a typo in a Fork's line to a whole room. Start with [CONTRIBUTING.md](./CONTRIBUTING.md): it explains the setup, the conventions, and how to add a room, a badge or a dialogue line without touching anything else. The [art guide](./docs/art-guide.md) (also as a [PDF](./docs/art-guide.pdf)) is the contract for anything visual.
+Issues and pull requests are welcome, from a typo in a Fork's line to a whole room. Start with [CONTRIBUTING.md](./CONTRIBUTING.md): it explains the setup, the conventions, and how to add a room, a badge or a dialogue line without touching anything else. The [art guide](./docs/art-guide.md) is the current reference for visual work.
 
 ## Credits
 
 Design, code, words and 3D by [Guilherme Martins Barradas](https://github.com/GuiBarradas). Brand art by the author. Music: "Uncontained" by Alana Jordan; ambience "The Shining Ambience" by Mezhdunami and "The Foyer Mirror" by turning_pages, all under the Pixabay Content License.
+
+Silkscreen is bundled under the [SIL Open Font License](./public/fonts/silkscreen/OFL.txt).
 
 ## License
 

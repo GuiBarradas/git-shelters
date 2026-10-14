@@ -14,6 +14,8 @@ Thanks for looking. This is a one-person game in public alpha; the bar for a con
 ```bash
 pnpm install
 cp .env.local.example .env.local   # fill in your own Supabase project
+pnpm exec supabase login
+pnpm exec supabase link --project-ref YOUR_PROJECT_REF
 pnpm db:push && pnpm db:types
 pnpm dev
 ```
@@ -27,7 +29,7 @@ Use your own Supabase project. Never point tests at a real player's account; int
 3. **Pure functions for the simulation.** Anything that turns state plus time into new state (`src/lib/economy/tick.ts`, `away.ts`, `forks/mood.ts`, `badges/catalog.ts`) takes no clock and does no I/O, and has a unit test that would fail if the rule changed.
 4. **Derive, do not store.** If a value can be computed from what exists (mood, badges due, a pin on the map), compute it.
 5. **Whitelist what leaves the server.** Public reads go through a mapper (`src/lib/api/*.ts`) that copies fields out by name. The leak tests in `tests/unit/lib/api/` will fail if you add a field named like something sensitive.
-6. **No new dependency for what a few lines can do.** No postprocessing (it cost 40 fps on integrated GPUs), no state library, no icon set.
+6. **No new dependency for what a few lines can do.** Reuse the existing visual pipeline and quality presets; Low must keep postprocessing disabled. Measure visual changes on integrated GPUs against the [art guide](./docs/art-guide.md). No state library or icon set without a demonstrated need.
 7. **Migrations are additive and pushed once.** `pnpm db:new <name>`, write the SQL, `pnpm db:push`, `pnpm db:types`, commit all three. Never edit a migration that has been pushed.
 
 ## How to add things
