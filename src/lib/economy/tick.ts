@@ -71,6 +71,18 @@ function chargePerHour(work: Workforce): number {
 }
 
 /**
+ * Net change per hour of each resource, for the HUD gauges. Same rates as
+ * simulate(); `powered` says whether the kitchen and the bench have light.
+ */
+export function ratesPerHour(work: Workforce, powered: boolean): ResourceState {
+  return {
+    cache: (powered ? work.cooks * RATES.cookPerHour : 0) - work.forks * RATES.eatPerHour,
+    uptime: chargePerHour(work),
+    payload: powered ? work.tinkerers * RATES.tinkerPerHour : 0,
+  };
+}
+
+/**
  * Hours of the window the lights stay on. Charge is linear, so if the
  * battery is running down it lasts uptime / drain hours and then the
  * kitchen and the bench go dark for the rest of the window.

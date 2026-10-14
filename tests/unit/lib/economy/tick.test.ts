@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { cacheCap, hoursBetween, payloadCap, RATES, simulate, type Workforce } from "@/lib/economy/tick";
+import { cacheCap, hoursBetween, payloadCap, RATES, ratesPerHour, simulate, type Workforce } from "@/lib/economy/tick";
 
 const idle: Workforce = { cooks: 0, engineers: 0, tinkerers: 0, forks: 1, cacheStorages: 0, powerPlants: 0, workshops: 0 };
 const crewed: Workforce = { cooks: 1, engineers: 1, tinkerers: 0, forks: 3, cacheStorages: 1, powerPlants: 1, workshops: 0 };
@@ -93,5 +93,35 @@ describe("simulate", () => {
     const now = new Date("2026-09-22T12:00:00Z");
     expect(hoursBetween("2026-09-22T09:00:00Z", now)).toBe(3);
     expect(hoursBetween("2026-09-22T13:00:00Z", now)).toBe(0);
+  });
+});
+
+describe("ratesPerHour", () => {
+  const bench: Workforce = { ...crewed, tinkerers: 1, workshops: 1 };
+
+  it("powered: cooks and tinkerers work, engineers charge", () => {
+    // 6 cooked - 3 eaten; 25 charged - 8 drain; 1 tinkerer × 2
+    expect(ratesPerHour(bench, true)).toEqual({ cache: 3, uptime: 17, payload: 2 });
+  });
+
+  it("unpowered: only eating and the charge count", () => {
+    expect(ratesPerHour(bench, false)).toEqual({ cache: -3, uptime: 17, payload: 0 });
+  });
+
+  it("no Power Plant: engineers charge nothing, only the drain", () => {
+    expect(ratesPerHour({ ...bench, powerPlants: 0 }, true).uptime).toBe(-RATES.drainPerHour);
+  });
+
+  it("no workers: survivors eat and the bunker drains", () => {
+    expect(ratesPerHour(idle, true)).toEqual({ cache: -RATES.eatPerHour, uptime: -RATES.drainPerHour, payload: 0 });
+  });
+
+  it("matches what simulate() does over an hour", () => {
+    const state = { cache: 40, uptime: 50, payload: 0 };
+    const r = ratesPerHour(bench, true);
+    const next = simulate(state, bench, 1);
+    expect(next.cache - state.cache).toBe(r.cache);
+    expect(next.uptime - state.uptime).toBe(r.uptime);
+    expect(next.payload - state.payload).toBe(r.payload);
   });
 });
