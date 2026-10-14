@@ -13,7 +13,7 @@ import { mapTime } from "./clock";
 import { plateauGeometry } from "./plateau";
 
 /** One plateau and its rim: solid when open, dashed when locked. */
-function Plateau({ region, onSelect }: { region: Region; onSelect: (region: Region) => void }) {
+function Plateau({ region, onSelect, onPeek }: { region: Region; onSelect: (region: Region) => void; onPeek: (id: string | null) => void }) {
   const geometry = useMemo(() => plateauGeometry(region), [region]);
   useEffect(() => () => geometry.dispose(), [geometry]);
   const look = REGION_LOOK[region.id]!;
@@ -41,8 +41,15 @@ function Plateau({ region, onSelect }: { region: Region; onSelect: (region: Regi
           if (e.delta > 8) return;
           onSelect(region);
         }}
-        onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = "pointer"; }}
-        onPointerOut={() => { document.body.style.cursor = "auto"; }}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          document.body.style.cursor = "pointer";
+          if (!region.open) onPeek(region.id);
+        }}
+        onPointerOut={() => {
+          document.body.style.cursor = "auto";
+          if (!region.open) onPeek(null);
+        }}
       >
         <meshLambertMaterial ref={topMaterial} attach="material-0" color={look.top} />
         <meshLambertMaterial attach="material-1" color={look.side} />
@@ -57,7 +64,7 @@ function Plateau({ region, onSelect }: { region: Region; onSelect: (region: Regi
 }
 
 /** The night table: a dark floor with a faint grid, and the seven plateaus on it. */
-export function Regions({ onSelect }: { onSelect: (region: Region) => void }) {
+export function Regions({ onSelect, onPeek }: { onSelect: (region: Region) => void; onPeek: (id: string | null) => void }) {
   useEffect(() => () => { document.body.style.cursor = "auto"; }, []);
   return (
     <group>
@@ -77,7 +84,7 @@ export function Regions({ onSelect }: { onSelect: (region: Region) => void }) {
         fadeDistance={260}
         fadeStrength={1.5}
       />
-      {REGIONS.map((r) => <Plateau key={r.id} region={r} onSelect={onSelect} />)}
+      {REGIONS.map((r) => <Plateau key={r.id} region={r} onSelect={onSelect} onPeek={onPeek} />)}
     </group>
   );
 }

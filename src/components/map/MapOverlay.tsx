@@ -80,7 +80,7 @@ function BunkerTip({ tip, pinned, review, onClose }: { tip: MapBunker; pinned: b
  * through {@link labels}, and the region panel, Repo list and dock below.
  */
 export function MapOverlay({
-  pins, mine, tip, pinned, tipEl, youEl, onCloseTip, review, labels, selected, onClose, drift, onDrift, quality, reducedMotion, onReset, onFindMe,
+  pins, mine, tip, pinned, tipEl, youEl, onCloseTip, review, labels, selected, onClose, fog, onFog, drift, onDrift, quality, reducedMotion, onReset, onFindMe,
 }: {
   pins: MapPin[];
   mine: MapPin | null;
@@ -95,6 +95,8 @@ export function MapOverlay({
   labels: RefObject<Map<string, HTMLElement>>;
   selected: Region | null;
   onClose: () => void;
+  fog: boolean;
+  onFog: (on: boolean) => void;
   /** null when drift is unavailable (reduced motion). */
   drift: boolean | null;
   onDrift: (on: boolean) => void;
@@ -174,13 +176,21 @@ export function MapOverlay({
           <ul className="mb-2 hidden space-y-1 text-hud-bone/80 sm:block">
             <li className="flex items-center gap-2"><span className="size-2.5 bg-hud-amber" />your Repo</li>
             <li className="flex items-center gap-2"><span className="size-2.5 bg-hud-lamp" />a Repo · brighter = more recent activity</li>
+            <li className="flex items-center gap-2"><span className="size-2.5 bg-hud-beacon" />Outage emergency beacon</li>
+            <li className="flex items-center gap-2"><span className="size-2.5 border border-hud-violet/60 bg-hud-violet/25" />no signal · hover to peek</li>
           </ul>
-          {drift !== null && (
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
             <label className="flex items-center gap-2">
-              <input type="checkbox" checked={drift} onChange={(e) => onDrift(e.target.checked)} className="accent-hud-violet" />
-              Drift
+              <input type="checkbox" checked={fog} onChange={(e) => onFog(e.target.checked)} className="accent-hud-violet" />
+              Signal fog
             </label>
-          )}
+            {drift !== null && (
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={drift} onChange={(e) => onDrift(e.target.checked)} className="accent-hud-violet" />
+                Drift
+              </label>
+            )}
+          </div>
           <p className="mt-1 hidden text-[10px] text-hud-bone/50 sm:block">drag to pan · right-drag to orbit · wheel to zoom</p>
           <p className="mt-1 text-[10px] text-hud-bone/50 sm:hidden">drag to pan · pinch to zoom</p>
           <div className="mt-2"><RepoList pins={pins} mine={mine} review={review} /></div>

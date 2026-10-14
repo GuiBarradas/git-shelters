@@ -10,6 +10,7 @@ import { mapTones, palette } from "@/lib/palette";
 
 import { beamHeight, type MapBunker, poolRadius, poolStrength } from "./bunker";
 import { mapTime } from "./clock";
+import { SHARP_LAYER } from "./SignalFogEffect";
 import { srgb, SRGB_TO_LINEAR } from "./glow";
 
 type Place = { at: [number, number, number]; scale?: [number, number, number] };
@@ -17,14 +18,16 @@ type Place = { at: [number, number, number]; scale?: [number, number, number] };
 const dummy = new Object3D();
 
 /** One InstancedMesh per part: the draw count does not grow with the number of bunkers. */
-function Instances({ geometry, material, places, color }: {
+function Instances({ geometry, material, places, color, layer = 0 }: {
   geometry: InstancedMesh["geometry"];
   material: InstancedMesh["material"];
   places: readonly Place[];
   /** Per-instance sRGB colour, as an aC attribute for the shader materials. */
   color?: readonly Color[];
+  layer?: number;
 }) {
   const mesh = useRef<InstancedMesh>(null);
+  useLayoutEffect(() => { mesh.current?.layers.set(layer); }, [layer, places.length]);
   useLayoutEffect(() => {
     const m = mesh.current;
     if (!m) return;
@@ -129,7 +132,8 @@ export function Bunkers({ bunkers }: { bunkers: readonly MapBunker[] }) {
       <Instances geometry={parts.hatch} material={materials.hatch} places={layout.hatches} />
       <Instances geometry={parts.mast} material={materials.mast} places={layout.masts} />
       <Instances geometry={parts.pool} material={materials.pool} places={layout.pools} color={layout.poolColors} />
-      <Instances geometry={parts.beam} material={materials.beam} places={layout.beams} color={layout.beamColors} />
+      {/* Beams rise in front of locked regions: they skip the fog and are drawn after it. */}
+      <Instances geometry={parts.beam} material={materials.beam} places={layout.beams} color={layout.beamColors} layer={SHARP_LAYER} />
       {layout.own && (
         // The one real light on the map: short, amber, unshadowed.
         <pointLight position={[layout.own.at[0], layout.own.at[1] + 1.6, layout.own.at[2]]} color={palette.amber} intensity={6} distance={14} decay={2} />
