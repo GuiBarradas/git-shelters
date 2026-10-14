@@ -61,9 +61,26 @@ function moveCard(el: HTMLElement, x: number, y: number) {
   el.style.visibility = "visible";
 }
 
-function track(at: Cell, box: HTMLElement | null, card: HTMLElement | null, camera: Camera, W: number, H: number, inset: HudInset, out: Rect) {
+/**
+ * Trims a box to the screen's width; null when too little of it shows.
+ * The phone overview frames two columns, so the staffing chip's room can
+ * sit off-screen: the chip then hides (and leaves the tab order) instead
+ * of hanging past the edge.
+ */
+export function clampToScreen(r: Rect, W: number): Rect | null {
+  r.left = Math.max(0, r.left);
+  r.right = Math.min(W, r.right);
+  return r.right - r.left < 24 ? null : r;
+}
+
+function track(at: Cell, box: HTMLElement | null, card: HTMLElement | null, camera: Camera, W: number, H: number, inset: HudInset, out: Rect, clamp = false) {
   if (!at || !box) return;
-  const r = projectRect(at[0], at[1], camera, W, H, out);
+  const projected = projectRect(at[0], at[1], camera, W, H, out);
+  const r = clamp ? clampToScreen(projected, W) : projected;
+  if (!r) {
+    box.style.visibility = "hidden";
+    return;
+  }
   // Read the card's height before writing styles, so the frame lays out once.
   const cardH = card?.offsetHeight ?? 0;
   moveBox(box, r);
@@ -92,7 +109,7 @@ export function OverlayProbe({ hoverAt, blockerAt, hoverRef, cardRef, blockerRef
   const rectRef = useRef<Rect>({ left: 0, top: 0, right: 0, bottom: 0 });
   useFrame(({ camera, size }) => {
     track(hoverAt, hoverRef.current, cardRef.current, camera, size.width, size.height, inset, rectRef.current);
-    track(blockerAt, blockerRef.current, null, camera, size.width, size.height, inset, rectRef.current);
+    track(blockerAt, blockerRef.current, null, camera, size.width, size.height, inset, rectRef.current, true);
   });
   return null;
 }

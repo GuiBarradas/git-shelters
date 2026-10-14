@@ -7,7 +7,8 @@ import { ShareDialog } from "@/components/scene/procedural/BunkerShare";
 import type { Fork } from "@/lib/forks/catalog";
 import type { GeneratedBunker } from "@/lib/visuals/types";
 
-const ITEM = "flex h-16 w-[92px] flex-col items-center justify-center gap-1.5 text-[10px] uppercase tracking-[0.22em] hover:bg-hud-violet/10";
+// Phones: the items share the full width. sm..xl compact, then the 92 px desktop items.
+const ITEM = "flex h-16 min-w-0 flex-1 flex-col sm:w-20 sm:flex-none xl:w-[92px] items-center justify-center gap-1.5 text-[10px] uppercase tracking-[0.22em] hover:bg-hud-violet/10";
 const IDLE = `${ITEM} border-b-2 border-transparent text-hud-bone/70 hover:text-hud-bone`;
 
 function Icon({ d }: { d: string }) {
@@ -26,12 +27,13 @@ function Item({ icon, label }: { icon: string; label: ReactNode }) {
 /**
  * Bottom-centre navigation for the bunker overview: the bunker itself, the
  * world map, and the share card when there are visuals to render. Crew and
- * Badges wait for their own screens.
+ * Badges wait for their own screens. On phones it spans the bottom edge,
+ * clear of the home indicator.
  */
 export function GameDock({ share }: { share: { bunker: GeneratedBunker; forks: Fork[] } | null }) {
   const [sharing, setSharing] = useState(false);
   return (
-    <nav aria-label="Game" className="pointer-events-auto flex border border-hud-violet/40 bg-hud-bg/95 font-mono">
+    <nav aria-label="Game" className="pointer-events-auto flex border-t border-hud-violet/40 bg-hud-bg/95 pb-[env(safe-area-inset-bottom)] font-mono sm:border sm:pb-0">
       <Link href="/" aria-current="page" className={`${ITEM} border-b-2 border-hud-violet bg-hud-violet/14 text-hud-bone`}>
         <Item icon="M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h5v5H9z" label="Bunker" />
       </Link>

@@ -7,7 +7,7 @@
 export function BadgeToast({ badges, alerting = false }: { badges: Array<{ name: string; blurb: string; kind: string }>; alerting?: boolean }) {
   if (badges.length === 0) return null;
   return (
-    <ul className={`pointer-events-none absolute ${alerting ? "top-[116px]" : "top-[72px]"} right-4 z-30 w-72 space-y-2 font-mono text-xs`}>
+    <ul className={`pointer-events-none absolute ${alerting ? "top-[160px] lg:top-[116px]" : "top-[116px] lg:top-[72px]"} right-4 z-30 w-72 max-w-[calc(100vw-2rem)] space-y-2 font-mono text-xs`}>
       {badges.map((b, i) => (
         <li
           key={b.name}

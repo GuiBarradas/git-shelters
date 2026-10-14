@@ -2,7 +2,8 @@ import React from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AccountMenu } from "@/components/hud/AccountMenu";
+import { AudioProvider } from "@/components/audio/AudioProvider";
+import { AccountMenu as Menu } from "@/components/hud/AccountMenu";
 
 vi.mock("@/app/auth/actions", () => ({ signOut: vi.fn() }));
 vi.stubGlobal("React", React);
@@ -11,8 +12,14 @@ beforeEach(() => {
   localStorage.clear();
   // jsdom has no matchMedia; the quality default asks it about touch screens.
   window.matchMedia = (() => ({ matches: false })) as unknown as typeof window.matchMedia;
+  // jsdom cannot play media; the sound row only needs the calls to succeed.
+  vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
+  vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => {});
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
+
+/** The menu carries the phone's sound switch, so it needs the provider. */
+const AccountMenu = (props: React.ComponentProps<typeof Menu>) => <AudioProvider><Menu {...props} /></AudioProvider>;
 
 const open = () => {
   fireEvent.click(screen.getByRole("button", { name: "Account" }));
@@ -64,5 +71,16 @@ describe("account menu", () => {
     expect(changed).toHaveBeenCalledOnce();
     expect(screen.getByRole("radio", { name: "high" })).toBeChecked();
     window.removeEventListener("shelter-quality", changed);
+  });
+
+  it("offers the sound switch on phones, where the TopBar hides it", () => {
+    render(<AccountMenu login="GuiBarradas" />);
+    open();
+    const sound = screen.getByRole("button", { name: "Sound" });
+    expect(sound).toHaveClass("sm:hidden");
+    expect(sound).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(sound);
+    expect(sound).toHaveAttribute("aria-pressed", "true");
+    expect(localStorage.getItem("gs.audio")).toBe("on");
   });
 });

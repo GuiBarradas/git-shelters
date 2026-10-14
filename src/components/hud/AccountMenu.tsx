@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useEffect, useId, useRef } from "react";
 
 import { signOut } from "@/app/auth/actions";
+import { useAudio } from "@/components/audio/AudioProvider";
 import { setQuality, useQuality, type Quality } from "@/components/scene/quality";
 
-import { useDisclosure } from "./useDisclosure";
+import { popoutGap, useDisclosure } from "./useDisclosure";
 
 const QUALITIES: Quality[] = ["low", "medium", "high"];
 const ROW = "flex items-center gap-3 px-4 py-2.5 text-sm text-hud-bone hover:bg-hud-violet/10";
@@ -23,6 +24,7 @@ function Icon({ d }: { d: string }) {
 const REPO_ICON = "M2 3h12v10H2zM5 7h6M5 10h3";
 const REPLAY_ICON = "M2 2.5h12v9H2zM6.5 5v4l3.5-2zM5 14h6";
 const SETTINGS_ICON = "M2 4h12M2 8h12M2 12h12M5 2.5v3M10 6.5v3M7 10.5v3";
+const SOUND_ICON = "M6 12V3l7-1.5v9M4.25 10.25a1.75 1.75 0 1 0 0 3.5 1.75 1.75 0 0 0 0-3.5M11.25 8.75a1.75 1.75 0 1 0 0 3.5 1.75 1.75 0 0 0 0-3.5";
 
 /** "GuiBarradas" -> "GB"; falls back to the first two letters. */
 const initials = (login: string) => (login.match(/[A-Z]/g)?.slice(0, 2).join("") || login.slice(0, 2)).toUpperCase();
@@ -35,6 +37,7 @@ const initials = (login: string) => (login.match(/[A-Z]/g)?.slice(0, 2).join("")
 export function AccountMenu({ login, alerting = false }: { login: string | null; alerting?: boolean }) {
   const { open, setOpen, root, trigger } = useDisclosure();
   const quality = useQuality();
+  const { enabled, toggle } = useAudio();
   const panel = useRef<HTMLDivElement>(null);
   const id = useId();
 
@@ -46,7 +49,8 @@ export function AccountMenu({ login, alerting = false }: { login: string | null;
   const close = () => setOpen(false);
 
   return (
-    <div ref={root} className="relative">
+    // Static below lg: the panel hangs from the bottom of the whole two-row bar.
+    <div ref={root} className="lg:relative">
       <button
         ref={trigger}
         type="button"
@@ -54,10 +58,10 @@ export function AccountMenu({ login, alerting = false }: { login: string | null;
         aria-controls={id}
         aria-label="Account"
         onClick={() => setOpen((v) => !v)}
-        className={`flex h-9 items-center gap-2 border pl-1 pr-2 text-xs ${open ? "border-hud-violet" : "border-hud-violet/40"} hover:bg-hud-violet/10`}
+        className={`flex h-11 min-w-11 items-center justify-center gap-2 border text-xs sm:pl-1 sm:pr-2 lg:h-9 ${open ? "border-hud-violet" : "border-hud-violet/40"} hover:bg-hud-violet/10`}
       >
         <span className="flex h-7 w-7 items-center justify-center bg-hud-plum text-hud-bone">{tag}</span>
-        <svg aria-hidden viewBox="0 0 10 10" className={`h-2.5 w-2.5 fill-none stroke-current text-hud-violet ${open ? "rotate-180" : ""}`} strokeWidth={1.4}>
+        <svg aria-hidden viewBox="0 0 10 10" className={`hidden h-2.5 w-2.5 fill-none stroke-current text-hud-violet sm:block ${open ? "rotate-180" : ""}`} strokeWidth={1.4}>
           <path d="M2 3.5 5 6.5 8 3.5" />
         </svg>
       </button>
@@ -67,7 +71,7 @@ export function AccountMenu({ login, alerting = false }: { login: string | null;
           id={id}
           role="region"
           aria-label="Account"
-          className={`absolute right-0 top-full z-30 ${alerting ? "mt-[52px]" : "mt-2"} w-80 max-w-[calc(100vw-2rem)] border border-hud-violet bg-hud-bg/95 font-mono`}
+          className={`absolute right-4 top-full z-30 lg:right-0 ${popoutGap(alerting)} w-80 max-w-[calc(100vw-2rem)] border border-hud-violet bg-hud-bg/95 font-mono`}
         >
           <div className="flex items-center gap-3 border-b border-hud-violet/40 p-4">
             <span className="flex h-10 w-10 items-center justify-center bg-hud-plum text-hud-bone">{tag}</span>
@@ -93,6 +97,12 @@ export function AccountMenu({ login, alerting = false }: { login: string | null;
               <Icon d={SETTINGS_ICON} />
               Settings
             </Link>
+            {/* The phone TopBar has no room for the sound switch; it lives here there. */}
+            <button type="button" onClick={toggle} aria-pressed={enabled} className={`${ROW} w-full sm:hidden`}>
+              <Icon d={SOUND_ICON} />
+              Sound
+              <span aria-hidden className={`ml-auto ${SMALL} ${enabled ? "text-hud-violet" : "text-hud-bone/60"}`}>{enabled ? "On" : "Off"}</span>
+            </button>
           </nav>
           <div className="border-b border-hud-violet/40 p-4">
             <p id={`${id}-visual`} className={`${SMALL} mb-2 text-hud-bone/60`}>Visual</p>

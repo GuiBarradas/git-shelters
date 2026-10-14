@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState, useSyncExternalStore } from "react";
 
 import { getBackfillStatus, syncBytes, type BackfillStatus, type SyncState } from "@/app/sync/actions";
+import { popoutGap } from "@/components/hud/useDisclosure";
 
 const IDLE: SyncState = { tone: "idle", message: "", at: 0 };
 
@@ -27,7 +28,11 @@ export function elapsedLabel(fromMs: number, nowMs: number): string {
  * icon, the time since `lastSyncedAt` (github_sync_state) or this visit's
  * last successful sync; nothing when neither is known.
  */
-export function SyncButton({ lastSyncedAt = null }: { lastSyncedAt?: string | null }) {
+export function SyncButton({ lastSyncedAt = null, alerting = false }: {
+  lastSyncedAt?: string | null;
+  /** An AlertBanner sits under the TopBar; the status note drops below it. */
+  alerting?: boolean;
+}) {
   const now = useSyncExternalStore(subscribeMinute, minuteNow, () => null);
   const router = useRouter();
   const [status, setStatus] = useState<BackfillStatus | null>(null);
@@ -75,24 +80,26 @@ export function SyncButton({ lastSyncedAt = null }: { lastSyncedAt?: string | nu
   const label = status === "failed" || state.tone === "warn" ? "Retry sync" : "Sync";
 
   return (
-    <form action={action} className="relative">
+    // Static below lg, like the other TopBar pop-outs: the note hangs from the whole two-row bar.
+    <form action={action} className="lg:relative">
       <button
         type="submit"
         disabled={busy}
         aria-busy={busy}
-        aria-label={busy ? undefined : label}
+        aria-label={busy ? "Syncing" : label}
         title={busy ? undefined : elapsed ? `${label} · last synced ${elapsed === "now" ? "just now" : `${elapsed} ago`}` : label}
-        className="flex h-9 items-center gap-2 border border-hud-violet/40 px-3 text-xs text-hud-bone/70 hover:bg-hud-violet/10 disabled:cursor-progress disabled:opacity-60"
+        className="flex h-11 min-w-11 items-center justify-center gap-2 border border-hud-violet/40 text-xs text-hud-bone/70 hover:bg-hud-violet/10 disabled:cursor-progress disabled:opacity-60 sm:px-3 lg:h-9"
       >
         <svg aria-hidden viewBox="0 0 14 14" className={`h-3.5 w-3.5 fill-none stroke-current ${warning ? "text-hud-amber" : "text-hud-violet"}`} strokeWidth={1.4}>
           <path d="M11.5 5.5A4.75 4.75 0 0 0 2.6 4.2M2.5 8.5a4.75 4.75 0 0 0 8.9 1.3M2.5 1.5v3h3M11.5 12.5v-3h-3" />
         </svg>
         {busy ? (
-          <>
+          // On phones the icon alone; the status note below says it is syncing.
+          <span className="hidden sm:inline">
             syncing<span className="blink">_</span>
-          </>
+          </span>
         ) : (
-          elapsed !== null && <span className="tabular-nums">{elapsed}</span>
+          elapsed !== null && <span className="hidden tabular-nums sm:inline">{elapsed}</span>
         )}
       </button>
       {message && (
@@ -100,7 +107,7 @@ export function SyncButton({ lastSyncedAt = null }: { lastSyncedAt?: string | nu
           role="status"
           key={state.at}
           aria-live="polite"
-          className={`${!pending && !initial && !warning ? "hud-fade " : ""}absolute right-0 top-full z-30 mt-1 w-64 max-w-[calc(100vw-2rem)] border border-hud-violet/40 bg-hud-bg/95 p-2 text-xs ${
+          className={`${!pending && !initial && !warning ? "hud-fade " : ""}absolute right-4 top-full z-30 lg:right-0 ${popoutGap(alerting)} w-64 max-w-[calc(100vw-2rem)] border border-hud-violet/40 bg-hud-bg/95 p-2 text-xs ${
             warning ? "text-hud-amber" : "text-hud-bone/70"
           }`}
         >

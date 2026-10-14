@@ -4,7 +4,8 @@ import { after } from "next/server";
 import { SessionBeacon } from "@/components/analytics/SessionBeacon";
 import { AwaySummary } from "@/components/hud/AwaySummary";
 import { BadgeToast } from "@/components/hud/BadgeToast";
-import { CrewLog, crewTip } from "@/components/hud/CrewLog";
+import { CrewLog } from "@/components/hud/CrewLog";
+import { crewTip } from "@/components/hud/crewTip";
 import { PacketCard } from "@/components/hud/PacketCard";
 import { resourceAlert, staffingTarget } from "@/components/hud/resourceAlert";
 import { TopBar } from "@/components/hud/TopBar";
@@ -111,6 +112,8 @@ export default async function Home({ searchParams }: HomeProps) {
   return (
     <main className="relative w-full h-dvh">
       <SessionBeacon />
+      {/* First in the DOM: Tab follows the screen top to bottom (bar, banner, scene, lower band). */}
+      <TopBar login={githubLogin} bytes={bytes} resources={resources} work={work} lastSyncedAt={lastSyncedAt} alerting={!!alert} />
       <BunkerSceneClient
         visuals={visuals}
         rooms={rooms}
@@ -129,6 +132,7 @@ export default async function Home({ searchParams }: HomeProps) {
         alert={alert}
         openBuild={!!alert && params.build === alert.roomKind}
         staffing={staffing}
+        notice={report && <AwaySummary report={report} alerting={!!alert} />}
         band={{
           crewLog: (
             <CrewLog
@@ -142,8 +146,6 @@ export default async function Home({ searchParams }: HomeProps) {
           packet: <PacketCard packet={dailyEvent ? (dailyEvent.resolved ? "resolved" : "pending") : null} observedAt={observedAt} />,
         }}
       />
-      <TopBar login={githubLogin} bytes={bytes} resources={resources} work={work} lastSyncedAt={lastSyncedAt} alerting={!!alert} />
-      {report && <AwaySummary report={report} alerting={!!alert} />}
       <BadgeToast badges={freshBadges} alerting={!!alert} />
       {me !== null && (me.intro_seen_at === null || replayIntro) && <Intro login={githubLogin} />}
     </main>

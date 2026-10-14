@@ -34,7 +34,7 @@ export function FirstSteps({ notices, eventDone, eventAvailable, built, bytes, o
   const cost = ROOM_CATALOG.cache_storage.cost;
   const ready = bytes !== null && bytes >= cost;
   return (
-    <aside aria-label="Getting started" className="pointer-events-auto max-h-[45dvh] w-full space-y-3 overflow-y-auto border border-hud-violet/60 bg-hud-bg/95 p-4 font-mono text-xs text-hud-bone lg:w-[380px]">
+    <aside aria-label="Getting started" className="pointer-events-auto max-h-[32dvh] w-full space-y-3 overflow-y-auto border border-hud-violet/60 bg-hud-bg/95 p-4 font-mono text-xs text-hud-bone sm:max-h-[45dvh] xl:w-[380px]">
       {guide && (
         <>
           <h2 className="text-sm text-hud-violet">Get your Repo running</h2>

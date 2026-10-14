@@ -8,8 +8,9 @@ import { FORK_TRAITS, type Fork as ForkData } from "@/lib/forks/catalog";
 import { type EventEcho, JOB_LINES, pickLine } from "@/lib/forks/mood";
 import type { Room, RoomKind } from "@/lib/rooms/catalog";
 
-import { hudInset, SpeechBubble } from "./BunkerSceneClient";
+import { SpeechBubble } from "./BunkerSceneClient";
 import { RegisteredBunkerScene, useBunkerFocus } from "./BunkerViewport";
+import { useHudInset } from "./hudInset";
 
 type Props = {
   kind: RoomKind | null;
@@ -22,7 +23,7 @@ type Props = {
   panel?: ReactNode;
   forks?: ForkData[];
   powered?: boolean;
-  /** An AlertBanner sits under the TopBar: the close-up leaves 100 px at the top, not 56. */
+  /** An AlertBanner sits under the TopBar: the close-up leaves 44 px more at the top. */
   alerting?: boolean;
 };
 
@@ -31,6 +32,8 @@ export function RoomSceneClient(props: Props) {
   const [speech, setSpeech] = useState<{ name: string; line: string } | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const [pokes, setPokes] = useState(0);
+  // No lower band in a room: only the TopBar (and banner) height, by breakpoint.
+  const [inset] = useHudInset(!!props.alerting);
 
   useEffect(() => {
     if (!speech) return;
@@ -43,7 +46,7 @@ export function RoomSceneClient(props: Props) {
       <RegisteredBunkerScene
         {...props}
         focusedSlot={props.slot ?? 0}
-        hudInset={hudInset(!!props.alerting, false, true)}
+        hudInset={inset}
         onSlotClick={() => {}}
         onForkClick={(f) => {
           setPokes((n) => n + 1);

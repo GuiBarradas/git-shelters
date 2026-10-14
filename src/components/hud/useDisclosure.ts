@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
+ * Top margin for a TopBar pop-out so it opens 8 px under the bar (and the
+ * AlertBanner). Below lg the anchor is the bar's 108 px bottom edge; from
+ * lg it is a 36 px control centred in the 56 px bar, ending at 46 px.
+ */
+export const popoutGap = (alerting: boolean) => (alerting ? "mt-[52px] lg:mt-[62px]" : "mt-2 lg:mt-[18px]");
+
+/**
  * Open/close state for a TopBar pop-out: Esc closes it and hands focus
  * back to the trigger; a pointer down or Tab focus outside `root` closes
  * it, so two pop-outs are never open at once.
