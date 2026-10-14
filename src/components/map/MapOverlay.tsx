@@ -8,6 +8,8 @@ import { setQuality, type Quality } from "@/components/scene/quality";
 import type { MapPin } from "@/lib/api/world-map";
 import { REGIONS, type Region } from "@/lib/regions/catalog";
 
+import { activityLabel, type MapBunker } from "./scene/bunker";
+
 const PANEL = "border border-hud-violet/40 bg-hud-bg/95";
 const CONTROL = `pointer-events-auto ${PANEL} px-2.5 py-1.5 text-hud-bone hover:bg-hud-violet/10`;
 
@@ -50,16 +52,45 @@ export function RepoList({ pins, mine, review }: { pins: MapPin[]; mine: MapPin 
   );
 }
 
+/** Bunker card: real pin facts only; the activity line is left out when it is unknown. */
+function BunkerTip({ tip, pinned, review, onClose }: { tip: MapBunker; pinned: boolean; review: boolean; onClose: () => void }) {
+  const { pin, mine } = tip;
+  const activity = activityLabel(pin.activity);
+  return (
+    <div className={`${pinned ? "pointer-events-auto" : ""} ${PANEL} min-w-48 px-3 py-2 text-xs`}>
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-hud-bone">{pin.login}</span>
+        {mine && <span className="text-[10px] uppercase tracking-[0.22em] text-hud-amber">Your Repo</span>}
+        {pinned && <button type="button" onClick={onClose} aria-label="Close" className="px-1 text-hud-bone/70 hover:text-hud-bone">×</button>}
+      </div>
+      {activity && <p className="text-hud-bone/70">{activity}</p>}
+      <p className="text-hud-bone/70">
+        {pin.bytes.toLocaleString("en-US")} B · {pin.rooms} {pin.rooms === 1 ? "room" : "rooms"} · {pin.badges} {pin.badges === 1 ? "badge" : "badges"}
+      </p>
+      {review ? <p className="mt-1 text-hud-bone/50">synthetic · no profile</p> : (
+        <Link href={`/u/${pin.login}`} prefetch={false} className="mt-1 inline-block text-hud-violet hover:text-hud-bone">open profile →</Link>
+      )}
+    </div>
+  );
+}
+
 /**
  * The DOM layer over the 3D map, on the HUD v2 tokens: title and view
  * controls on top, region labels placed every frame by LabelProjector
  * through {@link labels}, and the region panel, Repo list and dock below.
  */
 export function MapOverlay({
-  pins, mine, review, labels, selected, onClose, drift, onDrift, quality, reducedMotion, onReset, onFindMe,
+  pins, mine, tip, pinned, tipEl, youEl, onCloseTip, review, labels, selected, onClose, drift, onDrift, quality, reducedMotion, onReset, onFindMe,
 }: {
   pins: MapPin[];
   mine: MapPin | null;
+  /** The bunker under the pointer, or pinned by a tap. */
+  tip: MapBunker | null;
+  pinned: boolean;
+  /** Placed over the tip bunker and the visitor's own bunker by ScreenAnchor. */
+  tipEl: RefObject<HTMLDivElement | null>;
+  youEl: RefObject<HTMLDivElement | null>;
+  onCloseTip: () => void;
   review: boolean;
   labels: RefObject<Map<string, HTMLElement>>;
   selected: Region | null;
@@ -73,6 +104,8 @@ export function MapOverlay({
   onFindMe: () => void;
 }) {
   const count = (id: string) => pins.filter((p) => p.region === id).length;
+  // Credited today: a backfill counts too, so it says "active", not "pushed".
+  const activeToday = (id: string) => pins.filter((p) => p.region === id && p.activity === 1).length;
   // With nothing picked the panel reads the open region, where every Repo lives.
   const region = selected ?? REGIONS.find((r) => r.open)!;
   return (
@@ -94,6 +127,15 @@ export function MapOverlay({
               : <p className={`text-hud-violet/60 ${reducedMotion ? "" : "blink"}`}>No signal</p>}
           </div>
         ))}
+        {mine && (
+          <div ref={youEl} style={{ visibility: "hidden" }} className="absolute left-0 top-0">
+            <p className="-translate-x-1/2 -translate-y-full whitespace-nowrap text-[10px] uppercase tracking-[0.22em] text-hud-amber">You · {mine.login}</p>
+          </div>
+        )}
+        <div ref={tipEl} style={{ visibility: "hidden" }} className="absolute left-0 top-0">
+          {/* Up and right of the hatch, clear of the pointer. */}
+          {tip && <div className="translate-x-4 -translate-y-[calc(100%+14px)]"><BunkerTip tip={tip} pinned={pinned} review={review} onClose={onCloseTip} /></div>}
+        </div>
       </div>
 
       <header className="absolute inset-x-0 top-0 flex flex-col gap-2 p-3 sm:flex-row sm:items-start sm:justify-between sm:p-4">
@@ -123,10 +165,16 @@ export function MapOverlay({
             {selected && <button type="button" onClick={onClose} aria-label="Close region" className="px-1 text-hud-bone/70 hover:text-hud-bone">×</button>}
           </div>
           <p className="mt-1 text-hud-bone/80">{region.blurb}</p>
-          <p className="mt-1 text-hud-bone/60">{region.open ? answering(count(region.id)) : "Locked in the alpha"}</p>
+          <p className="mt-1 text-hud-bone/60">
+            {region.open ? `${answering(count(region.id))} · ${activeToday(region.id)} active today` : "Locked in the alpha"}
+          </p>
         </section>
         <div className="order-last sm:mx-auto lg:order-none lg:mx-0"><GameDock active="map" /></div>
         <div className={`pointer-events-auto mx-3 ${PANEL} px-3 py-2 text-xs sm:mx-auto sm:w-96 lg:mx-0 lg:w-80`}>
+          <ul className="mb-2 hidden space-y-1 text-hud-bone/80 sm:block">
+            <li className="flex items-center gap-2"><span className="size-2.5 bg-hud-amber" />your Repo</li>
+            <li className="flex items-center gap-2"><span className="size-2.5 bg-hud-lamp" />a Repo · brighter = more recent activity</li>
+          </ul>
           {drift !== null && (
             <label className="flex items-center gap-2">
               <input type="checkbox" checked={drift} onChange={(e) => onDrift(e.target.checked)} className="accent-hud-violet" />

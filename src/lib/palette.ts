@@ -50,6 +50,11 @@ export const mapTones = {
   sandboxSide: "#1a1420",
   edgeTop: "#4a4652",
   edgeSide: "#2b2832",
+  /** Bunker hatch and antenna mast (concrete tones). */
+  hatch: "#2c2733",
+  mast: "#3a3445",
+  /** The faint brown ember of a bunker idle for over a week (a lit oldWoodBrown). */
+  ember: "#6b4630",
   clusterBlue: "#8fb3d9",
   beaconRed: "#e05a5a",
 } as const;

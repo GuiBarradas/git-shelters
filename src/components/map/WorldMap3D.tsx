@@ -1,7 +1,8 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useRef, useState, useSyncExternalStore, type RefObject } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type RefObject } from "react";
 import { Vector3 } from "three";
 
 import { useQuality } from "@/components/scene/quality";
@@ -11,7 +12,12 @@ import { REGIONS, type Region } from "@/lib/regions/catalog";
 import { regionHeight, toWorld } from "@/lib/regions/look";
 
 import { MapOverlay } from "./MapOverlay";
+import { BunkerPicker, ScreenAnchor } from "./scene/BunkerPicker";
+import { Bunkers } from "./scene/Bunkers";
+import { bunkerGlows, mapBunkers, type MapBunker } from "./scene/bunker";
+import { mapTime, REDUCED_MOTION_SPEED } from "./scene/clock";
 import { FOV, type Vec3 } from "./scene/framing";
+import { Glows } from "./scene/Glows";
 import { MapCameraRig, type MapRigHandle } from "./scene/MapCameraRig";
 import { Regions } from "./scene/Regions";
 
@@ -41,6 +47,16 @@ function FirstFrame({ onReady }: { onReady: () => void }) {
   });
   return null;
 }
+
+/** Advances the shared scene time; reduced motion slows it rather than stopping it. */
+function MapTime({ reducedMotion }: { reducedMotion: boolean }) {
+  useFrame((_, delta) => { mapTime.value += Math.min(delta, 0.1) * (reducedMotion ? REDUCED_MOTION_SPEED : 1); });
+  return null;
+}
+
+/** The Sandbox's colour cycle, also used by every "cycle" glow. */
+const CYCLE = [palette.phosphorViolet, palette.amber, palette.mustardWarning] as const;
+const lift = (b: MapBunker | null, y: number): Vec3 | null => (b ? [b.at[0], b.at[1] + y, b.at[2]] : null);
 
 const scratch = new Vector3();
 const LABEL_AT: [string, Vec3][] = REGIONS.map((r) => {
@@ -84,9 +100,27 @@ export default function WorldMap3D({ pins, me, review, hidden, onReady, onLost }
   const labels = useRef(new Map<string, HTMLElement>());
   const rig = useRef<MapRigHandle>(null);
 
-  const mine = me ? (pins.find((p) => p.login.toLowerCase() === me.toLowerCase()) ?? null) : null;
-  const ownAt = mine ? toWorld(mine.at) : null;
-  const own: Vec3 | null = mine && ownAt ? [ownAt[0], regionHeight(mine.region), ownAt[1]] : null;
+  const router = useRouter();
+  const bunkers = useMemo(() => mapBunkers(pins, me), [pins, me]);
+  const glows = useMemo(() => bunkerGlows(bunkers), [bunkers]);
+  const ownBunker = bunkers.find((b) => b.mine) ?? null;
+  const mine = ownBunker?.pin ?? null;
+  const own = ownBunker?.at ?? null;
+  const hot = useRef<MapBunker | null>(null);
+  const [hovered, setHovered] = useState<MapBunker | null>(null);
+  const [pinned, setPinned] = useState<MapBunker | null>(null);
+  const tip = pinned ?? hovered;
+  const tipEl = useRef<HTMLDivElement>(null);
+  const youEl = useRef<HTMLDivElement>(null);
+  // Synthetic review Repos have no profile to open.
+  const openProfile = useCallback((b: MapBunker) => { if (!review) router.push(`/u/${b.pin.login}`); }, [review, router]);
+  const selectRegion = useCallback((r: Region) => { if (!hot.current) setSelected(r); }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { setPinned(null); setSelected(null); } };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   return (
     <div className={`absolute inset-0 ${hidden ? "invisible" : ""}`}>
@@ -101,14 +135,21 @@ export default function WorldMap3D({ pins, me, review, hidden, onReady, onLost }
           // No restore path: a lost context hands the visit back to the SVG map.
           gl.domElement.addEventListener("webglcontextlost", onLost, { once: true });
         }}
-        onPointerMissed={() => setSelected(null)}
+        onPointerMissed={() => { if (!hot.current) setSelected(null); }}
       >
         <color attach="background" args={[mapTones.mapSky]} />
         <fogExp2 attach="fog" args={[mapTones.mapSky, 0.0042]} />
         {/* violet night fill, and one high moon so the plateau walls read */}
         <hemisphereLight args={[mapTones.nightSky, palette.bunkerBlack, 3]} />
         <directionalLight position={[-30, 60, 25]} color={mapTones.moon} intensity={1.6} />
-        <Regions onSelect={setSelected} />
+        <MapTime reducedMotion={reducedMotion} />
+        <Regions onSelect={selectRegion} />
+        <Bunkers bunkers={bunkers} />
+        <Glows glows={glows} cycle={CYCLE} />
+        <BunkerPicker bunkers={bunkers} hot={hot} onHover={setHovered} onOpen={openProfile} onPin={setPinned} />
+        <ScreenAnchor at={lift(tip, 0.5)} el={tipEl} />
+        {/* Like the prototype, the YOU tag waits for a closer look so it never crowds the whole-map view. */}
+        <ScreenAnchor at={lift(ownBunker, 1.4)} el={youEl} within={120} />
         <MapCameraRig ref={rig} own={own} drift={drift} reducedMotion={reducedMotion} />
         <LabelProjector labels={labels} />
         <FirstFrame onReady={onReady} />
@@ -116,6 +157,11 @@ export default function WorldMap3D({ pins, me, review, hidden, onReady, onLost }
       <MapOverlay
         pins={pins}
         mine={mine}
+        tip={tip}
+        pinned={pinned !== null}
+        tipEl={tipEl}
+        youEl={youEl}
+        onCloseTip={() => setPinned(null)}
         review={review}
         labels={labels}
         selected={selected}

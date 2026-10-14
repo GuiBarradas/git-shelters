@@ -11,6 +11,7 @@
   --hud-violet: #bd93f9; /* phosphorViolet */
   --hud-violet-dim: #8d46a3; /* violetDim: locked, dividers; not for small text */
   --hud-amber: #e67e22; /* actions */
+  --hud-lamp: #ffc98a; /* lampWarm: a Repo's light on the map legend */
   --hud-bone: #e6dfc8; /* values and prose */
   --hud-red: #a14545; /* fadedRed: danger borders */
   --hud-red-text: #c95f5f; /* fadedRed lifted for text, ~5:1 contrast */
@@ -23,6 +24,7 @@
   --color-hud-bg: var(--hud-bg);
   --color-hud-plum: var(--hud-plum);
   --color-hud-violet: var(--hud-violet);
+  --color-hud-lamp: var(--hud-lamp);
   --color-hud-violet-dim: var(--hud-violet-dim);
   --color-hud-amber: var(--hud-amber);
   --color-hud-bone: var(--hud-bone);
