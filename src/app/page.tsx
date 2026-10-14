@@ -1,15 +1,13 @@
-import Link from "next/link";
 import { loadUserVisuals } from "@/lib/visuals/server";
 import { after } from "next/server";
 
 import { SessionBeacon } from "@/components/analytics/SessionBeacon";
 import { AwaySummary } from "@/components/hud/AwaySummary";
 import { BadgeToast } from "@/components/hud/BadgeToast";
+import { CrewLog, crewTip } from "@/components/hud/CrewLog";
+import { PacketCard } from "@/components/hud/PacketCard";
 import { resourceAlert } from "@/components/hud/resourceAlert";
-import { ReturnPlan } from "@/components/hud/ReturnPlan";
 import { TopBar } from "@/components/hud/TopBar";
-import { NextPacket } from "@/components/events/NextPacket";
-import { nextPacketAt } from "@/lib/events/schedule";
 import { Intro } from "@/components/intro/Intro";
 import { Landing } from "@/components/landing/Landing";
 import { BunkerSceneClient } from "@/components/scene/BunkerSceneClient";
@@ -19,7 +17,7 @@ import { awayReport } from "@/lib/economy/away";
 import { settleResources, workforce } from "@/lib/economy/resources";
 import { fetchDailyEvent } from "@/lib/events/daily";
 import { loadCrew } from "@/lib/forks/load";
-import { describeCrew, eventEcho, settleMood } from "@/lib/forks/mood";
+import { eventEcho, settleMood } from "@/lib/forks/mood";
 import { loadUnread } from "@/lib/notices";
 import { isRoomKind, isSlot, ROOM_CATALOG, type Room } from "@/lib/rooms/catalog";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -93,10 +91,14 @@ export default async function Home({ searchParams }: HomeProps) {
 
   // "While you were away": what the ledger and the simulation did since the last tick.
   const work = workforce(crew.forks, rooms);
-  const unstaffedRoom = crew.forks.some(f => !f.roomSlot) ? rooms.find(r =>
-    (r.kind === "cache_storage" || r.kind === "power_plant" || r.kind === "workshop") && !crew.forks.some(f => f.roomSlot === r.slot)
-  ) : undefined;
   const alert = resourceAlert({ resources, work, rooms, forks: crew.forks, bytes });
+  // Onboarding's "assign your idle Fork" follows the alert first, so it never asks
+  // for a Cook while a blackout needs an Engineer; without an alert, any producer room.
+  const staffingRoom = !crew.forks.some(f => !f.roomSlot) ? undefined
+    : alert ? (alert.room && !alert.room.staffed ? { slot: alert.room.slot, kind: alert.roomKind } : undefined)
+    : rooms.find(r =>
+      (r.kind === "cache_storage" || r.kind === "power_plant" || r.kind === "workshop") && !crew.forks.some(f => f.roomSlot === r.slot)
+    );
   const report = awayReport({
     hours: resources.hours,
     before: resources.before,
@@ -124,28 +126,27 @@ export default async function Home({ searchParams }: HomeProps) {
           notices: packets,
           eventDone: firstEvent.error ? null : (firstEvent.data?.length ?? 0) > 0,
           eventAvailable: dailyEvent !== null,
-          staffingRoom: unstaffedRoom ? { slot: unstaffedRoom.slot, name: ROOM_CATALOG[unstaffedRoom.kind].name } : undefined,
+          staffingRoom: staffingRoom ? { slot: staffingRoom.slot, name: ROOM_CATALOG[staffingRoom.kind].name } : undefined,
         }}
         alert={alert}
         openBuild={!!alert && params.build === alert.roomKind}
+        band={{
+          crewLog: (
+            <CrewLog
+              mood={crewMood}
+              lastPushAt={crew.lastPushAt}
+              echo={echo}
+              forks={crew.forks}
+              tip={crewTip({ resources, work, rooms, bytes, alert })}
+            />
+          ),
+          packet: <PacketCard packet={dailyEvent ? (dailyEvent.resolved ? "resolved" : "pending") : null} observedAt={observedAt} />,
+        }}
       />
       <TopBar login={githubLogin} bytes={bytes} resources={resources} work={work} lastSyncedAt={lastSyncedAt} alerting={!!alert} />
-      {report && <AwaySummary report={report} />}
-      <BadgeToast badges={freshBadges} />
+      {report && <AwaySummary report={report} alerting={!!alert} />}
+      <BadgeToast badges={freshBadges} alerting={!!alert} />
       {me !== null && (me.intro_seen_at === null || replayIntro) && <Intro login={githubLogin} />}
-      <div className={`pointer-events-none absolute ${alert ? "top-[116px]" : "top-[72px]"} left-6 z-10 space-y-1 font-mono text-xs`}>
-        {dailyEvent && !dailyEvent.resolved && (
-          <p className="text-[#BD93F9]/80">&gt; incoming packet on the Main Branch terminal</p>
-        )}
-        {dailyEvent?.resolved && <div className="pointer-events-auto"><NextPacket observedAt={observedAt} availableAt={nextPacketAt(observedAt)} /></div>}
-        <p className="text-[#E6DFC8]/50">&gt; {describeCrew(crewMood, crew.lastPushAt, new Date(), echo)}</p>
-        <p>
-          <Link href="/map" className="pointer-events-auto text-[#BD93F9]/70 hover:text-[#BD93F9]">
-            &gt; the 404 Lands: world map
-          </Link>
-        </p>
-        <ReturnPlan work={work} rooms={rooms} bytes={bytes} />
-      </div>
     </main>
   );
 }

@@ -5,15 +5,8 @@ import type { Fork as ForkData } from "@/lib/forks/catalog";
 import type { GeneratedBunker } from "@/lib/visuals/types";
 import { SnapshotStage, type SnapshotResult } from "./SnapshotStage";
 
-export function BunkerShare({ bunker, forks }: { bunker: GeneratedBunker; forks: ForkData[] }) {
-  const [open, setOpen] = useState(false);
-  return <>
-    <button className="absolute bottom-20 right-4 z-10 border border-[#bd93f9]/50 bg-[#130e19]/90 px-3 py-2 font-mono text-xs text-[#bd93f9]" onClick={() => setOpen(true)}>Share image ↗</button>
-    {open && <ShareDialog bunker={bunker} forks={forks} close={() => setOpen(false)} />}
-  </>;
-}
-
-function ShareDialog({ bunker, forks, close }: { bunker: GeneratedBunker; forks: ForkData[]; close: () => void }) {
+/** Render, download and publish the share card. Mounting it opens the modal; `close` unmounts it. */
+export function ShareDialog({ bunker, forks, close }: { bunker: GeneratedBunker; forks: ForkData[]; close: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => { dialog.current?.showModal(); }, []);
   const [capture, setCapture] = useState<SnapshotResult | null>(null), [error, setError] = useState(""), [busy, setBusy] = useState(false), [published, setPublished] = useState("");

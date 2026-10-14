@@ -132,7 +132,7 @@ export default async function RoomPage({ params }: Props) {
         <CrewPanel forks={allForks} rooms={rooms} slot={slotNumber} />
       </div>
       <div className="absolute bottom-14 right-4 left-4 z-10 space-y-2 sm:left-auto sm:w-80">
-        {isMain && dailyEvent?.resolved && <div className="border border-[#BD93F9]/40 bg-[#0B0713]/95 p-3 font-mono text-xs"><NextPacket observedAt={observedAt} availableAt={nextPacketAt(observedAt)} /></div>}
+        {isMain && dailyEvent?.resolved && <div data-hud className="border border-hud-violet/40 bg-hud-bg/95 p-4 font-mono text-xs"><NextPacket observedAt={observedAt} availableAt={nextPacketAt(observedAt)} /></div>}
       </div>
     </main>
   );

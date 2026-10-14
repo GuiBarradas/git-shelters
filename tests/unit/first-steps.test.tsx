@@ -74,6 +74,28 @@ describe("first steps", () => {
     expect(screen.queryByRole("list")).not.toBeInTheDocument();
   });
 
+  it("owns the lower-left slot exclusively: onboarding or the crew log, never both", () => {
+    const log = <section aria-label="Crew log">log</section>;
+    const { rerender } = render(<FirstSteps {...defaults} built fallback={log} />);
+    expect(screen.getByRole("complementary", { name: "Getting started" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Crew log" })).toBeNull();
+    rerender(<FirstSteps {...defaults} built eventDone fallback={log} />);
+    expect(screen.queryByRole("complementary")).toBeNull();
+    expect(screen.getByRole("region", { name: "Crew log" })).toBeInTheDocument();
+  });
+
+  it("does not revive completed onboarding for an idle Fork; the crew log takes the slot", () => {
+    render(<FirstSteps {...defaults} built eventDone staffingRoom={{ slot: 2, name: "Power Plant" }} fallback={<section aria-label="Crew log" />} />);
+    expect(screen.queryByRole("link", { name: /Assign your first worker/ })).toBeNull();
+    expect(screen.getByRole("region", { name: "Crew log" })).toBeInTheDocument();
+  });
+
+  it("keeps an unclaimed packet in the slot instead of the crew log", () => {
+    render(<FirstSteps {...defaults} built eventDone={null} notices={[notice]} fallback={<section aria-label="Crew log" />} />);
+    expect(screen.getByRole("button", { name: "Collect 100 B" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Crew log" })).toBeNull();
+  });
+
   it("offers the event as an alternative when the balance cannot fund a room", () => {
     render(<FirstSteps {...defaults} bytes={0} />);
     expect(screen.getByText(/50 more B/)).toBeInTheDocument();
