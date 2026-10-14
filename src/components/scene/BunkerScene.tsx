@@ -2,7 +2,9 @@
 
 import { Html, OrbitControls, PerformanceMonitor } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+
+import { roomStatus } from "@/components/hud/roomStatus";
 
 import { FORK_TRAITS, type Fork as ForkData } from "@/lib/forks/catalog";
 import { MOOD_LABEL } from "@/lib/forks/mood";
@@ -20,7 +22,8 @@ import {
   type Slot,
 } from "@/lib/rooms/catalog";
 
-import { DioramaCamera } from "./DioramaCamera";
+import { DioramaCamera, type HudInset } from "./DioramaCamera";
+import { OverlayProbe, RoomOverlay } from "./RoomOverlay";
 import { QualityControl, SceneEffects, useQuality } from "./SceneQuality";
 import { SceneInstances } from "./SceneInstances";
 import type { GeneratedBunker } from "@/lib/visuals/types";
@@ -49,6 +52,12 @@ export type BunkerSceneProps = {
   focusedSlot?: number | null;
   panel?: ReactNode;
   interactive?: boolean;
+  /** Screen space the HUD covers; the camera fits the bunker between it. Absent on landing/public. */
+  hudInset?: HudInset;
+  /** The gameplay overview: hover card instead of the bottom label, and the staffing chip. */
+  gameplay?: boolean;
+  /** The room that should get a worker next (staffingTarget); shown as an amber chip. */
+  blocker?: { slot: number; role: string } | null;
 };
 
 /** Distance between cell centres (pillars sit in the gap). */
@@ -61,6 +70,7 @@ const slotX = (slot: number) => ((slot >= 5 ? slot - 5 : slot) - (SLOT_COUNT - 1
 const LOWER_Y = -(CELL.h + 1.0);
 const slotY = (slot: number) => (slot >= 5 ? LOWER_Y : 0);
 const ROW_WIDTH = PITCH * SLOT_COUNT;
+const NO_INSET: HudInset = { top: 0, bottom: 0 };
 
 /** Invisible pointer target covering one cell, so hover and click ignore the props. */
 function CellHitbox({ onClick, onHover }: { onClick?: () => void; onHover: (h: boolean) => void }) {
@@ -107,6 +117,9 @@ export default function BunkerScene({
   focusedSlot: controlledFocus,
   panel,
   interactive = true,
+  hudInset,
+  gameplay = false,
+  blocker = null,
 }: BunkerSceneProps) {
   const quality = useQuality();
   const [entered, setEntered] = useState<number | null>(null);
@@ -124,16 +137,39 @@ export default function BunkerScene({
   const mainVisual = visuals?.rooms.find(r => r.slot === 0);
   const bySlot = new Map(rooms.map((room) => [room.slot, room]));
   const [hovered, setHovered] = useState<number | null>(null);
+  // Hitboxes unmount while a room is focused, so no pointer-out arrives:
+  // forget the hover when focus changes, or the card would come back stale.
+  const [hoverFocus, setHoverFocus] = useState(focusedSlot);
+  if (hoverFocus !== focusedSlot) {
+    setHoverFocus(focusedSlot);
+    setHovered(null);
+  }
   // ponytail: quality only steps down this visit; add recovery if long sessions need it.
   const [dpr, setDpr] = useState(1.25);
   // A Fork with no room wanders the Main Branch.
   const forksIn = (slot: number) => forks.filter((f) => (f.roomSlot ?? 0) === slot);
   const forkHover = (f: ForkData | null) =>
     onHoverBlurb?.(f ? `${f.name} · ${FORK_TRAITS[f.trait].name} · ${MOOD_LABEL[f.mood]}` : null);
+  // The overview's hover card replaces the bottom room label; Forks keep theirs.
+  const overlay = gameplay && !demo && interactive && focusedSlot === null;
   const hover = (slot: number, blurb: string) => (h: boolean) => {
     setHovered(h ? slot : null);
-    onHoverBlurb?.(h ? blurb : null);
+    onHoverBlurb?.(h && !overlay ? blurb : null);
   };
+  const hoverRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const blockerRef = useRef<HTMLDivElement>(null);
+  const cellAt = (slot: number): [number, number] => [slotX(slot) - CELL.w / 2, slotY(slot)];
+  const hoverSlot = overlay ? hovered : null;
+  const hoverStatus = hoverSlot === null ? null : roomStatus({
+    slot: hoverSlot,
+    kind: bySlot.get(hoverSlot as Slot)?.kind ?? null,
+    here: forksIn(hoverSlot),
+    crewSize: forks.length,
+    powered,
+    locked: hoverSlot >= 5 && !hasElevator(rooms),
+  });
+  const blocked = overlay && blocker ? blocker : null;
   // The landing keeps the hero text above the bunker: look higher, so the
   // row sits in the lower half of the screen.
   // Two floors: aim between them, a little high so the ground floor leads.
@@ -157,7 +193,15 @@ export default function BunkerScene({
         bounds={() => [60, 65]}
         onDecline={() => setDpr(value => Math.max(0.75, value - 0.1))}
       />
-      <DioramaCamera width={ROW_WIDTH} height={demo ? 12 : 9.5} center={[0,lookY,0]} focus={focus} controls={demo} />
+      <DioramaCamera width={ROW_WIDTH} height={demo ? 12 : 9.5} center={[0,lookY,0]} focus={focus} controls={demo} inset={hudInset} />
+      {(hoverStatus || blocked) && <OverlayProbe
+        inset={hudInset ?? NO_INSET}
+        hoverAt={hoverSlot === null ? null : cellAt(hoverSlot)}
+        blockerAt={blocked ? cellAt(blocked.slot) : null}
+        hoverRef={hoverRef}
+        cardRef={cardRef}
+        blockerRef={blockerRef}
+      />}
       {demo && (
         <OrbitControls
           target={[0, lookY, 0]}
@@ -238,6 +282,15 @@ export default function BunkerScene({
       </Html>}
       <SceneEffects quality={quality} closeUp={focusedSlot !== null} focusTarget={focus ? [focus[0], focus[1] - 0.25, -0.4] : undefined} />
     </Canvas>
+    {(hoverStatus || blocked) && <RoomOverlay
+      hover={hoverStatus && hoverSlot !== null ? { slot: hoverSlot, status: hoverStatus } : null}
+      blocker={blocked ? { role: blocked.role } : null}
+      hoverRef={hoverRef}
+      cardRef={cardRef}
+      blockerRef={blockerRef}
+      // The ordinary room route: focus the camera, then navigate.
+      onAssign={() => { if (blocked) enter(blocked.slot as Slot, true); }}
+    />}
     </>
   );
 }

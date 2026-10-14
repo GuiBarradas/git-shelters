@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useState, type ReactNode } from "react";
+import { useActionState, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 
 import type { GeneratedBunker } from "@/lib/visuals/types";
 import { useQuality } from "./SceneQuality";
@@ -9,7 +9,8 @@ import { buildRoom, type BuildState } from "@/app/rooms/actions";
 import { AlertBanner } from "@/components/hud/AlertBanner";
 import { FirstSteps, type FirstStepsState } from "@/components/hud/FirstSteps";
 import { GameDock } from "@/components/hud/GameDock";
-import { buildableSlot, type ResourceAlert } from "@/components/hud/resourceAlert";
+import { buildableSlot, type ResourceAlert, type StaffingTarget } from "@/components/hud/resourceAlert";
+import type { HudInset } from "./DioramaCamera";
 import { FORK_TRAITS, type Fork as ForkData } from "@/lib/forks/catalog";
 import { type EventEcho, JOB_LINES, pickLine } from "@/lib/forks/mood";
 import { GROUND_SLOTS, isLowerSlot, ROOM_CATALOG, type Room, type RoomKind, type Slot } from "@/lib/rooms/catalog";
@@ -40,7 +41,19 @@ type BunkerSceneClientProps = {
    * dock between them is built here, next to the share data.
    */
   band?: { crewLog: ReactNode; packet: ReactNode };
+  /** The room that should get a worker next (shared with onboarding); drawn as the scene's chip. */
+  staffing?: StaffingTarget | null;
 };
+
+// The lower band only sits in a row from `lg` up; below that the mobile pass will set its own inset.
+const LG = "(min-width: 1024px)";
+const subscribeLg = (cb: () => void) => { const m = window.matchMedia(LG); m.addEventListener("change", cb); return () => m.removeEventListener("change", cb); };
+const isLg = () => window.matchMedia(LG).matches;
+
+/** TopBar (56 px, 100 with the AlertBanner) and, on the overview, the 128 px band plus its 24 px margin. */
+export function hudInset(alerting: boolean, band: boolean, wide: boolean): HudInset {
+  return { top: alerting ? 100 : 56, bottom: band && wide ? 152 : 0 };
+}
 
 /**
  * Owns the client state the bunker needs: which empty slot the player
@@ -61,9 +74,11 @@ export function BunkerSceneClient({
   alert = null,
   openBuild = false,
   band,
+  staffing = null,
 }: BunkerSceneClientProps) {
   const router = useRouter();
   const quality = useQuality();
+  const wide = useSyncExternalStore(subscribeLg, isLg, () => true);
   const fixSlot = bytes !== null && !demo ? buildableSlot(alert) : null;
   const [previewKind, setPreviewKind] = useState<RoomKind | null>(openBuild && fixSlot !== null && alert ? alert.roomKind : null);
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(openBuild ? fixSlot : null);
@@ -118,6 +133,10 @@ export function BunkerSceneClient({
         onHoverBlurb={setBlurb}
         demo={demo}
         powered={powered}
+        // Only the signed-in overview reserves HUD space and gets the card and chip; landing and public stay as they were.
+        hudInset={band ? hudInset(!!alert, true, wide) : undefined}
+        gameplay={!!band}
+        blocker={band && staffing ? { slot: staffing.slot, role: staffing.role } : null}
       />
       {/* Low quality uses a CSS vignette; the other presets already have a post pass. */}
       <div

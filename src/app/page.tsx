@@ -6,7 +6,7 @@ import { AwaySummary } from "@/components/hud/AwaySummary";
 import { BadgeToast } from "@/components/hud/BadgeToast";
 import { CrewLog, crewTip } from "@/components/hud/CrewLog";
 import { PacketCard } from "@/components/hud/PacketCard";
-import { resourceAlert } from "@/components/hud/resourceAlert";
+import { resourceAlert, staffingTarget } from "@/components/hud/resourceAlert";
 import { TopBar } from "@/components/hud/TopBar";
 import { Intro } from "@/components/intro/Intro";
 import { Landing } from "@/components/landing/Landing";
@@ -92,13 +92,11 @@ export default async function Home({ searchParams }: HomeProps) {
   // "While you were away": what the ledger and the simulation did since the last tick.
   const work = workforce(crew.forks, rooms);
   const alert = resourceAlert({ resources, work, rooms, forks: crew.forks, bytes });
-  // Onboarding's "assign your idle Fork" follows the alert first, so it never asks
-  // for a Cook while a blackout needs an Engineer; without an alert, any producer room.
-  const staffingRoom = !crew.forks.some(f => !f.roomSlot) ? undefined
-    : alert ? (alert.room && !alert.room.staffed ? { slot: alert.room.slot, kind: alert.roomKind } : undefined)
-    : rooms.find(r =>
-      (r.kind === "cache_storage" || r.kind === "power_plant" || r.kind === "workshop") && !crew.forks.some(f => f.roomSlot === r.slot)
-    );
+  // One room to staff next, shared by onboarding and the scene's chip: the alert's
+  // own room if empty, else (with an idle Fork) power, then kitchen, then bench.
+  const staffing = staffingTarget({ alert, rooms, forks: crew.forks });
+  // Onboarding speaks of "your idle Fork", so it also needs one to exist.
+  const staffingRoom = staffing && crew.forks.some(f => !f.roomSlot) ? staffing : undefined;
   const report = awayReport({
     hours: resources.hours,
     before: resources.before,
@@ -130,6 +128,7 @@ export default async function Home({ searchParams }: HomeProps) {
         }}
         alert={alert}
         openBuild={!!alert && params.build === alert.roomKind}
+        staffing={staffing}
         band={{
           crewLog: (
             <CrewLog
