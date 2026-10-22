@@ -71,7 +71,7 @@ export async function fetchUserEvents(login: string, page = 1): Promise<GitHubEv
 
   const response = await fetch(
     `https://api.github.com/users/${encodeURIComponent(login)}/events/public?per_page=100&page=${page}`,
-    { headers, next: { revalidate: 60 } },
+    { headers, next: { revalidate: 60 }, signal: AbortSignal.timeout(10_000) },
   );
 
   if (!response.ok) {
