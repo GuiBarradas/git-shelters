@@ -23,6 +23,18 @@ const toPx = (cam: PerspectiveCamera, x: number, y: number) => {
 };
 
 describe("HUD camera reserve", () => {
+  it("aligns CSS3D panels with the off-centre WebGL projection at every zoom", () => {
+    for (const hud of [{ top: 56, bottom: 0 }, { top: 100, bottom: 0 }, { top: 152, bottom: 0 }, inset]) {
+      for (const distance of [6, 12, 20]) {
+        const webgl = camera(distance, hud);
+        // Drei Html transform uses a centred perspective, without view.offsetY.
+        const css3d = camera(distance, { top: 0, bottom: 0 });
+        for (const y of [-1, 0, 1]) {
+          expect(toPx(css3d, 0, y).y - viewOffsetY(hud)).toBeCloseTo(toPx(webgl, 0, y).y, 5);
+        }
+      }
+    }
+  });
   it("puts the look-at point in the middle of the free band", () => {
     for (const hud of [inset, { top: 100, bottom: 152 }, { top: 56, bottom: 0 }]) {
       const centre = toPx(camera(20, hud), 0, 0);

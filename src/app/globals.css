@@ -112,6 +112,9 @@ body,
 .bunker-hud > .route-enter {
   animation: none;
 }
+.bunker-panel {
+  translate: 0 var(--scene-view-offset-y, 0px);
+}
 /* The TopBar carries sound, settings, legal and quality: the global footer
    and the floating quality picker step aside wherever it is mounted. */
 body:has([data-topbar]) :is(.site-footer, .scene-quality) {
