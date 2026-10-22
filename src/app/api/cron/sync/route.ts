@@ -72,20 +72,27 @@ export async function GET(request: NextRequest) {
     failed: 0,
   };
 
-  for (const user of users ?? []) {
-    try {
-      const result = await syncUser(admin, user);
-      results[result.mode === "skipped" ? "skipped" : "synced"] += 1;
-    } catch (err) {
-      // Per-user failure isolation — surface to Sentry, keep going.
-      Sentry.withScope((scope) => {
-        scope.setTag("user_id", user.id);
-        scope.setTag("github_login", user.github_login ?? "unknown");
-        Sentry.captureException(err);
-      });
-      results.failed += 1;
+  // Three independent accounts at a time; keep each account's credit/cursor sequence intact.
+  const queue = users ?? [];
+  let next = 0;
+  async function worker() {
+    while (next < queue.length) {
+      const user = queue[next++]!;
+      try {
+        const result = await syncUser(admin, user);
+        results[result.mode === "skipped" ? "skipped" : "synced"] += 1;
+      } catch (err) {
+        // Per-user failure isolation — surface to Sentry, keep going.
+        Sentry.withScope((scope) => {
+          scope.setTag("user_id", user.id);
+          scope.setTag("github_login", user.github_login ?? "unknown");
+          Sentry.captureException(err);
+        });
+        results.failed += 1;
+      }
     }
   }
+  await Promise.all(Array.from({ length: Math.min(3, queue.length) }, worker));
 
   const elapsedMs = Date.now() - startedAt;
   Sentry.addBreadcrumb({
