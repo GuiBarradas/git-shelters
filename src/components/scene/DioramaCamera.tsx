@@ -35,6 +35,7 @@ export function DioramaCamera({ width, height, center, focus, controls = false, 
   width: number; height: number; center: Point; focus?: Point | null; controls?: boolean; inset?: HudInset;
 }) {
   const size = useThree(state => state.size);
+  const gl = useThree(state => state.gl);
   const camera = useRef<Camera>(null);
   const target = useRef(new Vector3());
   const aim = useRef(new Vector3());
@@ -64,7 +65,7 @@ export function DioramaCamera({ width, height, center, focus, controls = false, 
     camera.current.position.set(x + wide * 0.13, y + wide * 0.115, z + wide);
     camera.current.lookAt(target.current);
   }, [wide, x, y, z]);
-  useFrame(({ pointer }, delta) => {
+  useFrame(({ pointer, events }, delta) => {
     const cam = camera.current;
     if (!cam) return;
     const easing = reduceMotion.current ? 1 : 1 - Math.exp(-delta * 8);
@@ -77,6 +78,9 @@ export function DioramaCamera({ width, height, center, focus, controls = false, 
       o.H = size.height;
       if (o.y === 0) cam.clearViewOffset();
       else cam.setViewOffset(size.width, size.height, 0, o.y, size.width, size.height);
+      // Drei's CSS3D projection omits the camera's off-centre view window.
+      const htmlRoot = events.connected instanceof HTMLElement ? events.connected : gl.domElement.parentElement;
+      htmlRoot?.style.setProperty("--scene-view-offset-y", `${-o.y}px`);
     }
 
     if (controls) return;

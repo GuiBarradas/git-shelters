@@ -3,6 +3,7 @@
 import { useMemo, useState, type MouseEvent, type ReactNode } from "react";
 
 import { NextPacket } from "@/components/events/NextPacket";
+import { DailyEventCard } from "@/components/events/DailyEventCard";
 import { AlertBanner } from "@/components/hud/AlertBanner";
 import { CrewLog } from "@/components/hud/CrewLog";
 import { crewTip } from "@/components/hud/crewTip";
@@ -102,6 +103,10 @@ export function fixtureTime(at: string | null): string {
 }
 
 function roomPanel(slot: number, data: ReturnType<typeof hudFixture>): ReactNode {
+  if (slot === 0) {
+    const outcome = { label: "Inspect display", outcome_text: "Display alignment check complete. No server action is available in this fixture.", bytes_delta: 0 };
+    return <DailyEventCard variant="screen" event={{ title: "LAB · terminal alignment", narrative: "Synthetic resolved packet for visual QA. Text should stay inside the CRT bezel throughout the camera zoom.", options: { a: outcome, b: outcome }, resolved: { choice: "a", outcome } }} />;
+  }
   const here = data.forks.filter((f) => (f.roomSlot ?? 0) === slot).map((f) => f.name);
   switch (data.rooms.find((r) => r.slot === slot)?.kind) {
     case "cache_storage": return <LedgerPanel bytes={data.bytes} rows={[]} cache={data.resources.cache} cacheCap={cacheCap(data.work.cacheStorages)} cooks={here} />;
@@ -109,7 +114,6 @@ function roomPanel(slot: number, data: ReturnType<typeof hudFixture>): ReactNode
     case "dorm": return <BunkPanel beds={bedCount(data.rooms)} crew={data.forks.length} sleepers={here} />;
     case "elevator": return <LiftPanel lowerRooms={1} operators={here} />;
     case "workshop": return <BenchPanel payload={data.resources.payload} cap={payloadCap(data.work.workshops)} tinkerers={here} powered={data.resources.uptime > 0} />;
-    // The Main Branch terminal needs a real Daily Event; the fixture invents none.
     default: return undefined;
   }
 }

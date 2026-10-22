@@ -300,7 +300,7 @@ export default function BunkerScene({
         );
       })}
       </SceneInstances></OptionalBunkerVisuals>
-      {panel && focusedSlot !== null && <Html transform
+      {panel && focusedSlot !== null && <Html transform wrapperClass="bunker-panel"
         position={[slotX(focusedSlot) + anchor.position[0], slotY(focusedSlot) + anchor.position[1], anchor.position[2] + 0.012]}
         scale={40 / 300} style={{ width: anchor.width * 300, height: anchor.height * 300 }}>
         {panel}
